@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { runCli, isCliEntrypoint } from '../src/cli.js';
 import { writeCurrentTaskAtomic } from '../src/current-task.js';
+import { buildExpectedHooksConfig } from '../src/installed-hooks.js';
 import type { CurrentTask } from '../src/types.js';
 
 let tempRoot: string;
@@ -1070,15 +1071,7 @@ describe('runCli', () => {
     const hooksJsonPath = path.join(tempRoot, 'hooks.json');
     const auditRoot = path.join(tempRoot, 'audits');
     const prototypeRoot = path.join(tempRoot, 'prototype');
-    await fs.writeFile(hooksJsonPath, JSON.stringify({
-      hooks: {
-        SessionStart: [{ matcher: '^(startup|resume|clear|compact)$', hooks: [{ type: 'command', command: `node "${path.join(prototypeRoot, 'dist', 'src', 'cli.js')}" session-start --resolve-task-from-cwd --audit-root "${auditRoot}"`, additionalContextLimit: 1200 }] }],
-        PreToolUse: [{ matcher: '^(apply_patch|Edit|Write|Bash|mcp__fastctx__(read|grep|glob|replace))$', hooks: [{ type: 'command', command: `node "${path.join(prototypeRoot, 'dist', 'src', 'cli.js')}" hook-enforce --resolve-task-from-cwd --audit-root "${auditRoot}"` }] }],
-        PermissionRequest: [{ matcher: '^(apply_patch|Edit|Write|Bash|mcp__fastctx__(read|grep|glob|replace))$', hooks: [{ type: 'command', command: `node "${path.join(prototypeRoot, 'dist', 'src', 'cli.js')}" permission-enforce --resolve-task-from-cwd --audit-root "${auditRoot}"` }] }],
-        PostToolUse: [{ matcher: '^(apply_patch|Edit|Write|Bash|mcp__fastctx__(read|grep|glob|replace))$', hooks: [{ type: 'command', command: `node "${path.join(prototypeRoot, 'dist', 'src', 'cli.js')}" post-enforce --resolve-task-from-cwd --audit-root "${auditRoot}"` }] }],
-        Stop: [{ hooks: [{ type: 'command', command: `node "${path.join(prototypeRoot, 'dist', 'src', 'cli.js')}" stop-check --resolve-task-from-cwd --audit-root "${auditRoot}"` }] }]
-      }
-    }), 'utf8');
+    await fs.writeFile(hooksJsonPath, JSON.stringify(buildExpectedHooksConfig({ prototypeRoot, auditRoot })), 'utf8');
 
     const output = await runCli([
       'verify-installed-hooks',

@@ -421,7 +421,9 @@ try {
   ]));
   assert(installedHooksReport.schema === 'ccpanes.installed-hooks.verify.v1', 'installed hooks verify schema mismatch');
   assert(installedHooksReport.passed === true, 'installed hooks verify expected passed=true');
-  assert(installedHooksReport.discovered.length === 5, 'installed hooks verify expected five hooks');
+  assert(installedHooksReport.discovered.length === 7, 'installed hooks verify expected seven hooks');
+  assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit skills-hub'), 'installed hooks verify missing skills-hub UserPromptSubmit hook');
+  assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit cc-panes prompt-before'), 'installed hooks verify missing CC-Panes UserPromptSubmit hook');
 
   const productionToolkitManifest = parseJson(run([
     'create-production-toolkit',

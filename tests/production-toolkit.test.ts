@@ -44,6 +44,8 @@ describe('createProductionToolkit', () => {
     ].sort());
     expect(manifest.expectedHooks.map((hook) => hook.event)).toEqual([
       'SessionStart',
+      'UserPromptSubmit',
+      'UserPromptSubmit',
       'PreToolUse',
       'PermissionRequest',
       'PostToolUse',
@@ -63,6 +65,7 @@ describe('createProductionToolkit', () => {
     expect(bootstrapScript).toContain('bootstrap-project');
     expect(rollbackScript).toContain('Rollback');
     expect(readme).toContain('SessionStart');
+    expect(readme).toContain('UserPromptSubmit');
     expect(readme).toContain('AGENTS.md');
     expect(readme).toContain('bootstrap-report.json');
     expect(readme).toContain('Stop');
