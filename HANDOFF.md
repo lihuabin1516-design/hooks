@@ -9,8 +9,10 @@
 1. `README.md`：中文主说明和日常命令。
 2. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
 3. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
-4. `docs/plans/`：Phase 24 到 Phase 31 的分阶段设计与实施计划。
-5. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
+4. `docs/plans/`：Phase 24 到 Phase 33 的分阶段设计与实施计划。
+5. `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
+6. `docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md`：Codex plugin 分发后续设计。
+7. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
 
 ## 当前基线
 
@@ -29,13 +31,18 @@ Node：>=22
 ```text
 bootstrap-project      一键初始化项目上下文
 policy-capture         对话规则同时落 policy.md + policy.json
+plan-intake            plan 阶段 workflow/policy dry-run 和 audit
 policy-capture-plan    从 plan 文本识别明确规则并编排 policy-capture
+classify-task-risk     prompt 级 Light / Standard / Heavy 风险分级
+classify-workflow      SBA 风格任务路由、闭环强度和必要检查建议
+host-adapter-registry  机器可读宿主适配能力目录
 hook-enforce           PreToolUse 执行前拦截
 permission-enforce     PermissionRequest 高风险授权拦截
 post-enforce           PostToolUse 审计 JSONL
 session-start          注入当前任务上下文
 stop-check             停止阶段验收提醒
 verify-installed-hooks 已安装 hooks 只读自检
+record/verify acceptance 分层验收证据与 completionAllowed 汇总
 ```
 
 ## 维护目标
@@ -162,4 +169,4 @@ live 验证结果
 
 ## 下一步建议
 
-后续可继续做 Phase 32：在 CC-Panes plan 事件侧调用 `policy-capture-plan`，把工具层能力接入真实 plan 生命周期；继续保持用户级配置只读，先做 dry-run / audit 再发布。
+后续可继续做 Phase 34：把 `plan-intake` 接入 CC-Panes plan 事件侧的真实 dry-run/audit 子步骤；继续保持用户级配置只读，先跑一段审计 artifact 再评估是否进入发布授权包。

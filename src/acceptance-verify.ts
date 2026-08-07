@@ -1,6 +1,14 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
-import type { AcceptanceCheckResult, AcceptanceEvidence } from './acceptance.js';
+import {
+  buildAcceptanceTruthLayers,
+  summarizeAcceptanceTruthLayers,
+  type AcceptanceCheckResult,
+  type AcceptanceEvidence,
+  type AcceptanceSummary,
+  type AcceptanceTruthLayer,
+  type AcceptanceTruthState
+} from './acceptance.js';
 
 export type ArtifactVerifyStatus = 'match' | 'mismatch' | 'missing';
 
@@ -24,6 +32,8 @@ export interface AcceptanceVerifyResult {
   passed: boolean;
   artifactResults: ArtifactVerifyResult[];
   checkResults: CheckVerifyResult[];
+  truthLayers: AcceptanceTruthLayer[];
+  summary: AcceptanceSummary;
   failures: string[];
   verifiedAt: string;
 }
@@ -36,6 +46,16 @@ async function hashExistingFile(filePath: string): Promise<string | null> {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw error;
   }
+}
+
+function artifactTruthState(artifactResults: ArtifactVerifyResult[]): AcceptanceTruthState {
+  if (artifactResults.length === 0) return 'not-applicable';
+  return artifactResults.every((artifact) => artifact.status === 'match') ? 'pass' : 'fail';
+}
+
+function artifactTruthEvidence(artifactResults: ArtifactVerifyResult[]): string {
+  if (artifactResults.length === 0) return 'artifactCount=0';
+  return artifactResults.map((artifact) => `${artifact.path}:${artifact.status}`).join(', ');
 }
 
 export async function verifyAcceptanceEvidence(evidence: AcceptanceEvidence, verifiedAt = new Date().toISOString()): Promise<AcceptanceVerifyResult> {
@@ -68,12 +88,33 @@ export async function verifyAcceptanceEvidence(evidence: AcceptanceEvidence, ver
     }
   }
 
+  const truthLayers = buildAcceptanceTruthLayers({
+    taskId: evidence.taskId,
+    worktreeRoot: evidence.worktreeRoot,
+    artifactCount: evidence.artifactHashes.length,
+    checks: evidence.checks,
+    artifactHashState: artifactTruthState(artifactResults),
+    artifactHashEvidence: artifactTruthEvidence(artifactResults),
+    explicitTruthLayers: evidence.truthLayers?.filter((layer) => (
+      layer.name === 'live-gates' ||
+      layer.name === 'reference-repos' ||
+      layer.name === 'user-config'
+    ))
+  });
+  const summary = summarizeAcceptanceTruthLayers(truthLayers);
+  for (const layer of truthLayers) {
+    if (!layer.required) continue;
+    if (layer.state !== 'pass') failures.push(`truth layer not pass: ${layer.name} (${layer.state})`);
+  }
+
   return {
     schema: 'ccpanes.acceptance.verify.v1',
     taskId: evidence.taskId,
-    passed: failures.length === 0,
+    passed: failures.length === 0 && summary.completionAllowed,
     artifactResults,
     checkResults,
+    truthLayers,
+    summary,
     failures,
     verifiedAt
   };

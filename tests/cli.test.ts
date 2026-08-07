@@ -67,6 +67,60 @@ describe('runCli', () => {
     expect(parsed.scanErrors).toEqual([]);
   });
 
+  test('classifies task risk through CLI', async () => {
+    const output = await runCli(['classify-task-risk', '--prompt', '修改 src/foo.ts 并更新测试', '--cwd', tempRoot]);
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.task-risk.v1',
+      tier: 'standard',
+      reason: 'standard_code_task',
+      cwd: tempRoot
+    });
+    expect(parsed.dimensions.touchesCode).toBe(true);
+  });
+
+  test('classifies workflow profile through CLI', async () => {
+    const output = await runCli([
+      'classify-workflow',
+      '--prompt',
+      '扩展 hook-event-adapter 并更新测试',
+      '--cwd',
+      tempRoot,
+      '--changed-path',
+      'src/hook-event-adapter.ts',
+      '--changed-path',
+      'tests/hook-event-adapter.test.ts'
+    ]);
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.workflow-profile.v1',
+      route: { id: 'hook-runtime' },
+      rigor: 'standard',
+      closure: { bucket: 'full' },
+      cwd: tempRoot
+    });
+    expect(parsed.checks.map((check: { command: string }) => check.command)).toContain('npm run smoke');
+  });
+
+  test('prints host adapter registry and filters by host', async () => {
+    const registryOutput = await runCli(['host-adapter-registry']);
+    const registry = JSON.parse(registryOutput);
+    expect(registry.schema).toBe('ccpanes.host-adapter-registry.v1');
+    expect(registry.adapters.map((adapter: { id: string }) => adapter.id)).toContain('codex');
+
+    const codexOutput = await runCli(['host-adapter-registry', '--host', 'codex']);
+    const codex = JSON.parse(codexOutput);
+    expect(codex).toMatchObject({
+      schema: 'ccpanes.host-adapter.v1',
+      adapter: { id: 'codex', status: 'supported' }
+    });
+    expect(codex.adapter.surfaces).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'hard-gate', name: 'PreToolUse' })
+    ]));
+  });
+
   test('includes scanErrors for invalid scanned current-task files', async () => {
     const badRoot = path.join(tempRoot, 'bad-project');
     await fs.mkdir(path.join(badRoot, '.ccpanes-task'), { recursive: true });
@@ -238,6 +292,38 @@ describe('runCli', () => {
       reason: 'plan_block_command',
       match: { tools: ['shell'], commandContains: ['deploy-artifact'] }
     });
+  });
+
+  test('previews plan intake through CLI without writing policy files', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditOut = path.join(tempRoot, 'audits', 'plan-intake.json');
+
+    const output = await runCli([
+      'plan-intake',
+      '--root',
+      projectRoot,
+      '--prompt',
+      '进入 plan 阶段前先收敛规则',
+      '--utterance',
+      '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
+      '--changed-path',
+      'src/plan-policy-capture.ts',
+      '--audit-out',
+      auditOut
+    ]);
+    const parsed = JSON.parse(output);
+    const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.plan-intake.v1',
+      mode: 'dry-run',
+      changed: false,
+      workflow: { route: { id: 'project-policy' } },
+      policyPreview: { wouldCaptureCount: 1, wouldChangeProjectPolicy: true }
+    });
+    expect(audit.policyPreview.actions[0].reason).toBe('plan_block_command');
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).rejects.toThrow();
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).rejects.toThrow();
   });
 
   test('policy-disable and policy-clear preserve rules but disable enforcement', async () => {
@@ -825,6 +911,32 @@ describe('runCli', () => {
     expect(parsed).not.toHaveProperty('decision');
     expect(parsed.systemMessage).toContain('task-alpha');
     expect(parsed.systemMessage).toContain('verify-acceptance');
+  });
+
+  test('stop-check emits targeted reminder from transcript evidence', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const transcriptPath = path.join(tempRoot, 'transcript.jsonl');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+    await fs.writeFile(transcriptPath, [
+      JSON.stringify({ type: 'user', message: { content: [{ type: 'text', text: '修复 src/foo.ts' }] } }),
+      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Edit', input: { file_path: path.join(projectRoot, 'src', 'foo.ts') } }] } }),
+      JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: '已修复，测试通过。' }] } })
+    ].join('\n'), 'utf8');
+
+    const output = await runCli([
+      'stop-check',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'Stop',
+      cwd: projectRoot,
+      stop_hook_active: false,
+      transcript_path: transcriptPath
+    }));
+    const parsed = JSON.parse(output);
+
+    expect(parsed.continue).toBe(true);
+    expect(parsed.systemMessage).toContain('targeted verification reminder');
+    expect(parsed.systemMessage).toContain('claim-specific checks');
   });
 
   test('stop-check dynamic resolver no-ops when cwd has no task', async () => {
@@ -1552,7 +1664,8 @@ describe('runCli', () => {
       'record-acceptance',
       '--task', currentTaskPath,
       '--artifact', artifactPath,
-      '--check', 'unit tests=pass=34 tests passed'
+      '--check', 'unit tests=pass=34 tests passed',
+      '--truth', 'reference-repos=pass=comet clean; fastctx clean'
     ]);
     const parsed = JSON.parse(output);
 
@@ -1561,6 +1674,11 @@ describe('runCli', () => {
     expect(parsed.artifactHashes[0].path).toBe(artifactPath);
     expect(parsed.artifactHashes[0].sha256).toMatch(/^[A-F0-9]{64}$/);
     expect(parsed.checks[0]).toEqual({ name: 'unit tests', command: 'unit tests', result: 'pass', evidence: '34 tests passed' });
+    expect(parsed.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'reference-repos', state: 'pass', required: true }),
+      expect.objectContaining({ name: 'completion', state: 'pass' })
+    ]));
+    expect(parsed.summary.completionAllowed).toBe(true);
   });
   test('prints acceptance verify JSON from an input file', async () => {
     const taskRoot = path.join(tempRoot, 'project-alpha');

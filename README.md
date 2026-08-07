@@ -57,14 +57,23 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js bootstrap-pr
 
 ### 2. plan 阶段规则自动沉淀
 
-需求讨论或 plan 阶段出现明确的“禁止、开放、清除、限制”等项目规则时，优先用 `policy-capture-plan` 从计划文本自动提取规则，再写入人类可读 ledger 和 Hook 可执行规则：
+需求讨论或 plan 阶段出现明确的“禁止、开放、清除、限制”等项目规则时，先用 `plan-intake`
+做 dry-run 预览和审计，再由 `policy-capture-plan` 写入人类可读 ledger 和 Hook 可执行规则：
 
 ```powershell
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js plan-intake `
+  --root <project-root> `
+  --prompt "<current user request>" `
+  --utterance "计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。" `
+  --audit-out <audit-json>
+
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-capture-plan `
   --root <project-root> `
   --utterance "计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。"
 ```
 
+`plan-intake` 输出 `ccpanes.plan-intake.v1`，组合 `classify-workflow` 和 plan policy
+候选识别；默认不写 `.ccpanes-task\policy.md` 或 `.ccpanes-task\policy.json`。
 `policy-capture-plan` 只识别明确的命令级和路径级表达，未识别到规则时返回 `changed=false`，不创建项目 policy 文件。需要精确指定 matcher 时，继续使用底层 `policy-capture`：
 
 ```powershell
@@ -85,7 +94,32 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-captu
 <project>\.ccpanes-task\policy.json  # hook-enforce / permission-enforce 读取的机械规则
 ```
 
-### 3. 低层机械规则维护
+### 3. prompt 风险分级
+
+`classify-task-risk` 对 prompt 进行 Light / Standard / Heavy 分级，输出机器可读
+`ccpanes.task-risk.v1`，供后续 UI、启动策略和计划强度使用。
+`classify-workflow` 在此基础上增加长期工作流路由、闭环强度、必要检查和边界提示，
+输出 `ccpanes.workflow-profile.v1`。两者都只提供提示信号，实际写入边界仍由
+`hook-enforce`、`permission-enforce` 和项目 policy 决定。
+
+```powershell
+node dist/src/cli.js classify-task-risk --prompt "修改 src/foo.ts 并更新测试" --cwd <project-root>
+node dist/src/cli.js classify-workflow --prompt "扩展 hook-event-adapter 并更新测试" --cwd <project-root> --changed-path src/hook-event-adapter.ts --changed-path tests/hook-event-adapter.test.ts
+```
+
+### 4. 宿主适配 registry
+
+`host-adapter-registry` 输出机器可读 `ccpanes.host-adapter-registry.v1`，集中记录
+Codex、CC-Panes / Claude、Cursor、Gemini、Kimi、OpenCode 的接入状态、hook
+surface、审计 artifact、验证命令和边界。它只描述能力和证据要求，不替代
+`hook-enforce` / `permission-enforce` 的 hard gate。
+
+```powershell
+node dist/src/cli.js host-adapter-registry
+node dist/src/cli.js host-adapter-registry --host codex
+```
+
+### 5. 低层机械规则维护
 
 `policy-add`、`policy-disable`、`policy-clear`、`policy-list`、`policy-validate` 直接维护 `.ccpanes-task\policy.json`：
 
@@ -114,6 +148,10 @@ Codex hook event
 
 ```text
 session-start       注入当前任务上下文
+plan-intake         plan 阶段 workflow/policy dry-run 和 audit
+classify-task-risk  prompt 级 Light / Standard / Heavy 风险分级
+classify-workflow   SBA 风格任务路由、闭环强度和检查建议
+host-adapter-registry  机器可读宿主适配能力目录
 hook-enforce        PreToolUse 执行前拦截
 permission-enforce  PermissionRequest 拦截高风险授权请求
 post-enforce        PostToolUse 追加审计记录
@@ -185,11 +223,16 @@ node dist/src/cli.js verify-installed-hooks `
 bootstrap-project
 agents-install / agents-validate
 policy-capture
+plan-intake
 policy-capture-plan
 policy-add / policy-list / policy-validate / policy-disable / policy-clear
+classify-task-risk
+classify-workflow
+host-adapter-registry
 hook-enforce / permission-enforce / post-enforce
 session-start / stop-check
 verify-installed-hooks
+record-acceptance / verify-acceptance with layered truth summary
 production toolkit / release gate / runbook artifact generation
 ```
 

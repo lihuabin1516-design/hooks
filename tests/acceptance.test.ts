@@ -51,7 +51,7 @@ describe('createAcceptanceEvidence', () => {
       recordedAt: '2026-08-06T00:00:02.000Z'
     });
 
-    expect(evidence).toEqual({
+    expect(evidence).toMatchObject({
       schema: 'ccpanes.acceptance.v1',
       taskId: 'task-alpha',
       worktreeRoot: tempRoot,
@@ -61,6 +61,48 @@ describe('createAcceptanceEvidence', () => {
       checks: [{ name: 'unit tests', command: 'npm test', result: 'pass', evidence: '34 tests passed' }],
       recordedAt: '2026-08-06T00:00:02.000Z'
     });
+    expect(evidence.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'task-scope', state: 'pass', required: true }),
+      expect.objectContaining({ name: 'artifact-hashes', state: 'pass', required: true }),
+      expect.objectContaining({ name: 'repo-gates', state: 'pass', required: true }),
+      expect.objectContaining({ name: 'completion', state: 'pass', required: true })
+    ]));
+    expect(evidence.summary).toMatchObject({ passed: true, completionAllowed: true, failingLayerCount: 0 });
+  });
+
+  test('marks completion as not-run when repo gates are missing', async () => {
+    const evidence = await createAcceptanceEvidence({
+      task: task(tempRoot),
+      artifacts: [],
+      checks: [],
+      recordedAt: '2026-08-06T00:00:02.000Z'
+    });
+
+    expect(evidence.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'repo-gates', state: 'not-run', required: true }),
+      expect.objectContaining({ name: 'completion', state: 'not-run', required: true })
+    ]));
+    expect(evidence.summary).toMatchObject({ passed: false, completionAllowed: false, notRunLayerCount: 2 });
+  });
+
+  test('allows explicit reference repo and user config truth layers', async () => {
+    const evidence = await createAcceptanceEvidence({
+      task: task(tempRoot),
+      artifacts: [],
+      checks: [{ name: 'unit tests', command: 'npm test', result: 'pass', evidence: '34 tests passed' }],
+      truthLayers: [
+        { name: 'reference-repos', state: 'pass', required: true, evidence: 'comet clean; fastctx clean' },
+        { name: 'user-config', state: 'not-applicable', required: false, evidence: 'no user config touched' }
+      ],
+      recordedAt: '2026-08-06T00:00:02.000Z'
+    });
+
+    expect(evidence.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'reference-repos', state: 'pass', required: true }),
+      expect.objectContaining({ name: 'user-config', state: 'not-applicable', required: false }),
+      expect.objectContaining({ name: 'completion', state: 'pass' })
+    ]));
+    expect(evidence.summary.completionAllowed).toBe(true);
   });
 
   test('rejects invalid check results', async () => {
@@ -70,5 +112,25 @@ describe('createAcceptanceEvidence', () => {
       checks: [{ name: 'bad', command: 'bad', result: 'unknown', evidence: 'bad' }],
       recordedAt: '2026-08-06T00:00:02.000Z'
     })).rejects.toThrow('invalid acceptance check result: unknown');
+  });
+
+  test('rejects invalid truth layer states', async () => {
+    await expect(createAcceptanceEvidence({
+      task: task(tempRoot),
+      artifacts: [],
+      checks: [],
+      truthLayers: [{ name: 'user-config', state: 'unknown', evidence: 'bad' }],
+      recordedAt: '2026-08-06T00:00:02.000Z'
+    })).rejects.toThrow('invalid acceptance truth state: unknown');
+  });
+
+  test('rejects explicit overrides for derived truth layers', async () => {
+    await expect(createAcceptanceEvidence({
+      task: task(tempRoot),
+      artifacts: [],
+      checks: [],
+      truthLayers: [{ name: 'repo-gates', state: 'pass', evidence: 'manual override' }],
+      recordedAt: '2026-08-06T00:00:02.000Z'
+    })).rejects.toThrow('acceptance truth layer is derived from task/check/artifact evidence: repo-gates');
   });
 });

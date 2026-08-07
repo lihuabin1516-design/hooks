@@ -52,6 +52,11 @@ describe('verifyAcceptanceEvidence', () => {
     expect(result.passed).toBe(true);
     expect(result.artifactResults[0]).toMatchObject({ path: artifact, status: 'match' });
     expect(result.checkResults[0]).toMatchObject({ name: 'unit tests', status: 'pass' });
+    expect(result.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'artifact-hashes', state: 'pass' }),
+      expect.objectContaining({ name: 'completion', state: 'pass' })
+    ]));
+    expect(result.summary).toMatchObject({ passed: true, completionAllowed: true });
     expect(result.failures).toEqual([]);
   });
 
@@ -70,6 +75,10 @@ describe('verifyAcceptanceEvidence', () => {
 
     expect(result.passed).toBe(false);
     expect(result.artifactResults[0]?.status).toBe('mismatch');
+    expect(result.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'artifact-hashes', state: 'fail' }),
+      expect.objectContaining({ name: 'completion', state: 'fail' })
+    ]));
     expect(result.failures[0]).toContain('artifact hash mismatch');
   });
 
@@ -103,6 +112,25 @@ describe('verifyAcceptanceEvidence', () => {
 
     expect(result.passed).toBe(false);
     expect(result.checkResults[0]).toMatchObject({ name: 'typecheck', status: 'blocked' });
+    expect(result.summary.completionAllowed).toBe(false);
     expect(result.failures[0]).toContain('check not pass: typecheck');
+  });
+
+  test('fails completion when stored evidence has no repo gates', async () => {
+    const evidence = await createAcceptanceEvidence({
+      task: task(tempRoot),
+      artifacts: [],
+      checks: [],
+      recordedAt: '2026-08-06T00:00:02.000Z'
+    });
+
+    const result = await verifyAcceptanceEvidence(evidence);
+
+    expect(result.passed).toBe(false);
+    expect(result.truthLayers).toEqual(expect.arrayContaining([
+      expect.objectContaining({ name: 'repo-gates', state: 'not-run' }),
+      expect.objectContaining({ name: 'completion', state: 'not-run' })
+    ]));
+    expect(result.failures).toContain('truth layer not pass: repo-gates (not-run)');
   });
 });

@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { createAcceptanceEvidence, type AcceptanceEvidence } from './acceptance.js';
+import { createAcceptanceEvidence, type AcceptanceEvidence, type AcceptanceTruthLayerInput, type AcceptanceTruthLayerName } from './acceptance.js';
 import { installAgentsEntry, validateAgentsEntry } from './agents-entry.js';
 import { verifyAcceptanceEvidence } from './acceptance-verify.js';
 import { validateCurrentTask, currentTaskPath, resolveCurrentTaskFromCwd, writeCurrentTaskAtomic } from './current-task.js';
@@ -24,9 +24,11 @@ import { createHookWriteRestore, writeHookWriteRestoreReportAtomic } from './hoo
 import { createHookProductionReadiness, writeHookProductionReadinessAtomic } from './hook-production-readiness.js';
 import { createHookGoLiveApprovalPackage } from './hook-go-live-approval.js';
 import { createHookFinalRunbook } from './hook-final-runbook.js';
+import { createHostAdapterRegistry, getHostAdapter } from './host-adapter-registry.js';
 import { verifyInstalledHooks } from './installed-hooks.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
+import { createPlanIntake, writePlanIntakeAuditAtomic } from './plan-intake.js';
 import { capturePlanPolicyInstructions, readPlanPolicyCaptureText } from './plan-policy-capture.js';
 import { createProductionToolkit } from './production-toolkit.js';
 import { bootstrapProject } from './project-bootstrap.js';
@@ -43,8 +45,10 @@ import {
   type ProjectPolicyRuleInput
 } from './project-policy.js';
 import { probeResume } from './resume-probe.js';
-import { createSessionStartHookOutput, createStopCheckHookOutput } from './session-lifecycle.js';
+import { analyzeStopCheckEvent, createSessionStartHookOutput, createStopCheckHookOutput } from './session-lifecycle.js';
+import { classifyTaskRisk } from './task-risk.js';
 import type { CurrentTask, GitState, HookCall, TaskPhase } from './types.js';
+import { classifyWorkflowProfile } from './workflow-profile.js';
 import { scanWorkspaceTasks } from './workspace-scan.js';
 
 function valueAfter(args: string[], flag: string): string | null {
@@ -70,6 +74,14 @@ function parseCheck(value: string): { name: string; command: string; result: str
   const [name, result, ...evidenceParts] = value.split('=');
   if (!name || !result || evidenceParts.length === 0) throw new Error(`invalid check: ${value}`);
   return { name, command: name, result, evidence: evidenceParts.join('=') };
+}
+
+function parseTruthLayer(value: string): AcceptanceTruthLayerInput {
+  const [name, state, ...evidenceParts] = value.split('=');
+  if (!name || !state || evidenceParts.length === 0) throw new Error(`invalid truth layer: ${value}`);
+  const required = !name.endsWith('?');
+  const normalizedName = (required ? name : name.slice(0, -1)) as AcceptanceTruthLayerName;
+  return { name: normalizedName, state, required, evidence: evidenceParts.join('=') };
 }
 
 function makeTask(root: string, taskId: string, phase: TaskPhase): CurrentTask {
@@ -230,6 +242,34 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     return `${JSON.stringify(result, null, 2)}\n`;
   }
 
+  if (command === 'classify-task-risk') {
+    const prompt = valueAfter(args, '--prompt');
+    const cwd = valueAfter(args, '--cwd');
+    if (prompt === null) throw new Error('missing --prompt');
+    return `${JSON.stringify(classifyTaskRisk({ prompt, cwd }), null, 2)}\n`;
+  }
+
+  if (command === 'classify-workflow') {
+    const prompt = valueAfter(args, '--prompt');
+    const cwd = valueAfter(args, '--cwd');
+    if (prompt === null) throw new Error('missing --prompt');
+    return `${JSON.stringify(classifyWorkflowProfile({
+      prompt,
+      cwd,
+      changedPaths: valuesAfter(args, '--changed-path')
+    }), null, 2)}\n`;
+  }
+
+  if (command === 'host-adapter-registry') {
+    const host = valueAfter(args, '--host');
+    if (host) {
+      const adapter = getHostAdapter(host);
+      if (!adapter) throw new Error(`unknown host adapter: ${host}`);
+      return `${JSON.stringify({ schema: 'ccpanes.host-adapter.v1', adapter }, null, 2)}\n`;
+    }
+    return `${JSON.stringify(createHostAdapterRegistry(), null, 2)}\n`;
+  }
+
   if (command === 'write-current') {
     const root = valueAfter(args, '--root');
     const taskId = valueAfter(args, '--task-id');
@@ -318,6 +358,25 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     if (!utterance && !inputPath) throw new Error('missing --utterance or --input');
     const text = inputPath ? await readPlanPolicyCaptureText(inputPath) : utterance;
     return `${JSON.stringify(await capturePlanPolicyInstructions({ projectRoot: root, text: text ?? '' }), null, 2)}\n`;
+  }
+
+  if (command === 'plan-intake') {
+    const root = valueAfter(args, '--root');
+    const utterance = valueAfter(args, '--utterance');
+    const prompt = valueAfter(args, '--prompt');
+    const inputPath = valueAfter(args, '--input');
+    const auditOut = valueAfter(args, '--audit-out');
+    if (!root) throw new Error('missing --root');
+    if (!utterance && !inputPath) throw new Error('missing --utterance or --input');
+    const text = inputPath ? await readPlanPolicyCaptureText(inputPath) : (utterance ?? '');
+    const result = createPlanIntake({
+      projectRoot: root,
+      text,
+      prompt,
+      changedPaths: valuesAfter(args, '--changed-path')
+    });
+    if (auditOut) await writePlanIntakeAuditAtomic(auditOut, result);
+    return `${JSON.stringify(result, null, 2)}\n`;
   }
 
   if (command === 'policy-add') {
@@ -541,7 +600,7 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       resolvedTaskPath = taskPath;
     }
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    return `${JSON.stringify(createStopCheckHookOutput({ task, taskPath: resolvedTaskPath, auditRoot }), null, 2)}\n`;
+    return `${JSON.stringify(createStopCheckHookOutput({ task, taskPath: resolvedTaskPath, auditRoot, stopAnalysis: analyzeStopCheckEvent(event) }), null, 2)}\n`;
   }
 
   if (command === 'hook-shadow') {
@@ -750,7 +809,8 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     const artifacts = valuesAfter(args, '--artifact');
     const checks = valuesAfter(args, '--check').map((check) => parseCheck(check));
-    const evidence = await createAcceptanceEvidence({ task, artifacts, checks });
+    const truthLayers = valuesAfter(args, '--truth').map((truth) => parseTruthLayer(truth));
+    const evidence = await createAcceptanceEvidence({ task, artifacts, checks, truthLayers });
     return `${JSON.stringify(evidence, null, 2)}\n`;
   }
 

@@ -8,11 +8,14 @@ const root = resolve(new URL('..', import.meta.url).pathname.replace(/^\/([A-Za-
 const cli = join(root, 'dist', 'src', 'cli.js');
 const fixture = join(root, '.tmp-smoke');
 const project = join(fixture, 'project-alpha');
+const planPreviewProject = join(fixture, 'project-plan-preview');
 const currentTask = join(project, '.ccpanes-task', 'current-task.json');
 const artifact = join(fixture, 'artifact.md');
+const planIntakeAudit = join(fixture, 'plan-intake-audit.json');
 const hookEvent = join(fixture, 'hook-event.json');
 const adaptedHookBatch = join(fixture, 'adapted-hook-batch.json');
 const hookBatch = join(fixture, 'hook-batch.json');
+const stopTranscript = join(fixture, 'stop-transcript.jsonl');
 const shadowAudit = join(fixture, 'shadow-audit.json');
 const installPlan = join(fixture, 'hook-install-plan.json');
 const hookPackage = join(fixture, 'hook-package');
@@ -73,6 +76,7 @@ try {
   assert(existsSync(cli), `missing built CLI: ${cli}; run npm run build first`);
   cleanFixture();
   mkdirSync(project, { recursive: true });
+  mkdirSync(planPreviewProject, { recursive: true });
 
   const bootstrapProject = parseJson(run(['bootstrap-project', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
   assert(bootstrapProject.schema === 'ccpanes.project-bootstrap-result.v1', 'bootstrap-project schema mismatch');
@@ -133,6 +137,25 @@ try {
   assert(planPolicyCapture.schema === 'ccpanes.plan-policy-capture-result.v1', 'policy-capture-plan schema mismatch');
   assert(planPolicyCapture.capturedCount === 1, 'policy-capture-plan expected one captured rule');
   assert(readFileSync(join(project, '.ccpanes-task', 'policy.md'), 'utf8').includes('禁止运行 ship-artifact'), 'policy-capture-plan ledger missing instruction');
+  const planIntake = parseJson(run([
+    'plan-intake',
+    '--root',
+    planPreviewProject,
+    '--prompt',
+    '进入 plan 阶段前先收敛规则',
+    '--utterance',
+    '计划阶段规则：禁止运行 dry-run-artifact，除非测试显式解除。',
+    '--changed-path',
+    'src/plan-intake.ts',
+    '--audit-out',
+    planIntakeAudit
+  ]));
+  assert(planIntake.schema === 'ccpanes.plan-intake.v1', 'plan-intake schema mismatch');
+  assert(planIntake.mode === 'dry-run', 'plan-intake expected dry-run mode');
+  assert(planIntake.policyPreview.wouldCaptureCount === 1, 'plan-intake expected one would-capture action');
+  assert(planIntake.workflow.route.id === 'project-policy', 'plan-intake expected project-policy route');
+  assert(existsSync(planIntakeAudit), 'plan-intake audit missing');
+  assert(!existsSync(join(planPreviewProject, '.ccpanes-task', 'policy.json')), 'plan-intake should not write policy.json');
   const policyList = parseJson(run(['policy-list', '--root', project]));
   assert(policyList.ruleCount === 3, 'policy-list expected three rules');
   const policyValidate = parseJson(run(['policy-validate', '--root', project]));
@@ -146,6 +169,32 @@ try {
   assert(probe.schema === 'ccpanes.resume-probe.v1', 'probe schema mismatch');
   assert(probe.action === 'auto_resume', `probe expected auto_resume, got ${probe.action}`);
   assert(probe.scanErrors.length === 0, 'probe expected zero scanErrors');
+
+  const taskRisk = parseJson(run(['classify-task-risk', '--prompt', '修改 src/foo.ts 并更新 tests/foo.test.ts', '--cwd', project]));
+  assert(taskRisk.schema === 'ccpanes.task-risk.v1', 'task risk schema mismatch');
+  assert(taskRisk.tier === 'standard', 'task risk expected standard tier');
+  assert(taskRisk.dimensions.touchesCode === true, 'task risk expected touchesCode=true');
+  const workflowProfile = parseJson(run([
+    'classify-workflow',
+    '--prompt',
+    '扩展 hook-event-adapter 并更新测试',
+    '--cwd',
+    project,
+    '--changed-path',
+    'src/hook-event-adapter.ts',
+    '--changed-path',
+    'tests/hook-event-adapter.test.ts'
+  ]));
+  assert(workflowProfile.schema === 'ccpanes.workflow-profile.v1', 'workflow profile schema mismatch');
+  assert(workflowProfile.route.id === 'hook-runtime', 'workflow profile expected hook-runtime route');
+  assert(workflowProfile.closure.bucket === 'full', 'workflow profile expected full closure bucket');
+  assert(workflowProfile.checks.some((check) => check.command === 'npm run smoke'), 'workflow profile missing smoke check');
+  const hostRegistry = parseJson(run(['host-adapter-registry']));
+  assert(hostRegistry.schema === 'ccpanes.host-adapter-registry.v1', 'host adapter registry schema mismatch');
+  assert(hostRegistry.defaultHost === 'codex', 'host adapter registry expected codex default');
+  const codexHost = parseJson(run(['host-adapter-registry', '--host', 'codex']));
+  assert(codexHost.schema === 'ccpanes.host-adapter.v1', 'host adapter filtered schema mismatch');
+  assert(codexHost.adapter.surfaces.some((surface) => surface.kind === 'hard-gate' && surface.name === 'PreToolUse'), 'codex host missing PreToolUse hard gate');
 
   writeFileSync(hookBatch, JSON.stringify({
     schema: 'ccpanes.hook-dry-run-batch.v1',
@@ -323,6 +372,20 @@ try {
   assert(stopCheckOutput.continue === true, 'stop-check expected continue=true');
   assert(!Object.hasOwn(stopCheckOutput, 'decision'), 'stop-check should not emit continuation decision');
   assert(stopCheckOutput.systemMessage.includes('verify-acceptance'), 'stop-check missing acceptance reminder');
+
+  writeFileSync(stopTranscript, [
+    JSON.stringify({ type: 'user', message: { content: [{ type: 'text', text: '修复 src/foo.ts' }] } }),
+    JSON.stringify({ type: 'assistant', message: { content: [{ type: 'tool_use', name: 'Edit', input: { file_path: join(project, 'src', 'foo.ts') } }] } }),
+    JSON.stringify({ type: 'assistant', message: { content: [{ type: 'text', text: '已修复，测试通过。' }] } })
+  ].join('\n'), 'utf8');
+  const targetedStopCheckOutput = parseJson(run(['stop-check', '--resolve-task-from-cwd', '--audit-root', hookEnforceAuditRoot], JSON.stringify({
+    hook_event_name: 'Stop',
+    cwd: project,
+    turn_id: 'turn-smoke-stop-2',
+    stop_hook_active: false,
+    transcript_path: stopTranscript
+  })));
+  assert(targetedStopCheckOutput.systemMessage.includes('targeted verification reminder'), 'stop-check missing targeted reminder');
 
   writeFileSync(installedHooksFixture, JSON.stringify(buildExpectedHooksConfig({ prototypeRoot: root, auditRoot: hookEnforceAuditRoot }), null, 2), 'utf8');
   const installedHooksReport = parseJson(run([
@@ -666,11 +729,13 @@ try {
   const verifyMatch = parseJson(run(['verify-acceptance', '--input', acceptance]));
   assert(verifyMatch.schema === 'ccpanes.acceptance.verify.v1', 'verify schema mismatch');
   assert(verifyMatch.passed === true, 'verify expected passed=true before mutation');
+  assert(verifyMatch.summary.completionAllowed === true, 'verify expected completionAllowed=true before mutation');
 
   writeFileSync(artifact, 'smoke artifact changed', 'utf8');
   const verifyMismatch = parseJson(run(['verify-acceptance', '--input', acceptance]));
   assert(verifyMismatch.passed === false, 'verify expected passed=false after mutation');
   assert(verifyMismatch.artifactResults[0].status === 'mismatch', 'verify expected artifact mismatch after mutation');
+  assert(verifyMismatch.truthLayers.some((layer) => layer.name === 'artifact-hashes' && layer.state === 'fail'), 'verify expected artifact-hashes truth failure');
 
   cleanFixture();
   console.log('SMOKE_PASS');

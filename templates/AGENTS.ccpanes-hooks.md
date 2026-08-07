@@ -38,6 +38,28 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js bootstrap-pr
 - `verify`: minimal fixes and verification are active.
 - `archive`: only documentation, handoff, and final artifacts are expected.
 
+## Workflow routing and progressive rigor
+
+For non-trivial or long-lived tasks, use the CC-Panes workflow profile as an
+advisory router before implementation:
+
+```powershell
+node <ccpanes-hooks-root>\dist\src\cli.js classify-workflow --prompt "<user request>" --cwd <project-root> --changed-path <path>
+```
+
+The result `ccpanes.workflow-profile.v1` gives:
+
+- `route`: read-only review, project bootstrap, project policy, hook runtime,
+  production gate, implementation, documentation, or other.
+- `rigor`: Light / Standard / Heavy, inherited from task risk.
+- `closure`: none / light / full / production.
+- `checks`: recommended local, audit, and production checks.
+
+This routing signal never replaces the hard gates below: `current-task.json`
+remains the task scope authority, `policy.json` remains the executable project
+policy authority, and `hook-enforce` / `permission-enforce` remain the write
+boundary.
+
 ## Conversation-level hook policy ledger
 
 When the user says a clear project rule during planning, such as "禁止运行 X",
@@ -57,8 +79,13 @@ When the user says a clear project rule during planning, such as "禁止运行 X
 Preferred plan-stage CLI form when the CC-Panes hooks CLI is available:
 
 ```powershell
+node <ccpanes-hooks-root>\dist\src\cli.js plan-intake --root <project-root> --prompt "<current user request>" --utterance "<current plan/user rule text>" --audit-out <audit-json>
 node <ccpanes-hooks-root>\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
 ```
+
+Run `plan-intake` first when the session is still in discussion or plan mode; it
+is dry-run and only previews `workflow-profile` plus policy candidates. Run
+`policy-capture-plan` only when the rule should become project-local policy.
 
 Use the lower-level forms when the matcher must be explicit:
 
@@ -74,6 +101,7 @@ node <ccpanes-hooks-root>\dist\src\cli.js policy-validate --root <project-root>
 Known local default for this workstation:
 
 ```powershell
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js plan-intake --root <project-root> --prompt "<current user request>" --utterance "<current plan/user rule text>" --audit-out <audit-json>
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-validate --root <project-root>
 ```

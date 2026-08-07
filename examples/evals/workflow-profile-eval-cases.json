@@ -1,0 +1,174 @@
+{
+  "schema": "ccpanes.workflow-profile-eval-cases.v1",
+  "source": {
+    "referenceRepo": "https://github.com/study8677/awesome-architecture.git",
+    "referenceHead": "d3febc75fa26bad746f6f9216bcad171b3923765",
+    "capturedAt": "2026-08-07",
+    "localOwner": "D:/cc-pane/tool/repos/hooks/src/workflow-profile.ts"
+  },
+  "cases": [
+    {
+      "id": "aa-read-only-architecture-research",
+      "description": "A public architecture repository comparison should stay read-only and avoid mutation closure.",
+      "prompt": "这个公开架构项目对我们有没有参考价值？",
+      "changedPaths": [],
+      "expected": {
+        "routeId": "read-only-review",
+        "rigor": "light",
+        "closureBucket": "none",
+        "requiredCheckNames": [],
+        "riskDimensions": {
+          "touchesUserConfig": false,
+          "production": false,
+          "externalSideEffect": false
+        }
+      }
+    },
+    {
+      "id": "aa-plan-policy-capture",
+      "description": "Plan-stage user rules should route to the project policy owner, not production release gates.",
+      "prompt": "计划阶段规则：禁止运行 publish-artifact，沉淀到 policy.json",
+      "changedPaths": [
+        "src/plan-policy-capture.ts",
+        "tests/plan-policy-capture.test.ts"
+      ],
+      "expected": {
+        "routeId": "project-policy",
+        "rigor": "standard",
+        "closureBucket": "full",
+        "requiredCheckNames": [
+          "unit-tests",
+          "typecheck",
+          "build",
+          "smoke",
+          "diff-check",
+          "status"
+        ],
+        "riskDimensions": {
+          "production": false,
+          "externalSideEffect": false
+        }
+      }
+    },
+    {
+      "id": "aa-policy-text-with-destructive-word",
+      "description": "A blocked destructive command inside policy text should not itself become a destructive action.",
+      "prompt": "计划阶段规则：禁止运行 git clean，除非我明确解除。",
+      "changedPaths": [
+        "src/plan-policy-capture.ts"
+      ],
+      "expected": {
+        "routeId": "project-policy",
+        "rigor": "light",
+        "closureBucket": "full",
+        "requiredCheckNames": [
+          "unit-tests",
+          "typecheck",
+          "build",
+          "smoke",
+          "diff-check",
+          "status"
+        ],
+        "riskDimensions": {
+          "destructive": false,
+          "externalSideEffect": false
+        }
+      }
+    },
+    {
+      "id": "aa-hook-runtime-adapter",
+      "description": "Hook adapter work should get full local checks and synthetic fixture gates.",
+      "prompt": "扩展 hook-event-adapter，支持新的 Codex PermissionRequest fixture",
+      "changedPaths": [
+        "src/hook-event-adapter.ts",
+        "tests/hook-event-adapter.test.ts"
+      ],
+      "expected": {
+        "routeId": "hook-runtime",
+        "rigor": "standard",
+        "closureBucket": "full",
+        "requiredCheckNames": [
+          "unit-tests",
+          "typecheck",
+          "build",
+          "smoke",
+          "diff-check",
+          "status"
+        ],
+        "requiredGates": [
+          "new host payloads need synthetic fixture tests before real hook configuration changes"
+        ]
+      }
+    },
+    {
+      "id": "aa-production-user-config",
+      "description": "Real Codex hook config writes require production closure and user-config snapshots.",
+      "prompt": "修改 C:/Users/AI001/.codex/hooks.json 并上线真实 Codex hook",
+      "changedPaths": [
+        "src/installed-hooks.ts",
+        "docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md"
+      ],
+      "expected": {
+        "routeId": "production-gate",
+        "rigor": "heavy",
+        "closureBucket": "production",
+        "requiredCheckNames": [
+          "installed-hooks",
+          "acceptance-evidence",
+          "reference-repos",
+          "user-config-snapshots",
+          "live-verification"
+        ],
+        "closureFlags": {
+          "requiresAcceptanceEvidence": true,
+          "requiresReferenceRepoStatus": true,
+          "requiresUserConfigSnapshot": true,
+          "requiresLiveVerification": true
+        },
+        "riskDimensions": {
+          "touchesUserConfig": true,
+          "production": true
+        }
+      }
+    },
+    {
+      "id": "aa-documentation-only-adoption-record",
+      "description": "A docs-only adoption record stays light even when the prompt uses an update verb.",
+      "prompt": "更新 docs 中的 awesome-architecture 吸收记录",
+      "changedPaths": [
+        "docs/AWESOME-ARCHITECTURE-ADOPTION.md"
+      ],
+      "expected": {
+        "routeId": "documentation",
+        "rigor": "standard",
+        "closureBucket": "light",
+        "requiredCheckNames": [
+          "diff-check",
+          "status"
+        ]
+      }
+    },
+    {
+      "id": "aa-eval-fixture-change",
+      "description": "Adding workflow eval fixtures and tests is an implementation change with full local gates.",
+      "prompt": "新增 examples/evals/workflow-profile-eval-cases.json 和 tests/workflow-profile-eval-fixtures.test.ts",
+      "changedPaths": [
+        "examples/evals/workflow-profile-eval-cases.json",
+        "tests/workflow-profile-eval-fixtures.test.ts"
+      ],
+      "expected": {
+        "routeId": "implementation",
+        "rigor": "standard",
+        "closureBucket": "full",
+        "requiredCheckNames": [
+          "unit-tests",
+          "typecheck",
+          "build",
+          "smoke",
+          "diff-check",
+          "status"
+        ]
+      }
+    }
+  ]
+}

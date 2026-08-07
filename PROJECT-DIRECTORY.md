@@ -37,8 +37,12 @@ project-policy.ts            policy.json 机械规则模型、校验、匹配
 project-policy-ledger.ts     policy.md 人类可读规则台账
 project-policy-capture.ts    policy.md + policy.json 双写入口
 plan-policy-capture.ts       plan 文本规则识别并编排 policy-capture
+plan-intake.ts               plan 阶段 workflow/profile/policy 预览和审计
 hook-event-adapter.ts        Codex/Claude/泛化 tool event 到 HookCall 的适配
 hook-shell-analyzer.ts       shell 命令读写目标和高风险分类
+task-risk.ts                 prompt 级 Light/Standard/Heavy 风险分类
+workflow-profile.ts          SBA 风格任务路由、闭环强度和必要检查建议
+host-adapter-registry.ts     宿主适配能力、surface、验证和边界的机器可读 registry
 hook-dry-run.ts              单次 HookCall allow/block 决策
 hook-batch.ts                批量 dry-run 输入输出模型
 hook-runner.ts               Hook 事件 + project policy 的 dry-run 执行器
@@ -68,11 +72,14 @@ project-bootstrap.test.ts         bootstrap-project 行为
 project-policy.test.ts            policy.json 规则校验和匹配
 project-policy-capture.test.ts    policy-capture 双写行为
 plan-policy-capture.test.ts       plan 阶段规则自动识别和沉淀
+plan-intake.test.ts               plan 阶段 dry-run 预览和审计
 hook-event-adapter.test.ts        Hook 事件适配
 hook-dry-run.test.ts              allow/block 决策
 hook-runner.test.ts               Hook runner 与项目策略集成
 installed-hooks.test.ts           已安装 hooks 自检
 smoke-script.test.ts              smoke 脚本存在性和基本行为
+workflow-profile.test.ts          SBA 风格工作流路由和闭环强度
+host-adapter-registry.test.ts     宿主适配 registry 契约
 ```
 
 新增源码时优先新增对应测试文件。已有能力扩展时优先扩展对应测试文件。
@@ -81,6 +88,8 @@ smoke-script.test.ts              smoke 脚本存在性和基本行为
 
 ```text
 docs/plans/       分阶段实施计划；每个 Phase 一个文件
+docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md  宿主 hook 能力和适配边界
+docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md   Codex plugin 分发后续设计记录
 README.md         当前远端仓库默认中文说明
 HANDOFF.md        接手和运行交接
 PROJECT-DIRECTORY.md  目录职责和长期维护约定
