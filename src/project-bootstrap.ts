@@ -1,8 +1,9 @@
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import { mkdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { installAgentsEntry, validateAgentsEntry, type AgentsInstallResult, type AgentsValidateResult } from './agents-entry.js';
 import { currentTaskPath, validateCurrentTask, writeCurrentTaskAtomic } from './current-task.js';
 import { emptyProjectPolicy, projectPolicyPath, readProjectPolicy, writeProjectPolicyAtomic, type ProjectPolicy } from './project-policy.js';
+import { ensureProjectPolicyLedger, projectPolicyLedgerPath } from './project-policy-ledger.js';
 import type { CurrentTask, TaskPhase } from './types.js';
 
 export interface ProjectBootstrapInput {
@@ -59,52 +60,9 @@ function makeTask(input: ProjectBootstrapInput): CurrentTask {
   });
 }
 
-function policyLedgerPath(projectRoot: string): string {
-  return path.join(projectRoot, '.ccpanes-task', 'policy.md');
-}
-
 function bootstrapReportPath(projectRoot: string): string {
   return path.join(projectRoot, '.ccpanes-task', 'bootstrap-report.json');
 }
-
-function defaultPolicyLedger(): string {
-  return [
-    '# CC-Panes Project Policy Ledger',
-    '',
-    'This file is project-local. It records conversation-level constraints that Codex should apply alongside mechanical hooks.',
-    '',
-    '## Effective rules',
-    '',
-    '- No project-specific rules recorded yet.',
-    '',
-    '## Rule log',
-    '',
-    '| Time | User instruction | Effective action | Notes |',
-    '|---|---|---|---|',
-    '|  |  |  |  |',
-    '',
-    '## Mechanical counterpart',
-    '',
-    '- Executable rules live in `.ccpanes-task/policy.json`.',
-    '- Use `policy-add`, `policy-disable`, `policy-clear`, `policy-list`, and `policy-validate` from the CC-Panes hooks CLI.',
-    ''
-  ].join('\n');
-}
-
-async function writeTextIfMissing(filePath: string, text: string): Promise<boolean> {
-  try {
-    await readFile(filePath, 'utf8');
-    return false;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
-  await mkdir(path.dirname(filePath), { recursive: true });
-  const tempPath = path.join(path.dirname(filePath), `${path.basename(filePath)}.${process.pid}.${Date.now()}.tmp`);
-  await writeFile(tempPath, text, 'utf8');
-  await rename(tempPath, filePath);
-  return true;
-}
-
 async function ensurePolicyJson(projectRoot: string): Promise<{ changed: boolean; policy: ProjectPolicy }> {
   const existing = await readProjectPolicy(projectRoot);
   if (existing) return { changed: false, policy: existing };
@@ -128,8 +86,8 @@ export async function bootstrapProject(input: ProjectBootstrapInput): Promise<Pr
   await writeCurrentTaskAtomic(projectRoot, task);
   const agents = await installAgentsEntry(projectRoot);
   const agentsValidation = await validateAgentsEntry(projectRoot);
-  const ledgerPath = policyLedgerPath(projectRoot);
-  const policyLedgerChanged = await writeTextIfMissing(ledgerPath, defaultPolicyLedger());
+  const ledgerPath = projectPolicyLedgerPath(projectRoot);
+  const policyLedgerChanged = await ensureProjectPolicyLedger(projectRoot);
   const policyJson = await ensurePolicyJson(projectRoot);
 
   const withoutReportPath: Omit<ProjectBootstrapResult, 'reportPath'> = {

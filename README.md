@@ -36,7 +36,9 @@ should be recorded in:
 <project>/.ccpanes-task/policy.md
 ```
 
-When a rule needs hook-level enforcement, mirror the effective rule into:
+Use `policy-capture` as the normal conversation-rule entrypoint. It appends the human-readable rule to `policy.md` and writes the executable counterpart to `policy.json` in one command. When you need lower-level JSON-only maintenance, use `policy-add` / `policy-disable` / `policy-clear` directly.
+
+When a rule needs hook-level enforcement, the executable rule lives in:
 
 ```text
 <project>/.ccpanes-task/policy.json
@@ -62,7 +64,7 @@ npm run smoke
 1. `bootstrap-project`
 2. `write-current`
 3. `agents-install` / `agents-validate`
-4. `policy-add` / `policy-list` / `policy-validate` / `policy-disable` / `policy-clear`
+4. `policy-capture` plus `policy-add` / `policy-list` / `policy-validate` / `policy-disable` / `policy-clear`
 5. `probe --workspace-root`
 6. `dry-run-hook --input`
 7. `adapt-hook-event --task --event`
@@ -104,7 +106,8 @@ node dist/src/cli.js write-current --root <task-dir> --task-id <id> --phase buil
 node dist/src/cli.js bootstrap-project --root <project-root> --task-id <task-id> --phase shape
 node dist/src/cli.js agents-install --root <project-root>
 node dist/src/cli.js agents-validate --root <project-root>
-node dist/src/cli.js policy-add --root <project-root> --id block-publish --effect block --reason user_blocked_publish --tool shell --command-contains publish-artifact
+node dist/src/cli.js policy-capture --root <project-root> --id block-publish --instruction "禁止运行 publish-artifact，除非我明确解除。" --effect block --reason user_blocked_publish --tool shell --command-contains publish-artifact
+node dist/src/cli.js policy-add --root <project-root> --id block-publish-json-only --effect block --reason user_blocked_publish --tool shell --command-contains publish-artifact
 node dist/src/cli.js policy-add --root <project-root> --id allow-docs-shape --effect allow --reason user_opened_docs --tool apply_patch --path-contains docs/ --phase shape
 node dist/src/cli.js policy-list --root <project-root>
 node dist/src/cli.js policy-validate --root <project-root>
@@ -177,7 +180,7 @@ See `examples/` for synthetic input files and schema examples:
 - Phase 25 project policy reads `<project>/.ccpanes-task/policy.json` when present. A malformed file fails closed with a `project_policy_invalid` deny reason. Rules support `allow` / `block`, `enabled`, `tools` / `tool`, `pathContains`, `commandContains`, `phases` / `phase`, and `reasons` / `reason`. Later matching rules win among project rules. Project `allow` rules can open phase or project-policy blocks inside the active worktree, but they do not override hard boundaries such as user config paths, reference repositories, destructive Git commands, global installs, or writes without target paths.
 - Phase 27 adds project policy management commands. `policy-add` creates or replaces a rule with `--replace`; `policy-disable` turns one rule off while preserving it; `policy-clear` disables all rules in the executable JSON file; `policy-list` and `policy-validate` are read-oriented inspection commands. These commands write only `<project>/.ccpanes-task/policy.json`.
 - Phase 28 adds `agents-install` / `agents-validate`. `agents-install` creates or merges a managed CC-Panes hook block in `<project>/AGENTS.md` using `<!-- ccpanes-hooks:begin -->` / `<!-- ccpanes-hooks:end -->` markers, preserving other project instructions. Re-running it replaces only the managed block and is idempotent. `BOOTSTRAP-PROJECT.ps1` now runs `write-current`, `agents-install`, and `agents-validate`.
-- Phase 29 adds `bootstrap-project`, the recommended one-shot project onboarding entrypoint. It writes `<project>/.ccpanes-task/current-task.json`, injects/validates `AGENTS.md`, initializes `.ccpanes-task/policy.md`, initializes empty `.ccpanes-task/policy.json` when missing, and records `.ccpanes-task/bootstrap-report.json`. `BOOTSTRAP-PROJECT.ps1` now delegates to this command.
+- Phase 29 adds `bootstrap-project`, the recommended one-shot project onboarding entrypoint. It writes `<project>/.ccpanes-task/current-task.json`, injects/validates `AGENTS.md`, initializes `.ccpanes-task/policy.md`, initializes empty `.ccpanes-task/policy.json` when missing, and records `.ccpanes-task/bootstrap-report.json`. `BOOTSTRAP-PROJECT.ps1` now delegates to this command.\n- Phase 30 adds `policy-capture`, the recommended conversation-rule capture entrypoint. It writes one ledger row to `<project>/.ccpanes-task/policy.md` and one executable allow/block rule to `<project>/.ccpanes-task/policy.json`, preserving existing ledger content and supporting `--replace` for rule updates.
 - `post-enforce` is the Phase 21 Codex `PostToolUse` audit entrypoint. It appends compact JSONL records to `<audit-root>/<base64url(taskId)>/post-tool-use-audit.jsonl` and emits no stdout, so it does not alter Codex's normal tool result handling.
 - `session-start` is the Phase 22 Codex `SessionStart` entrypoint. It emits compact `hookSpecificOutput.additionalContext` for the resolved current task and audit paths.
 - `stop-check` is the Phase 22 Codex `Stop` entrypoint. It emits a JSON `systemMessage` reminder and `continue: true`; it does not emit `decision: "block"` or create continuation prompts.

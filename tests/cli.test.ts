@@ -173,6 +173,44 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).resolves.toBeTruthy();
   });
 
+  test('captures project policy instruction through CLI', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+
+    const output = await runCli([
+      'policy-capture',
+      '--root',
+      projectRoot,
+      '--id',
+      'block-publish',
+      '--instruction',
+      '禁止运行 publish-artifact，除非我明确解除。',
+      '--effect',
+      'block',
+      '--reason',
+      'user_blocked_publish',
+      '--tool',
+      'shell',
+      '--command-contains',
+      'publish-artifact'
+    ]);
+    const parsed = JSON.parse(output);
+    const ledger = await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.project-policy-capture-result.v1',
+      changed: true,
+      ruleId: 'block-publish',
+      policyRuleCount: 1
+    });
+    expect(ledger).toContain('禁止运行 publish-artifact，除非我明确解除。');
+    expect(policy.rules[0]).toMatchObject({
+      id: 'block-publish',
+      effect: 'block',
+      reason: 'user_blocked_publish',
+      match: { tools: ['shell'], commandContains: ['publish-artifact'] }
+    });
+  });
   test('policy-disable and policy-clear preserve rules but disable enforcement', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     await runCli([

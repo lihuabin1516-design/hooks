@@ -29,6 +29,7 @@ import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
 import { createProductionToolkit } from './production-toolkit.js';
 import { bootstrapProject } from './project-bootstrap.js';
+import { captureProjectPolicyInstruction } from './project-policy-capture.js';
 import {
   addProjectPolicyRule,
   clearProjectPolicyRules,
@@ -278,6 +279,34 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const exists = fs.existsSync(projectPolicyPath(root));
     const policy = await readProjectPolicyOrEmpty(root);
     return projectPolicyCliResult(command, root, false, policy, { exists, ruleCount: policy.rules.length });
+  }
+
+  if (command === 'policy-capture') {
+    const root = valueAfter(args, '--root');
+    const id = valueAfter(args, '--id');
+    const instruction = valueAfter(args, '--instruction');
+    const reason = valueAfter(args, '--reason');
+    const notes = valueAfter(args, '--notes');
+    if (!root) throw new Error('missing --root');
+    if (!id) throw new Error('missing --id');
+    if (!instruction) throw new Error('missing --instruction');
+    if (!reason) throw new Error('missing --reason');
+    return `${JSON.stringify(await captureProjectPolicyInstruction({
+      projectRoot: root,
+      id,
+      instruction,
+      effect: parseProjectPolicyEffect(valueAfter(args, '--effect')),
+      reason,
+      match: {
+        tools: valuesAfter(args, '--tool').map((tool) => parseProjectPolicyTool(tool)),
+        pathContains: valuesAfter(args, '--path-contains'),
+        commandContains: valuesAfter(args, '--command-contains'),
+        phases: valuesAfter(args, '--phase').map((phase) => parsePhase(phase)),
+        reasons: valuesAfter(args, '--match-reason')
+      },
+      replace: args.includes('--replace'),
+      notes
+    }), null, 2)}\n`;
   }
 
   if (command === 'policy-add') {
