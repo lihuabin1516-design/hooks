@@ -55,6 +55,15 @@ hooks.state.'C:\Users\AI001\.codex\hooks.json:user_prompt_submit:0:0'.trusted_ha
 mcp_servers.fastctx.command = C:/Users/AI001/.fastctx/bin/fastctx.exe
 ```
 
+FastCtx 本机落盘 exe 只做存在状态、大小和 SHA-256 记录：
+
+```text
+path: C:\Users\AI001\.fastctx\bin\fastctx.exe
+size: 53498368
+lastWriteUtc: 2026-08-06T03:59:38Z
+sha256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA8579
+```
+
 判断：
 
 - Codex prompt 层 hook 已存在，目标就是 `skills-hub-hook.exe`。

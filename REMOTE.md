@@ -67,28 +67,30 @@ C:\Users\AI001\.codex\hooks.json
 C:\Users\AI001\.codex\config.toml
 C:\Users\AI001\.cc-panes\config.toml
 C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+C:\Users\AI001\.fastctx\bin\fastctx.exe
 ```
 
 推荐核验命令：
 
 ```powershell
-Get-Item C:\Users\AI001\.codex\hooks.json,C:\Users\AI001\.codex\config.toml,C:\Users\AI001\.cc-panes\config.toml,C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe |
+Get-Item C:\Users\AI001\.codex\hooks.json,C:\Users\AI001\.codex\config.toml,C:\Users\AI001\.cc-panes\config.toml,C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe,C:\Users\AI001\.fastctx\bin\fastctx.exe |
   Select-Object FullName,Length
 
 Get-FileHash -Algorithm SHA256 `
   C:\Users\AI001\.codex\hooks.json,`
   C:\Users\AI001\.codex\config.toml,`
   C:\Users\AI001\.cc-panes\config.toml,`
-  C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+  C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe,`
+  C:\Users\AI001\.fastctx\bin\fastctx.exe
 ```
 
 ## 参考仓库
 
-以下仓库属于参考对象，常规 hooks 维护只检查 status：
+以下仓库属于参考对象，常规 hooks 维护只检查 status 和 remote/HEAD 元数据：
 
 ```text
-D:\cc-pane\tool\repos\comet
-D:\cc-pane\tool\repos\fastctx
+D:\cc-pane\tool\repos\comet    origin https://github.com/rpamis/comet.git
+D:\cc-pane\tool\repos\fastctx  origin https://github.com/yc-duan/fastctx.git
 ```
 
 核验命令：
@@ -96,6 +98,19 @@ D:\cc-pane\tool\repos\fastctx
 ```powershell
 git -C D:\cc-pane\tool\repos\comet status --short
 git -C D:\cc-pane\tool\repos\fastctx status --short
+git -C D:\cc-pane\tool\repos\comet remote -v
+git -C D:\cc-pane\tool\repos\fastctx remote -v
+git -C D:\cc-pane\tool\repos\comet rev-parse HEAD
+git -C D:\cc-pane\tool\repos\fastctx rev-parse HEAD
+```
+
+当前只读基线：
+
+```text
+comet HEAD:   07c5b64b02dc00fffa6d66da70014bfb0f9ebca0
+fastctx HEAD: 86dac0c99efae7859ed2be468f68c16e58f5e16a
+fastctx exe:  C:\Users\AI001\.fastctx\bin\fastctx.exe
+fastctx exe SHA256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA8579
 ```
 
 ## 远端发布步骤

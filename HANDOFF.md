@@ -82,13 +82,22 @@ C:\Users\AI001\.cc-panes\config.toml
 
 ```text
 C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+C:\Users\AI001\.fastctx\bin\fastctx.exe
 ```
 
-参考仓库只做 status 检查：
+参考仓库只做 status / remote / HEAD 检查：
 
 ```text
-D:\cc-pane\tool\repos\comet
-D:\cc-pane\tool\repos\fastctx
+D:\cc-pane\tool\repos\comet    origin https://github.com/rpamis/comet.git
+D:\cc-pane\tool\repos\fastctx  origin https://github.com/yc-duan/fastctx.git
+```
+
+当前只读基线：
+
+```text
+comet HEAD:   07c5b64b02dc00fffa6d66da70014bfb0f9ebca0
+fastctx HEAD: 86dac0c99efae7859ed2be468f68c16e58f5e16a
+fastctx exe SHA256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA8579
 ```
 
 ## 标准执行顺序

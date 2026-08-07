@@ -173,7 +173,8 @@ node dist/src/cli.js verify-installed-hooks `
 
 - 用户配置路径作为已安装状态读取和哈希核验对象：`C:\Users\AI001\.codex`、`C:\Users\AI001\.cc-panes`。
 - `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe` 是上游 hook 可执行文件引用；本工具层维护中保持哈希核验，不直接运行。
-- `D:\cc-pane\tool\repos\comet` 和 `D:\cc-pane\tool\repos\fastctx` 是参考仓库，常规维护只检查 status。
+- `C:\Users\AI001\.fastctx\bin\fastctx.exe` 是 FastCtx 本机落盘可执行文件；本工具层维护中只记录存在状态、大小和 SHA-256，不直接执行。
+- `D:\cc-pane\tool\repos\comet` 和 `D:\cc-pane\tool\repos\fastctx` 是参考仓库，上游分别固定为 `https://github.com/rpamis/comet.git` 和 `https://github.com/yc-duan/fastctx.git`；常规维护只检查 status、remote 和 HEAD。
 - 真实写入应限定在本仓库、live prototype、或合成 fixture 目录内。
 
 ## 当前能力状态
