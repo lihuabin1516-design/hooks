@@ -1,0 +1,13 @@
+{
+  "command": "create-final-runbook",
+  "goLiveManifest": "./examples/example-task/.ccpanes-task/go-live-approval-package/manifest.json",
+  "outDir": "./examples/example-task/.ccpanes-task/final-runbook",
+  "expectedArtifacts": [
+    "manifest.json",
+    "FINAL-RUNBOOK.md",
+    "PRE-FLIGHT.ps1",
+    "POST-FLIGHT.ps1",
+    "ROLLBACK-CHECKLIST.md"
+  ],
+  "note": "This request shape generates the final manual execution runbook from an approved go-live package. It writes only runbook artifacts and does not execute the scripts, register hooks, or modify user configs."
+}

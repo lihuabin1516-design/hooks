@@ -1,0 +1,14 @@
+{
+  "command": "apply-hook-write",
+  "writePreview": "./examples/example-task/.ccpanes-task/hook-write-preview/write-preview.json",
+  "approvalCheck": "./examples/example-task/.ccpanes-task/hook-approval-check.json",
+  "out": "./examples/example-task/.ccpanes-task/hook-write-apply.json",
+  "allowRoots": [
+    "./examples/example-task/synthetic-config-root"
+  ],
+  "expectedArtifacts": [
+    "hook-write-apply.json",
+    "hook-write-apply.json.artifacts/backups/*.bak"
+  ],
+  "note": "This request shape is for guarded synthetic application only. The CLI requires explicit --allow-root and fails closed when a target config path is outside the allowed root."
+}

@@ -1,0 +1,12 @@
+{
+  "command": "restore-hook-write",
+  "applyReport": "./examples/example-task/.ccpanes-task/hook-write-apply.json",
+  "out": "./examples/example-task/.ccpanes-task/hook-write-restore.json",
+  "allowRoots": [
+    "./examples/example-task/synthetic-config-root"
+  ],
+  "expectedArtifacts": [
+    "hook-write-restore.json"
+  ],
+  "note": "This request shape is for guarded synthetic restore only. The CLI requires explicit --allow-root and verifies current after hash plus backup before hash before restoring."
+}

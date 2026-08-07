@@ -1,0 +1,6 @@
+{
+  "command": "create-hook-apply-plan",
+  "releaseGate": "./examples/example-task/.ccpanes-task/release-gate.json",
+  "outDir": "./examples/example-task/.ccpanes-task/hook-apply-plan",
+  "note": "This is a request fixture; the CLI takes flags rather than this JSON directly. The generated scripts are review artifacts and are not executed by the generator."
+}

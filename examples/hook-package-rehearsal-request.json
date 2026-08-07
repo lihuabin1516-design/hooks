@@ -1,0 +1,7 @@
+{
+  "command": "rehearse-hook-package",
+  "packageDir": "./examples/example-task/.ccpanes-task/hook-package",
+  "expectedUpstreamSha256": "F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4",
+  "out": "./examples/example-task/.ccpanes-task/hook-package-rehearsal.json",
+  "note": "This is a request fixture; the CLI takes flags rather than this JSON directly."
+}

@@ -1,0 +1,27 @@
+{
+  "command": "check-hook-approval",
+  "applyPlan": "./examples/example-task/.ccpanes-task/hook-apply-plan/apply-plan.json",
+  "approval": "./examples/example-task/.ccpanes-task/hook-approval.json",
+  "out": "./examples/example-task/.ccpanes-task/hook-approval-check.json",
+  "approvalSchemaExample": {
+    "schema": "ccpanes.hook-approval.v1",
+    "approved": true,
+    "applyPlanSha256": "APPLY_PLAN_SHA256",
+    "releaseGateSha256": "RELEASE_GATE_SHA256",
+    "targetConfigPaths": [
+      "C:/Users/AI001/.codex/config.toml",
+      "C:/Users/AI001/.cc-panes/config.toml"
+    ],
+    "expectedConfigSha256ByPath": {
+      "C:/Users/AI001/.codex/config.toml": "CONFIG_SHA256",
+      "C:/Users/AI001/.cc-panes/config.toml": "CONFIG_SHA256"
+    },
+    "backupDir": "BACKUP_DIR",
+    "rollbackCommand": "ROLLBACK_COMMAND",
+    "writeWindow": {
+      "startsAt": "2026-01-01T00:00:00.000Z",
+      "endsAt": "2027-01-01T00:00:00.000Z"
+    }
+  },
+  "note": "This is a request fixture; the CLI takes flags and an approval JSON file rather than this JSON directly."
+}

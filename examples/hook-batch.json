@@ -1,0 +1,40 @@
+{
+  "schema": "ccpanes.hook-dry-run-batch.v1",
+  "task": {
+    "schema": "ccpanes.task-selection.v1",
+    "taskId": "example-task",
+    "workspace": "cc-pane",
+    "projectPath": "./examples/example-task",
+    "worktreeRoot": "./examples/example-task",
+    "mainRepoRoot": null,
+    "branch": null,
+    "head": null,
+    "owner": {
+      "leaderSessionId": null,
+      "paneId": null,
+      "layoutId": null
+    },
+    "phase": "build",
+    "createdAt": "2026-08-06T00:00:00.000Z",
+    "updatedAt": "2026-08-06T00:00:01.000Z",
+    "source": "manual-import",
+    "notes": "synthetic hook batch example"
+  },
+  "calls": [
+    {
+      "tool": "read",
+      "targetPath": "./examples/example-task/src/a.ts",
+      "writes": false
+    },
+    {
+      "tool": "write",
+      "targetPath": "./examples/example-task/src/a.ts",
+      "writes": true
+    },
+    {
+      "tool": "write",
+      "targetPath": "C:/Users/AI001/.codex/config.toml",
+      "writes": true
+    }
+  ]
+}

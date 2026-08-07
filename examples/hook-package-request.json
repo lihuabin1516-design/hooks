@@ -1,0 +1,9 @@
+{
+  "command": "create-hook-package",
+  "prototypeRoot": "D:/cc-pane/tool/experiments/ccpanes-task-probe",
+  "task": "./examples/example-task/.ccpanes-task/current-task.json",
+  "target": "both",
+  "upstreamHook": "C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe",
+  "outDir": "./examples/example-task/.ccpanes-task/hook-package",
+  "note": "This is a request fixture; the CLI takes flags rather than this JSON directly."
+}

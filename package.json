@@ -1,0 +1,22 @@
+{
+  "name": "ccpanes-task-probe-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Isolated prototype for CC-Panes task ownership and resume probe.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc -p tsconfig.json",
+    "cli": "node dist/src/cli.js",
+    "smoke": "node scripts/smoke.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

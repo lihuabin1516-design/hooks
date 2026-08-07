@@ -1,0 +1,8 @@
+node_modules/
+dist/
+live/
+.tmp-smoke/
+*.log
+.env
+.env.*
+!.env.example

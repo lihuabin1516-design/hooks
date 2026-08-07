@@ -1,0 +1,15 @@
+{
+  "command": "create-go-live-approval-package",
+  "readiness": "./examples/example-task/.ccpanes-task/production-readiness.json",
+  "outDir": "./examples/example-task/.ccpanes-task/go-live-approval-package",
+  "approvedBy": "AI001",
+  "approvalNote": "manual authorization approved",
+  "upstreamHook": "C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe",
+  "expectedArtifacts": [
+    "manifest.json",
+    "GO-LIVE-APPROVAL.md",
+    "COMMANDS.ps1",
+    "EVIDENCE-INDEX.md"
+  ],
+  "note": "This request shape records manual approval evidence only. It writes the package directory but does not run commands, register hooks, or modify user configs."
+}

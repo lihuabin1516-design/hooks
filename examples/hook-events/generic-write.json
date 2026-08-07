@@ -1,0 +1,13 @@
+{
+  "schema": "ccpanes.hook-event.v1",
+  "calls": [
+    {
+      "tool": "read",
+      "targetPath": "./examples/example-task/src/a.ts"
+    },
+    {
+      "tool": "write",
+      "targetPath": "./examples/example-task/src/a.ts"
+    }
+  ]
+}

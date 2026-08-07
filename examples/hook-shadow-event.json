@@ -1,0 +1,7 @@
+{
+  "event": "tool_call",
+  "tool": "write",
+  "arguments": {
+    "path": "./examples/example-task/src/a.ts"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "command": "preview-hook-write",
+  "approvalCheck": "./examples/example-task/.ccpanes-task/hook-approval-check.json",
+  "outDir": "./examples/example-task/.ccpanes-task/hook-write-preview",
+  "expectedArtifacts": [
+    "write-preview.json",
+    "backup-manifest.json",
+    "before/*.toml",
+    "after/*.toml",
+    "diffs/*.diff"
+  ],
+  "note": "This is a dry-run write preview request fixture; the CLI takes flags rather than this JSON directly and writes only to the explicit preview output directory."
+}

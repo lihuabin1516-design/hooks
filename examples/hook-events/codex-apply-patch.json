@@ -1,0 +1,7 @@
+{
+  "event": "tool_call",
+  "tool": "apply_patch",
+  "arguments": {
+    "patch": "*** Begin Patch\n*** Update File: ./examples/example-task/src/a.ts\n@@\n-old\n+new\n*** End Patch\n"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "command": "plan-hook-install",
+  "prototypeRoot": "D:/cc-pane/tool/experiments/ccpanes-task-probe",
+  "task": "./examples/example-task/.ccpanes-task/current-task.json",
+  "target": "both",
+  "upstreamHook": "C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe",
+  "out": "./examples/example-task/.ccpanes-task/hook-install-plan.json",
+  "note": "This is a request fixture; the CLI takes flags rather than this JSON directly."
+}

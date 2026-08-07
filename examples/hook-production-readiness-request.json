@@ -1,0 +1,13 @@
+{
+  "command": "production-readiness",
+  "releaseGate": "./examples/example-task/.ccpanes-task/release-gate.json",
+  "approvalCheck": "./examples/example-task/.ccpanes-task/hook-approval-check.json",
+  "writePreview": "./examples/example-task/.ccpanes-task/hook-write-preview/write-preview.json",
+  "applyReport": "./examples/example-task/.ccpanes-task/hook-write-apply.json",
+  "restoreReport": "./examples/example-task/.ccpanes-task/hook-write-restore.json",
+  "out": "./examples/example-task/.ccpanes-task/production-readiness.json",
+  "expectedArtifacts": [
+    "production-readiness.json"
+  ],
+  "note": "This request shape aggregates final gate evidence. It reads current config hashes and writes only the readiness report."
+}
