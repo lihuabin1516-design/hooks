@@ -37,7 +37,7 @@ project-policy.ts            policy.json 机械规则模型、校验、匹配
 project-policy-ledger.ts     policy.md 人类可读规则台账
 project-policy-capture.ts    policy.md + policy.json 双写入口
 plan-policy-capture.ts       plan 文本规则识别并编排 policy-capture
-plan-intake.ts               plan 阶段 workflow/profile/policy 预览和审计
+plan-intake.ts               plan 阶段 workflow/profile/policy 预览、lifecycle event 归一化和审计
 hook-event-adapter.ts        Codex/Claude/泛化 tool event 到 HookCall 的适配
 hook-shell-analyzer.ts       shell 命令读写目标和高风险分类
 task-risk.ts                 prompt 级 Light/Standard/Heavy 风险分类
@@ -72,7 +72,7 @@ project-bootstrap.test.ts         bootstrap-project 行为
 project-policy.test.ts            policy.json 规则校验和匹配
 project-policy-capture.test.ts    policy-capture 双写行为
 plan-policy-capture.test.ts       plan 阶段规则自动识别和沉淀
-plan-intake.test.ts               plan 阶段 dry-run 预览和审计
+plan-intake.test.ts               plan 阶段 dry-run 预览、lifecycle event 归一化和审计
 hook-event-adapter.test.ts        Hook 事件适配
 hook-dry-run.test.ts              allow/block 决策
 hook-runner.test.ts               Hook runner 与项目策略集成

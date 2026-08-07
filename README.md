@@ -58,7 +58,9 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js bootstrap-pr
 ### 2. plan 阶段规则自动沉淀
 
 需求讨论或 plan 阶段出现明确的“禁止、开放、清除、限制”等项目规则时，先用 `plan-intake`
-做 dry-run 预览和审计，再由 `policy-capture-plan` 写入人类可读 ledger 和 Hook 可执行规则：
+做 dry-run 预览和审计；接入真实 CC-Panes plan 生命周期事件时，用
+`plan-lifecycle-intake` 从事件 `cwd` 自动解析当前任务并写入 task-scoped audit；再由
+`policy-capture-plan` 写入人类可读 ledger 和 Hook 可执行规则：
 
 ```powershell
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js plan-intake `
@@ -67,6 +69,11 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js plan-intake 
   --utterance "计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。" `
   --audit-out <audit-json>
 
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js plan-lifecycle-intake `
+  --resolve-task-from-cwd `
+  --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits `
+  --event <ccpanes-plan-lifecycle-event.json>
+
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-capture-plan `
   --root <project-root> `
   --utterance "计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。"
@@ -74,6 +81,8 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-captu
 
 `plan-intake` 输出 `ccpanes.plan-intake.v1`，组合 `classify-workflow` 和 plan policy
 候选识别；默认不写 `.ccpanes-task\policy.md` 或 `.ccpanes-task\policy.json`。
+`plan-lifecycle-intake` 输出同一 schema，并把 audit 固定写到
+`<audit-root>\<base64url(taskId)>\plan-intake-audit.json`；找不到当前 task 时不输出也不写 audit。
 `policy-capture-plan` 只识别明确的命令级和路径级表达，未识别到规则时返回 `changed=false`，不创建项目 policy 文件。需要精确指定 matcher 时，继续使用底层 `policy-capture`：
 
 ```powershell
@@ -149,6 +158,7 @@ Codex hook event
 ```text
 session-start       注入当前任务上下文
 plan-intake         plan 阶段 workflow/policy dry-run 和 audit
+plan-lifecycle-intake  从真实 plan lifecycle event 解析 task 并写 task-scoped dry-run audit
 classify-task-risk  prompt 级 Light / Standard / Heavy 风险分级
 classify-workflow   SBA 风格任务路由、闭环强度和检查建议
 host-adapter-registry  机器可读宿主适配能力目录
@@ -224,6 +234,7 @@ bootstrap-project
 agents-install / agents-validate
 policy-capture
 plan-intake
+plan-lifecycle-intake
 policy-capture-plan
 policy-add / policy-list / policy-validate / policy-disable / policy-clear
 classify-task-risk

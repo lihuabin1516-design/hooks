@@ -5,6 +5,8 @@ import { classifyWorkflowProfile, type WorkflowProfileResult } from './workflow-
 
 export type PlanIntakePolicyPreviewStatus = 'would_capture' | 'would_clear' | 'skipped';
 
+export const PLAN_LIFECYCLE_EVENT_SCHEMA = 'ccpanes.plan-lifecycle-event.v1' as const;
+
 export interface PlanIntakePolicyPreviewAction {
   status: PlanIntakePolicyPreviewStatus;
   kind: PlanPolicyCaptureAction['kind'] | 'none';
@@ -45,6 +47,58 @@ export interface PlanIntakeResult {
   recommendedNextCommands: string[];
   gates: string[];
   recordedAt: string;
+}
+
+export interface NormalizePlanLifecycleEventInput {
+  event: unknown;
+  fallbackCwd?: string | null;
+  fallbackPrompt?: string | null;
+  fallbackText?: string | null;
+  fallbackChangedPaths?: string[] | null;
+}
+
+export interface NormalizedPlanLifecycleEvent {
+  schema: typeof PLAN_LIFECYCLE_EVENT_SCHEMA;
+  cwd: string | null;
+  prompt: string | null;
+  text: string;
+  changedPaths: string[];
+  source: string | null;
+}
+
+function planLifecycleEventRecord(event: unknown): Record<string, unknown> {
+  if (event === null || event === undefined) return {};
+  if (typeof event !== 'object' || Array.isArray(event)) {
+    throw new Error('invalid plan lifecycle event: object');
+  }
+  return event as Record<string, unknown>;
+}
+
+function optionalEventString(record: Record<string, unknown>, field: string): string | null {
+  const value = record[field];
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') throw new Error(`invalid plan lifecycle event: ${field}`);
+  return value;
+}
+
+function optionalEventStringArray(record: Record<string, unknown>, field: string): string[] {
+  const value = record[field];
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.some((item) => typeof item !== 'string')) {
+    throw new Error(`invalid plan lifecycle event: ${field}`);
+  }
+  return value;
+}
+
+function firstNonEmpty(...values: Array<string | null | undefined>): string | null {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim().length > 0) return value;
+  }
+  return null;
+}
+
+function uniqueNonEmpty(values: string[]): string[] {
+  return [...new Set(values.map((value) => value.trim()).filter((value) => value.length > 0))];
 }
 
 function nonEmptyLines(text: string): string[] {
@@ -115,6 +169,31 @@ function nextCommands(projectRoot: string, text: string, policyPreview: PlanInta
   return commands;
 }
 
+export function normalizePlanLifecycleEvent(input: NormalizePlanLifecycleEventInput): NormalizedPlanLifecycleEvent {
+  const record = planLifecycleEventRecord(input.event);
+  const schema = optionalEventString(record, 'schema');
+  if (schema !== null && schema !== PLAN_LIFECYCLE_EVENT_SCHEMA) {
+    throw new Error('invalid plan lifecycle event: schema');
+  }
+
+  return {
+    schema: PLAN_LIFECYCLE_EVENT_SCHEMA,
+    cwd: firstNonEmpty(optionalEventString(record, 'cwd'), input.fallbackCwd),
+    prompt: firstNonEmpty(input.fallbackPrompt, optionalEventString(record, 'prompt')),
+    text: firstNonEmpty(
+      optionalEventString(record, 'planText'),
+      optionalEventString(record, 'utterance'),
+      optionalEventString(record, 'text'),
+      input.fallbackText
+    ) ?? '',
+    changedPaths: uniqueNonEmpty([
+      ...optionalEventStringArray(record, 'changedPaths'),
+      ...(input.fallbackChangedPaths ?? [])
+    ]),
+    source: firstNonEmpty(optionalEventString(record, 'source'))
+  };
+}
+
 export function createPlanIntake(input: PlanIntakeInput): PlanIntakeResult {
   const prompt = profilePrompt(input);
   const policyPreview = createPolicyPreview(input.text);
@@ -148,4 +227,8 @@ export async function writePlanIntakeAuditAtomic(outPath: string, result: PlanIn
   const tempPath = path.join(path.dirname(resolvedOut), `${path.basename(resolvedOut)}.${process.pid}.${Date.now()}.tmp`);
   await writeFile(tempPath, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
   await rename(tempPath, resolvedOut);
+}
+
+export function planIntakeAuditPathFromRoot(auditRoot: string, taskId: string): string {
+  return path.join(auditRoot, Buffer.from(taskId, 'utf8').toString('base64url'), 'plan-intake-audit.json');
 }

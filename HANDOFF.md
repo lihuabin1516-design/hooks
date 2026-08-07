@@ -9,7 +9,7 @@
 1. `README.md`：中文主说明和日常命令。
 2. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
 3. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
-4. `docs/plans/`：Phase 24 到 Phase 33 的分阶段设计与实施计划。
+4. `docs/plans/`：Phase 24 到 Phase 35 的分阶段设计与实施计划。
 5. `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
 6. `docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md`：Codex plugin 分发后续设计。
 7. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
@@ -32,6 +32,7 @@ Node：>=22
 bootstrap-project      一键初始化项目上下文
 policy-capture         对话规则同时落 policy.md + policy.json
 plan-intake            plan 阶段 workflow/policy dry-run 和 audit
+plan-lifecycle-intake  从真实 plan lifecycle event 解析 task 并写 task-scoped dry-run audit
 policy-capture-plan    从 plan 文本识别明确规则并编排 policy-capture
 classify-task-risk     prompt 级 Light / Standard / Heavy 风险分级
 classify-workflow      SBA 风格任务路由、闭环强度和必要检查建议
@@ -169,4 +170,4 @@ live 验证结果
 
 ## 下一步建议
 
-后续可继续做 Phase 34：把 `plan-intake` 接入 CC-Panes plan 事件侧的真实 dry-run/audit 子步骤；继续保持用户级配置只读，先跑一段审计 artifact 再评估是否进入发布授权包。
+后续可继续做 Phase 36：把 `plan-lifecycle-intake` 纳入发布收口链路；提交、push、同步 live 后在 live 路径重跑完整门禁和 `verify-installed-hooks`，再记录 repo/live 一致性与用户配置哈希。

@@ -326,6 +326,117 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).rejects.toThrow();
   });
 
+  test('previews plan lifecycle intake by resolving current-task from event cwd and writing task audit', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const nestedCwd = path.join(projectRoot, 'packages', 'demo');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+    await fs.mkdir(nestedCwd, { recursive: true });
+
+    const output = await runCli([
+      'plan-lifecycle-intake',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot,
+      '--prompt',
+      'CLI prompt wins',
+      '--changed-path',
+      'src/cli.ts'
+    ], JSON.stringify({
+      schema: 'ccpanes.plan-lifecycle-event.v1',
+      cwd: nestedCwd,
+      prompt: 'event prompt',
+      planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
+      changedPaths: ['src/plan-intake.ts'],
+      source: 'cc-panes-plan'
+    }));
+    const parsed = JSON.parse(output);
+    const auditPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'plan-intake-audit.json');
+    const audit = JSON.parse(await fs.readFile(auditPath, 'utf8'));
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.plan-intake.v1',
+      mode: 'dry-run',
+      changed: false,
+      projectRoot,
+      workflow: { route: { id: 'project-policy' } },
+      policyPreview: { wouldCaptureCount: 1, wouldChangeProjectPolicy: true }
+    });
+    expect(parsed.prompt).toContain('CLI prompt wins');
+    expect(audit.projectRoot).toBe(projectRoot);
+    expect(audit.workflow.changedPaths).toEqual(['src/plan-intake.ts', 'src/cli.ts']);
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).rejects.toThrow();
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).rejects.toThrow();
+  });
+
+  test('plan lifecycle intake no-ops when event cwd has no current task ancestor', async () => {
+    const orphanCwd = path.join(tempRoot, 'orphan');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await fs.mkdir(orphanCwd, { recursive: true });
+
+    const output = await runCli([
+      'plan-lifecycle-intake',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot
+    ], JSON.stringify({
+      schema: 'ccpanes.plan-lifecycle-event.v1',
+      cwd: orphanCwd,
+      planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。'
+    }));
+
+    expect(output).toBe('');
+    await expect(fs.stat(auditRoot)).rejects.toThrow();
+  });
+
+  test('plan lifecycle intake resolves task before validating event schema for no-task no-op', async () => {
+    const orphanCwd = path.join(tempRoot, 'orphan');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await fs.mkdir(orphanCwd, { recursive: true });
+
+    const output = await runCli([
+      'plan-lifecycle-intake',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot
+    ], JSON.stringify({
+      schema: 'wrong',
+      cwd: orphanCwd,
+      planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。'
+    }));
+
+    expect(output).toBe('');
+    await expect(fs.stat(auditRoot)).rejects.toThrow();
+  });
+
+  test('plan lifecycle intake accepts explicit task and utterance without stdin event', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskFile = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+
+    const output = await runCli([
+      'plan-lifecycle-intake',
+      '--task',
+      currentTaskFile,
+      '--audit-root',
+      auditRoot,
+      '--cwd',
+      projectRoot,
+      '--utterance',
+      '允许 shape 阶段修改 docs/。'
+    ]);
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.plan-intake.v1',
+      mode: 'dry-run',
+      projectRoot,
+      policyPreview: { wouldCaptureCount: 1 }
+    });
+    await expect(fs.stat(path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'plan-intake-audit.json'))).resolves.toBeTruthy();
+  });
+
   test('policy-disable and policy-clear preserve rules but disable enforcement', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     await runCli([

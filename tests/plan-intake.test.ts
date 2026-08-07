@@ -2,7 +2,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { createPlanIntake, writePlanIntakeAuditAtomic } from '../src/plan-intake.js';
+import { createPlanIntake, normalizePlanLifecycleEvent, planIntakeAuditPathFromRoot, writePlanIntakeAuditAtomic } from '../src/plan-intake.js';
 
 let tempRoot: string;
 
@@ -84,5 +84,41 @@ describe('writePlanIntakeAuditAtomic', () => {
       effect: 'allow',
       reason: 'plan_allow_path'
     });
+  });
+});
+
+describe('normalizePlanLifecycleEvent', () => {
+  test('normalizes CC-Panes plan lifecycle event fields for dry-run intake', () => {
+    const result = normalizePlanLifecycleEvent({
+      event: {
+        schema: 'ccpanes.plan-lifecycle-event.v1',
+        cwd: path.join(tempRoot, 'packages', 'demo'),
+        prompt: 'event prompt',
+        planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
+        changedPaths: ['src/plan-intake.ts', ' src/plan-intake.ts '],
+        source: 'cc-panes-plan'
+      },
+      fallbackPrompt: 'cli prompt',
+      fallbackChangedPaths: ['src/cli.ts']
+    });
+
+    expect(result).toEqual({
+      schema: 'ccpanes.plan-lifecycle-event.v1',
+      cwd: path.join(tempRoot, 'packages', 'demo'),
+      prompt: 'cli prompt',
+      text: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
+      changedPaths: ['src/plan-intake.ts', 'src/cli.ts'],
+      source: 'cc-panes-plan'
+    });
+  });
+
+  test('builds the task-scoped plan intake audit path under audit-root', () => {
+    expect(planIntakeAuditPathFromRoot(tempRoot, 'task-alpha')).toBe(
+      path.join(tempRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'plan-intake-audit.json')
+    );
+  });
+
+  test('rejects invalid lifecycle event schema at the boundary', () => {
+    expect(() => normalizePlanLifecycleEvent({ event: { schema: 'wrong' } })).toThrow('invalid plan lifecycle event: schema');
   });
 });

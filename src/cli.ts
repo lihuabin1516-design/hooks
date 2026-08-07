@@ -28,7 +28,7 @@ import { createHostAdapterRegistry, getHostAdapter } from './host-adapter-regist
 import { verifyInstalledHooks } from './installed-hooks.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
-import { createPlanIntake, writePlanIntakeAuditAtomic } from './plan-intake.js';
+import { createPlanIntake, normalizePlanLifecycleEvent, planIntakeAuditPathFromRoot, writePlanIntakeAuditAtomic } from './plan-intake.js';
 import { capturePlanPolicyInstructions, readPlanPolicyCaptureText } from './plan-policy-capture.js';
 import { createProductionToolkit } from './production-toolkit.js';
 import { bootstrapProject } from './project-bootstrap.js';
@@ -376,6 +376,67 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       changedPaths: valuesAfter(args, '--changed-path')
     });
     if (auditOut) await writePlanIntakeAuditAtomic(auditOut, result);
+    return `${JSON.stringify(result, null, 2)}\n`;
+  }
+
+  if (command === 'plan-lifecycle-intake') {
+    const taskPath = valueAfter(args, '--task');
+    const eventPath = valueAfter(args, '--event');
+    const inputPath = valueAfter(args, '--input');
+    const utterance = valueAfter(args, '--utterance');
+    const planText = valueAfter(args, '--plan-text');
+    const auditRoot = valueAfter(args, '--audit-root');
+    const resolveTaskFromCwd = args.includes('--resolve-task-from-cwd');
+    if (!auditRoot) throw new Error('missing --audit-root');
+
+    let event: unknown = null;
+    let rawStdinText: string | null = null;
+    if (eventPath) {
+      event = JSON.parse(await readFile(eventPath, 'utf8'));
+    } else if (stdinText !== undefined || (!inputPath && !utterance && !planText)) {
+      const eventText = stdinText ?? await readStdin();
+      if (eventText.trim().length > 0) {
+        try {
+          event = JSON.parse(eventText);
+        } catch {
+          rawStdinText = eventText;
+        }
+      }
+    }
+
+    const fallbackCwd = valueAfter(args, '--cwd');
+    const eventCwd = extractHookCwd(event) ?? fallbackCwd;
+
+    let task: CurrentTask;
+    if (resolveTaskFromCwd) {
+      const resolved = await resolveCurrentTaskFromCwd(eventCwd ?? process.cwd());
+      if (!resolved) return '';
+      task = resolved.task;
+    } else {
+      if (!taskPath) throw new Error('missing --task or --resolve-task-from-cwd');
+      task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
+    }
+    if (eventCwd && !isPathInside(task.worktreeRoot, eventCwd)) return '';
+
+    const explicitText = inputPath
+      ? await readPlanPolicyCaptureText(inputPath)
+      : (utterance ?? planText ?? rawStdinText);
+    const lifecycleEvent = normalizePlanLifecycleEvent({
+      event,
+      fallbackCwd,
+      fallbackPrompt: valueAfter(args, '--prompt'),
+      fallbackText: explicitText,
+      fallbackChangedPaths: valuesAfter(args, '--changed-path')
+    });
+    if (lifecycleEvent.text.trim().length === 0) throw new Error('missing plan lifecycle text');
+
+    const result = createPlanIntake({
+      projectRoot: task.worktreeRoot,
+      text: lifecycleEvent.text,
+      prompt: lifecycleEvent.prompt,
+      changedPaths: lifecycleEvent.changedPaths
+    });
+    await writePlanIntakeAuditAtomic(planIntakeAuditPathFromRoot(auditRoot, task.taskId), result);
     return `${JSON.stringify(result, null, 2)}\n`;
   }
 

@@ -12,6 +12,7 @@ const planPreviewProject = join(fixture, 'project-plan-preview');
 const currentTask = join(project, '.ccpanes-task', 'current-task.json');
 const artifact = join(fixture, 'artifact.md');
 const planIntakeAudit = join(fixture, 'plan-intake-audit.json');
+const planLifecycleAuditRoot = join(fixture, 'plan-lifecycle-audits');
 const hookEvent = join(fixture, 'hook-event.json');
 const adaptedHookBatch = join(fixture, 'adapted-hook-batch.json');
 const hookBatch = join(fixture, 'hook-batch.json');
@@ -156,6 +157,27 @@ try {
   assert(planIntake.workflow.route.id === 'project-policy', 'plan-intake expected project-policy route');
   assert(existsSync(planIntakeAudit), 'plan-intake audit missing');
   assert(!existsSync(join(planPreviewProject, '.ccpanes-task', 'policy.json')), 'plan-intake should not write policy.json');
+  const planLifecycleCwd = join(project, 'packages', 'demo');
+  mkdirSync(planLifecycleCwd, { recursive: true });
+  const planLifecycleIntake = parseJson(run([
+    'plan-lifecycle-intake',
+    '--resolve-task-from-cwd',
+    '--audit-root',
+    planLifecycleAuditRoot,
+    '--changed-path',
+    'src/cli.ts'
+  ], JSON.stringify({
+    schema: 'ccpanes.plan-lifecycle-event.v1',
+    cwd: planLifecycleCwd,
+    prompt: 'CC-Panes plan lifecycle event',
+    planText: '计划阶段规则：禁止运行 lifecycle-artifact，除非测试显式解除。',
+    changedPaths: ['src/plan-intake.ts'],
+    source: 'cc-panes-plan'
+  })));
+  assert(planLifecycleIntake.schema === 'ccpanes.plan-intake.v1', 'plan-lifecycle-intake schema mismatch');
+  assert(planLifecycleIntake.projectRoot === project, 'plan-lifecycle-intake project root mismatch');
+  assert(planLifecycleIntake.policyPreview.wouldCaptureCount === 1, 'plan-lifecycle-intake expected one would-capture action');
+  assert(existsSync(join(planLifecycleAuditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'plan-intake-audit.json')), 'plan-lifecycle-intake audit missing');
   const policyList = parseJson(run(['policy-list', '--root', project]));
   assert(policyList.ruleCount === 3, 'policy-list expected three rules');
   const policyValidate = parseJson(run(['policy-validate', '--root', project]));
