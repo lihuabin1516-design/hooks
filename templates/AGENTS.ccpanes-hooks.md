@@ -40,8 +40,8 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js bootstrap-pr
 
 ## Conversation-level hook policy ledger
 
-When the user says a rule such as "禁止 X", "不要再建议 Y", "开放 X",
-"清除限制", or gives a project-specific permission boundary:
+When the user says a clear project rule during planning, such as "禁止运行 X",
+"开放修改 Y", "清除限制", or gives a project-specific permission boundary:
 
 1. Record the current effective rule in `.ccpanes-task/policy.md`.
 2. If the rule needs mechanical enforcement, also update
@@ -54,9 +54,16 @@ When the user says a rule such as "禁止 X", "不要再建议 Y", "开放 X",
    `.ccpanes-task/policy.json`; do not write user-level Codex config for
    project-specific policy.
 
-Preferred CLI form when the CC-Panes hooks CLI is available:
+Preferred plan-stage CLI form when the CC-Panes hooks CLI is available:
 
 ```powershell
+node <ccpanes-hooks-root>\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
+```
+
+Use the lower-level forms when the matcher must be explicit:
+
+```powershell
+node <ccpanes-hooks-root>\dist\src\cli.js policy-capture --root <project-root> --id <rule-id> --instruction "<user rule>" --effect block --reason <reason> --tool shell --command-contains <text>
 node <ccpanes-hooks-root>\dist\src\cli.js policy-add --root <project-root> --id <rule-id> --effect block --reason <reason> --tool shell --command-contains <text>
 node <ccpanes-hooks-root>\dist\src\cli.js policy-add --root <project-root> --id <rule-id> --effect allow --reason <reason> --tool apply_patch --path-contains docs/ --phase shape
 node <ccpanes-hooks-root>\dist\src\cli.js policy-disable --root <project-root> --id <rule-id>
@@ -67,6 +74,7 @@ node <ccpanes-hooks-root>\dist\src\cli.js policy-validate --root <project-root>
 Known local default for this workstation:
 
 ```powershell
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-validate --root <project-root>
 ```
 

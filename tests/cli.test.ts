@@ -211,6 +211,35 @@ describe('runCli', () => {
       match: { tools: ['shell'], commandContains: ['publish-artifact'] }
     });
   });
+
+  test('captures explicit plan-stage policy instructions through CLI', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+
+    const output = await runCli([
+      'policy-capture-plan',
+      '--root',
+      projectRoot,
+      '--utterance',
+      '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。'
+    ]);
+    const parsed = JSON.parse(output);
+    const ledger = await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.plan-policy-capture-result.v1',
+      changed: true,
+      capturedCount: 1,
+      clearedCount: 0
+    });
+    expect(ledger).toContain('禁止运行 deploy-artifact');
+    expect(policy.rules[0]).toMatchObject({
+      effect: 'block',
+      reason: 'plan_block_command',
+      match: { tools: ['shell'], commandContains: ['deploy-artifact'] }
+    });
+  });
+
   test('policy-disable and policy-clear preserve rules but disable enforcement', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     await runCli([

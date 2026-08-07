@@ -26,6 +26,8 @@ When the user says "清除限制", "开放权限", "这个允许", or equivalent
 Preferred mechanical commands:
 
 ```powershell
+node <ccpanes-hooks-root>\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
+node <ccpanes-hooks-root>\dist\src\cli.js policy-capture --root <project-root> --id block-publish --instruction "禁止运行 publish-artifact。" --effect block --reason user_blocked_publish --tool shell --command-contains publish-artifact
 node <ccpanes-hooks-root>\dist\src\cli.js policy-add --root <project-root> --id block-publish --effect block --reason user_blocked_publish --tool shell --command-contains publish-artifact
 node <ccpanes-hooks-root>\dist\src\cli.js policy-disable --root <project-root> --id block-publish
 node <ccpanes-hooks-root>\dist\src\cli.js policy-clear --root <project-root>

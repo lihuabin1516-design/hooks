@@ -55,9 +55,17 @@ node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js bootstrap-pr
 
 已有 `AGENTS.md` 会保留原内容，只维护 `<!-- ccpanes-hooks:begin -->` 到 `<!-- ccpanes-hooks:end -->` 之间的托管块。已有 `.ccpanes-task\policy.md` 也会保留。
 
-### 2. 对话规则沉淀
+### 2. plan 阶段规则自动沉淀
 
-需求讨论或 plan 阶段出现“禁止、开放、清除、限制”等项目规则时，用 `policy-capture` 同时写入人类可读 ledger 和 Hook 可执行规则：
+需求讨论或 plan 阶段出现明确的“禁止、开放、清除、限制”等项目规则时，优先用 `policy-capture-plan` 从计划文本自动提取规则，再写入人类可读 ledger 和 Hook 可执行规则：
+
+```powershell
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-capture-plan `
+  --root <project-root> `
+  --utterance "计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。"
+```
+
+`policy-capture-plan` 只识别明确的命令级和路径级表达，未识别到规则时返回 `changed=false`，不创建项目 policy 文件。需要精确指定 matcher 时，继续使用底层 `policy-capture`：
 
 ```powershell
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-capture `
@@ -176,6 +184,7 @@ node dist/src/cli.js verify-installed-hooks `
 bootstrap-project
 agents-install / agents-validate
 policy-capture
+policy-capture-plan
 policy-add / policy-list / policy-validate / policy-disable / policy-clear
 hook-enforce / permission-enforce / post-enforce
 session-start / stop-check

@@ -31,7 +31,7 @@ export function defaultProjectPolicyLedger(): string {
     '## Mechanical counterpart',
     '',
     '- Executable rules live in `.ccpanes-task/policy.json`.',
-    '- Use `policy-capture` for conversation rules and `policy-add`, `policy-disable`, `policy-clear`, `policy-list`, and `policy-validate` for mechanical rule management.',
+    '- Use `policy-capture-plan` for clear plan-stage rules, `policy-capture` for exact conversation rules, and `policy-add`, `policy-disable`, `policy-clear`, `policy-list`, and `policy-validate` for mechanical rule management.',
     ''
   ].join('\n');
 }

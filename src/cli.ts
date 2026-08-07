@@ -27,6 +27,7 @@ import { createHookFinalRunbook } from './hook-final-runbook.js';
 import { verifyInstalledHooks } from './installed-hooks.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
+import { capturePlanPolicyInstructions, readPlanPolicyCaptureText } from './plan-policy-capture.js';
 import { createProductionToolkit } from './production-toolkit.js';
 import { bootstrapProject } from './project-bootstrap.js';
 import { captureProjectPolicyInstruction } from './project-policy-capture.js';
@@ -307,6 +308,16 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       replace: args.includes('--replace'),
       notes
     }), null, 2)}\n`;
+  }
+
+  if (command === 'policy-capture-plan') {
+    const root = valueAfter(args, '--root');
+    const utterance = valueAfter(args, '--utterance');
+    const inputPath = valueAfter(args, '--input');
+    if (!root) throw new Error('missing --root');
+    if (!utterance && !inputPath) throw new Error('missing --utterance or --input');
+    const text = inputPath ? await readPlanPolicyCaptureText(inputPath) : utterance;
+    return `${JSON.stringify(await capturePlanPolicyInstructions({ projectRoot: root, text: text ?? '' }), null, 2)}\n`;
   }
 
   if (command === 'policy-add') {

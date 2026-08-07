@@ -123,14 +123,24 @@ try {
   assert(policyCapture.schema === 'ccpanes.project-policy-capture-result.v1', 'policy-capture schema mismatch');
   assert(policyCapture.policyRuleCount === 2, 'policy-capture expected two rules');
   assert(readFileSync(join(project, '.ccpanes-task', 'policy.md'), 'utf8').includes('禁止运行 deploy-artifact'), 'policy-capture ledger missing instruction');
+  const planPolicyCapture = parseJson(run([
+    'policy-capture-plan',
+    '--root',
+    project,
+    '--utterance',
+    '计划阶段规则：禁止运行 ship-artifact，除非测试显式解除。'
+  ]));
+  assert(planPolicyCapture.schema === 'ccpanes.plan-policy-capture-result.v1', 'policy-capture-plan schema mismatch');
+  assert(planPolicyCapture.capturedCount === 1, 'policy-capture-plan expected one captured rule');
+  assert(readFileSync(join(project, '.ccpanes-task', 'policy.md'), 'utf8').includes('禁止运行 ship-artifact'), 'policy-capture-plan ledger missing instruction');
   const policyList = parseJson(run(['policy-list', '--root', project]));
-  assert(policyList.ruleCount === 2, 'policy-list expected two rules');
+  assert(policyList.ruleCount === 3, 'policy-list expected three rules');
   const policyValidate = parseJson(run(['policy-validate', '--root', project]));
   assert(policyValidate.valid === true, 'policy-validate expected valid=true');
   const policyDisable = parseJson(run(['policy-disable', '--root', project, '--id', 'block-publish-smoke']));
   assert(policyDisable.policy.rules.find((rule) => rule.id === 'block-publish-smoke').enabled === false, 'policy-disable expected disabled rule');
   const policyClear = parseJson(run(['policy-clear', '--root', project]));
-  assert(policyClear.disabledRuleCount === 2, 'policy-clear expected two disabled rules');
+  assert(policyClear.disabledRuleCount === 3, 'policy-clear expected three disabled rules');
 
   const probe = parseJson(run(['probe', '--utterance', '继续', '--session', 'leader-1', '--workspace-root', fixture]));
   assert(probe.schema === 'ccpanes.resume-probe.v1', 'probe schema mismatch');

@@ -36,6 +36,7 @@ project-bootstrap.ts         一键项目初始化编排
 project-policy.ts            policy.json 机械规则模型、校验、匹配
 project-policy-ledger.ts     policy.md 人类可读规则台账
 project-policy-capture.ts    policy.md + policy.json 双写入口
+plan-policy-capture.ts       plan 文本规则识别并编排 policy-capture
 hook-event-adapter.ts        Codex/Claude/泛化 tool event 到 HookCall 的适配
 hook-shell-analyzer.ts       shell 命令读写目标和高风险分类
 hook-dry-run.ts              单次 HookCall allow/block 决策
@@ -66,6 +67,7 @@ paths.ts                     路径归一化和边界判断
 project-bootstrap.test.ts         bootstrap-project 行为
 project-policy.test.ts            policy.json 规则校验和匹配
 project-policy-capture.test.ts    policy-capture 双写行为
+plan-policy-capture.test.ts       plan 阶段规则自动识别和沉淀
 hook-event-adapter.test.ts        Hook 事件适配
 hook-dry-run.test.ts              allow/block 决策
 hook-runner.test.ts               Hook runner 与项目策略集成

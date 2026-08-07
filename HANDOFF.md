@@ -9,7 +9,7 @@
 1. `README.md`：中文主说明和日常命令。
 2. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
 3. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
-4. `docs/plans/`：Phase 24 到 Phase 30 的分阶段设计与实施计划。
+4. `docs/plans/`：Phase 24 到 Phase 31 的分阶段设计与实施计划。
 5. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
 
 ## 当前基线
@@ -29,6 +29,7 @@ Node：>=22
 ```text
 bootstrap-project      一键初始化项目上下文
 policy-capture         对话规则同时落 policy.md + policy.json
+policy-capture-plan    从 plan 文本识别明确规则并编排 policy-capture
 hook-enforce           PreToolUse 执行前拦截
 permission-enforce     PermissionRequest 高风险授权拦截
 post-enforce           PostToolUse 审计 JSONL
@@ -152,4 +153,4 @@ live 验证结果
 
 ## 下一步建议
 
-后续可继续做 Phase 31：把 `policy-capture` 进一步接入 CC-Panes plan 阶段自动调用，让对话中出现的“禁止/开放/清除规则”自动落到项目 `.ccpanes-task`，减少手工命令输入。
+后续可继续做 Phase 32：在 CC-Panes plan 事件侧调用 `policy-capture-plan`，把工具层能力接入真实 plan 生命周期；继续保持用户级配置只读，先做 dry-run / audit 再发布。
