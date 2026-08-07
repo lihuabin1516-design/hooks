@@ -22,17 +22,13 @@ When Codex starts in this project or begins planning a concrete task:
 Preferred command when the CC-Panes hooks CLI is available:
 
 ```powershell
-node <ccpanes-hooks-root>\dist\src\cli.js write-current --root <project-root> --task-id <task-id> --phase shape
-node <ccpanes-hooks-root>\dist\src\cli.js agents-install --root <project-root>
-node <ccpanes-hooks-root>\dist\src\cli.js agents-validate --root <project-root>
+node <ccpanes-hooks-root>\dist\src\cli.js bootstrap-project --root <project-root> --task-id <task-id> --phase shape
 ```
 
 Known local default for this workstation:
 
 ```powershell
-node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js write-current --root <project-root> --task-id <task-id> --phase shape
-node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js agents-install --root <project-root>
-node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js agents-validate --root <project-root>
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js bootstrap-project --root <project-root> --task-id <task-id> --phase shape
 ```
 
 ## Phase meanings

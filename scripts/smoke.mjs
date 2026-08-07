@@ -74,12 +74,13 @@ try {
   cleanFixture();
   mkdirSync(project, { recursive: true });
 
-  const writeCurrent = parseJson(run(['write-current', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
-  assert(writeCurrent.taskId === 'task-alpha', 'write-current did not return task-alpha');
+  const bootstrapProject = parseJson(run(['bootstrap-project', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
+  assert(bootstrapProject.schema === 'ccpanes.project-bootstrap-result.v1', 'bootstrap-project schema mismatch');
+  assert(bootstrapProject.taskId === 'task-alpha', 'bootstrap-project did not return task-alpha');
+  assert(existsSync(join(project, '.ccpanes-task', 'policy.md')), 'bootstrap-project missing policy.md');
+  assert(existsSync(join(project, '.ccpanes-task', 'policy.json')), 'bootstrap-project missing policy.json');
+  assert(existsSync(join(project, '.ccpanes-task', 'bootstrap-report.json')), 'bootstrap-project missing bootstrap-report.json');
 
-  const agentsInstall = parseJson(run(['agents-install', '--root', project]));
-  assert(agentsInstall.schema === 'ccpanes.agents-entry-result.v1', 'agents-install schema mismatch');
-  assert(agentsInstall.changed === true, 'agents-install expected changed=true');
   const agentsValidate = parseJson(run(['agents-validate', '--root', project]));
   assert(agentsValidate.valid === true, 'agents-validate expected valid=true');
   const agentsInstallAgain = parseJson(run(['agents-install', '--root', project]));

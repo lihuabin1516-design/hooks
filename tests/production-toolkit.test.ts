@@ -60,12 +60,11 @@ describe('createProductionToolkit', () => {
     expect(installScript).toContain('hooks.json');
     expect(installScript).toContain('INSTALL-HOOKS');
     expect(verifyScript).toContain('verify-installed-hooks');
-    expect(bootstrapScript).toContain('write-current');
-    expect(bootstrapScript).toContain('agents-install');
-    expect(bootstrapScript).toContain('agents-validate');
+    expect(bootstrapScript).toContain('bootstrap-project');
     expect(rollbackScript).toContain('Rollback');
     expect(readme).toContain('SessionStart');
     expect(readme).toContain('AGENTS.md');
+    expect(readme).toContain('bootstrap-report.json');
     expect(readme).toContain('Stop');
   });
 

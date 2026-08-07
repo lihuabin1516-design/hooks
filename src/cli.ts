@@ -28,6 +28,7 @@ import { verifyInstalledHooks } from './installed-hooks.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
 import { createProductionToolkit } from './production-toolkit.js';
+import { bootstrapProject } from './project-bootstrap.js';
 import {
   addProjectPolicyRule,
   clearProjectPolicyRules,
@@ -236,6 +237,17 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const task = makeTask(root, taskId, phase);
     await writeCurrentTaskAtomic(root, task);
     return `${JSON.stringify({ path: currentTaskPath(root), taskId, phase }, null, 2)}\n`;
+  }
+
+  if (command === 'bootstrap-project') {
+    const root = valueAfter(args, '--root');
+    const taskId = valueAfter(args, '--task-id');
+    const phase = parsePhase(valueAfter(args, '--phase') ?? 'shape');
+    const workspace = valueAfter(args, '--workspace');
+    const notes = valueAfter(args, '--notes');
+    if (!root) throw new Error('missing --root');
+    if (!taskId) throw new Error('missing --task-id');
+    return `${JSON.stringify(await bootstrapProject({ projectRoot: root, taskId, phase, workspace, notes }), null, 2)}\n`;
   }
 
   if (command === 'agents-install') {

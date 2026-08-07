@@ -86,6 +86,32 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
   });
 
+  test('bootstraps a project with current task, AGENTS entry, policy files, and report', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const output = await runCli([
+      'bootstrap-project',
+      '--root',
+      projectRoot,
+      '--task-id',
+      'task-alpha',
+      '--phase',
+      'shape'
+    ]);
+    const parsed = JSON.parse(output);
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.project-bootstrap-result.v1',
+      taskId: 'task-alpha',
+      phase: 'shape'
+    });
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, 'AGENTS.md'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'bootstrap-report.json'))).resolves.toBeTruthy();
+    expect(JSON.parse(await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), 'utf8')).rules).toEqual([]);
+  });
+
   test('installs and validates AGENTS.md hook entry through CLI', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     await fs.mkdir(projectRoot, { recursive: true });
