@@ -1,0 +1,27 @@
+{
+  "schema": "ccpanes.project-policy.v1",
+  "rules": [
+    {
+      "id": "block-generated-edits",
+      "enabled": true,
+      "effect": "block",
+      "reason": "user_blocked_generated_edits",
+      "match": {
+        "tools": ["write", "edit", "apply_patch", "shell"],
+        "pathContains": ["generated/"],
+        "phases": ["build", "verify"]
+      }
+    },
+    {
+      "id": "allow-docs-during-shape",
+      "enabled": true,
+      "effect": "allow",
+      "reason": "user_opened_docs_during_shape",
+      "match": {
+        "tools": ["write", "edit", "apply_patch"],
+        "pathContains": ["docs/"],
+        "phases": ["shape"]
+      }
+    }
+  ]
+}

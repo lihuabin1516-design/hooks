@@ -35,9 +35,15 @@ should be recorded in:
 <project>/.ccpanes-task/policy.md
 ```
 
-The current mechanical hooks enforce task/worktree/user-config boundaries from
-`current-task.json`; `policy.md` is the project-local model-readable ledger for
-dialogue-level and temporary project policy.
+When a rule needs hook-level enforcement, mirror the effective rule into:
+
+```text
+<project>/.ccpanes-task/policy.json
+```
+
+`policy.md` is the project-local model-readable ledger. `policy.json` is the
+mechanical allow/block contract consumed by `hook-enforce`, `permission-enforce`,
+and `hook-runner`.
 
 ## Quick Start
 
@@ -142,6 +148,7 @@ See `examples/` for synthetic input files and schema examples:
 - `examples/hook-final-runbook-request.json`: flag-level request fixture for final manual execution runbook generation.
 - `templates/AGENTS.ccpanes-hooks.md`: AGENTS.md block for project-level no-touch hook entry.
 - `templates/policy.example.md`: project-local conversation policy ledger example.
+- `templates/policy.example.json`: project-local mechanical allow/block rule example.
 
 ## Safety Boundaries
 
@@ -154,6 +161,7 @@ See `examples/` for synthetic input files and schema examples:
 - `hook-enforce` is the live Codex hook entrypoint: allowed calls emit no stdout; blocked `PreToolUse` calls emit the documented Codex deny JSON shape and optionally write an audit artifact.
 - Phase 19 coverage includes `apply_patch`, `Edit`, `Write`, `Bash` / `shell_command`, and FastCtx MCP `read` / `grep` / `glob` / `replace` style events. Shell coverage extracts common PowerShell and redirection write targets, allows known read-only verification commands, and blocks high-risk commands such as destructive git clean/reset, global installs, and git push.
 - `permission-enforce` is the Phase 20 Codex `PermissionRequest` entrypoint. Blocked requests emit the documented `PermissionRequest` deny JSON shape. Allowed requests emit no stdout so Codex continues the normal approval flow; the tool intentionally does not auto-approve escalations.
+- Phase 25 project policy reads `<project>/.ccpanes-task/policy.json` when present. A malformed file fails closed with a `project_policy_invalid` deny reason. Rules support `allow` / `block`, `enabled`, `tools` / `tool`, `pathContains`, `commandContains`, `phases` / `phase`, and `reasons` / `reason`. Later matching rules win among project rules. Project `allow` rules can open phase or project-policy blocks inside the active worktree, but they do not override hard boundaries such as user config paths, reference repositories, destructive Git commands, global installs, or writes without target paths.
 - `post-enforce` is the Phase 21 Codex `PostToolUse` audit entrypoint. It appends compact JSONL records to `<audit-root>/<base64url(taskId)>/post-tool-use-audit.jsonl` and emits no stdout, so it does not alter Codex's normal tool result handling.
 - `session-start` is the Phase 22 Codex `SessionStart` entrypoint. It emits compact `hookSpecificOutput.additionalContext` for the resolved current task and audit paths.
 - `stop-check` is the Phase 22 Codex `Stop` entrypoint. It emits a JSON `systemMessage` reminder and `continue: true`; it does not emit `decision: "block"` or create continuation prompts.

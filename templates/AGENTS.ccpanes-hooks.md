@@ -43,17 +43,34 @@ When the user says a rule such as "禁止 X", "不要再建议 Y", "开放 X",
 "清除限制", or gives a project-specific permission boundary:
 
 1. Record the current effective rule in `.ccpanes-task/policy.md`.
-2. Treat newer explicit user instructions as overriding older policy entries.
-3. Keep policy scoped to this project unless the user explicitly says it is global.
-4. If the user says to clear/open a policy, update `.ccpanes-task/policy.md`
+2. If the rule needs mechanical enforcement, also update
+   `.ccpanes-task/policy.json`.
+3. Treat newer explicit user instructions as overriding older policy entries.
+4. Keep policy scoped to this project unless the user explicitly says it is global.
+5. If the user says to clear/open a policy, update `.ccpanes-task/policy.md`
    and note the cleared item.
-5. Do not write user-level Codex config for project-specific policy.
+6. For mechanical clearing/opening, disable or add an `allow` rule in
+   `.ccpanes-task/policy.json`; do not write user-level Codex config for
+   project-specific policy.
 
-Current mechanical hooks enforce tool/file/command boundaries from
-`current-task.json`. The policy ledger is the model-readable source of truth for
-dialogue-level preferences and project-local allow/block decisions. If a policy
-needs hard mechanical enforcement, add it as a future hook-policy JSON rule under
-`.ccpanes-task/` and verify with the production toolkit before relying on it.
+Mechanical hooks enforce tool/file/command boundaries from `current-task.json`
+and optional project-local rules from `.ccpanes-task/policy.json`.
+`policy.md` remains the model-readable ledger; `policy.json` is the executable
+allow/block rule file.
+
+Supported `policy.json` match dimensions:
+
+- `tools` / `tool`
+- `pathContains`
+- `commandContains`
+- `phases` / `phase`
+- `reasons` / `reason`
+- `enabled`
+
+`allow` rules can open project-local phase or project-policy blocks inside the
+active worktree. They do not override hard boundaries such as user-level config
+paths, reference repositories, destructive Git commands, global installs, or
+write calls without a target path.
 
 ## Completion gate
 

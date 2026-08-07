@@ -53,6 +53,8 @@ export interface HookCall {
   tool: 'read' | 'grep' | 'glob' | 'edit' | 'write' | 'apply_patch' | 'shell';
   targetPath: string | null;
   writes: boolean;
+  command?: string;
+  policyEffect?: 'allow' | 'block';
   policyReason?: string;
 }
 

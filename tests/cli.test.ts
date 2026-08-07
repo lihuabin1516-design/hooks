@@ -367,6 +367,102 @@ describe('runCli', () => {
     expect(output).toBe('');
   });
 
+  test('hook-enforce applies project policy block rules from current task worktree', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), JSON.stringify({
+      schema: 'ccpanes.project-policy.v1',
+      rules: [{
+        id: 'block-publish-probe',
+        effect: 'block',
+        reason: 'user_blocked_publish_probe',
+        match: { tools: ['shell'], commandContains: ['publish-artifact'] }
+      }]
+    }), 'utf8');
+
+    const output = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: 'node scripts/publish-artifact.mjs'
+      }
+    }));
+    const parsed = JSON.parse(output);
+    const auditPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'hook-enforce-audit.json');
+    const audit = JSON.parse(await fs.readFile(auditPath, 'utf8'));
+
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain('project_policy_block:user_blocked_publish_probe');
+    expect(audit.batch.calls[0]).toMatchObject({
+      policyEffect: 'block',
+      policyReason: 'user_blocked_publish_probe'
+    });
+  });
+
+  test('hook-enforce applies project policy allow rules without opening hard boundaries', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'shape' });
+    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), JSON.stringify({
+      schema: 'ccpanes.project-policy.v1',
+      rules: [{
+        id: 'allow-docs-shape',
+        effect: 'allow',
+        reason: 'user_opened_docs_during_shape',
+        match: { tools: ['apply_patch'], pathContains: ['docs/'], phases: ['shape'] }
+      }]
+    }), 'utf8');
+
+    const output = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'apply_patch',
+      tool_input: {
+        patch: `*** Begin Patch\n*** Add File: ${path.join(projectRoot, 'docs', 'plan.md')}\n+ok\n*** End Patch\n`
+      }
+    }));
+    const auditPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'hook-enforce-audit.json');
+    const audit = JSON.parse(await fs.readFile(auditPath, 'utf8'));
+
+    expect(output).toBe('');
+    expect(audit.allowed).toBe(true);
+    expect(audit.dryRun.decisions[0].reason).toBe('project_policy_allow:user_opened_docs_during_shape');
+  });
+
+  test('permission-enforce fails closed when project policy json is malformed', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), '{not-json', 'utf8');
+
+    const output = await runCli([
+      'permission-enforce',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'PermissionRequest',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: 'npm test'
+      }
+    }));
+    const parsed = JSON.parse(output);
+
+    expect(parsed.hookSpecificOutput.decision.behavior).toBe('deny');
+    expect(parsed.hookSpecificOutput.decision.message).toContain('project_policy_invalid');
+  });
+
   test('permission-enforce dynamic resolver no-ops when no task exists', async () => {
     const orphanCwd = path.join(tempRoot, 'orphan');
     await fs.mkdir(orphanCwd, { recursive: true });

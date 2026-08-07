@@ -92,4 +92,52 @@ describe('decideHookDryRun', () => {
     const decision = decideHookDryRun(task('shape'), call);
     expect(decision).toMatchObject({ action: 'allow', reason: 'non_write_call' });
   });
+
+  test('project block rules can deny otherwise allowed non-write calls', () => {
+    const call: HookCall = {
+      tool: 'shell',
+      targetPath: 'D:/cc-pane/project-alpha',
+      writes: false,
+      policyEffect: 'block',
+      policyReason: 'user_blocked_publish_probe'
+    };
+    const decision = decideHookDryRun(task('build'), call);
+    expect(decision).toMatchObject({ action: 'block', reason: 'project_policy_block:user_blocked_publish_probe' });
+  });
+
+  test('project allow rules can open phase guarded writes inside the worktree', () => {
+    const call: HookCall = {
+      tool: 'write',
+      targetPath: 'D:/cc-pane/project-alpha/docs/plan.md',
+      writes: true,
+      policyEffect: 'allow',
+      policyReason: 'user_opened_docs_during_shape'
+    };
+    const decision = decideHookDryRun(task('shape'), call);
+    expect(decision).toMatchObject({ action: 'allow', reason: 'project_policy_allow:user_opened_docs_during_shape' });
+  });
+
+  test('project allow rules do not override hard user config boundaries', () => {
+    const call: HookCall = {
+      tool: 'write',
+      targetPath: 'C:/Users/AI001/.codex/config.toml',
+      writes: true,
+      policyEffect: 'allow',
+      policyReason: 'user_opened_config'
+    };
+    const decision = decideHookDryRun(task('shape'), call);
+    expect(decision).toMatchObject({ action: 'block', reason: 'forbidden_user_config_path' });
+  });
+
+  test('project block rules do not hide hard user config boundary reasons', () => {
+    const call: HookCall = {
+      tool: 'write',
+      targetPath: 'C:/Users/AI001/.codex/config.toml',
+      writes: true,
+      policyEffect: 'block',
+      policyReason: 'user_blocked_config'
+    };
+    const decision = decideHookDryRun(task('build'), call);
+    expect(decision).toMatchObject({ action: 'block', reason: 'forbidden_user_config_path' });
+  });
 });

@@ -9,7 +9,7 @@ import { readGitState } from './git-state.js';
 import { decideHookDryRun } from './hook-dry-run.js';
 import { adaptHookEventToBatch } from './hook-event-adapter.js';
 import { runHookDryRunBatch, validateHookDryRunBatch } from './hook-batch.js';
-import { runHookEventDryRun } from './hook-runner.js';
+import { runHookEventDryRunWithProjectPolicy, type HookRunnerResult } from './hook-runner.js';
 import { createHookShadowAudit, writeHookShadowAuditAtomic } from './hook-shadow.js';
 import { createHookInstallPlan, writeHookInstallPlanAtomic, type HookInstallTarget } from './hook-install-plan.js';
 import { createHookPackage } from './hook-package.js';
@@ -119,7 +119,7 @@ function extractHookCwd(event: unknown): string | null {
   return typeof record.cwd === 'string' && record.cwd.length > 0 ? record.cwd : null;
 }
 
-function formatPreToolUseDeny(result: ReturnType<typeof runHookEventDryRun>): string {
+function formatPreToolUseDeny(result: HookRunnerResult): string {
   const blocked = result.dryRun.decisions.find((decision) => decision.action === 'block');
   const reason = blocked
     ? `${blocked.reason}${blocked.targetPath ? `: ${blocked.targetPath}` : ''}`
@@ -133,7 +133,7 @@ function formatPreToolUseDeny(result: ReturnType<typeof runHookEventDryRun>): st
   }, null, 2)}\n`;
 }
 
-function formatPermissionRequestDeny(result: ReturnType<typeof runHookEventDryRun>): string {
+function formatPermissionRequestDeny(result: HookRunnerResult): string {
   const blocked = result.dryRun.decisions.find((decision) => decision.action === 'block');
   const reason = blocked
     ? `${blocked.reason}${blocked.targetPath ? `: ${blocked.targetPath}` : ''}`
@@ -242,7 +242,7 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const eventText = eventPath ? await readFile(eventPath, 'utf8') : (stdinText ?? await readStdin());
     if (eventText.trim().length === 0) throw new Error('missing hook event stdin');
     const event = JSON.parse(eventText);
-    const result = runHookEventDryRun(task, event);
+    const result = await runHookEventDryRunWithProjectPolicy(task, event);
     return `${JSON.stringify(result, null, 2)}\n`;
   }
 
@@ -267,7 +267,7 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     }
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    const result = runHookEventDryRun(task, event);
+    const result = await runHookEventDryRunWithProjectPolicy(task, event);
     const resolvedAuditOut = auditOut ?? (auditRoot ? auditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
       fs.mkdirSync(path.dirname(resolvedAuditOut), { recursive: true });
@@ -297,7 +297,7 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     }
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    const result = runHookEventDryRun(task, event);
+    const result = await runHookEventDryRunWithProjectPolicy(task, event);
     const resolvedAuditOut = auditOut ?? (auditRoot ? permissionAuditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
       fs.mkdirSync(path.dirname(resolvedAuditOut), { recursive: true });

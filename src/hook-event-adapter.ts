@@ -48,6 +48,12 @@ function extractPathFromPatch(patch: unknown): string | null {
   return null;
 }
 
+function extractCommandText(input: Record<string, unknown>, tool: HookCall['tool']): string | undefined {
+  if (typeof input.command === 'string') return input.command;
+  if (tool === 'apply_patch' && typeof input.patch === 'string') return input.patch;
+  return undefined;
+}
+
 function extractTargetPaths(input: Record<string, unknown>, tool: HookCall['tool']): string[] {
   if (tool === 'apply_patch') {
     const patchPath = extractPathFromPatch(input.patch ?? input.command);
@@ -83,9 +89,11 @@ function adaptCall(value: unknown, fallbackCwd: string | null): HookCall[] {
   }
   const targetPaths = extractTargetPaths(record, tool);
   if (targetPaths.length === 0) {
-    return [{ tool, targetPath: null, writes: inferWrites(tool, record.writes) }];
+    const command = extractCommandText(record, tool);
+    return [{ tool, targetPath: null, writes: inferWrites(tool, record.writes), ...(command ? { command } : {}) }];
   }
-  return targetPaths.map((targetPath) => ({ tool, targetPath, writes: inferWrites(tool, record.writes) }));
+  const command = extractCommandText(record, tool);
+  return targetPaths.map((targetPath) => ({ tool, targetPath, writes: inferWrites(tool, record.writes), ...(command ? { command } : {}) }));
 }
 
 function adaptGenericEvent(task: CurrentTask, record: Record<string, unknown>): HookDryRunBatchInput | null {
@@ -114,9 +122,10 @@ function adaptSingleToolEvent(task: CurrentTask, record: Record<string, unknown>
     };
   }
   const targetPaths = extractTargetPaths(input, tool);
+  const command = extractCommandText(input, tool);
   const calls = targetPaths.length === 0
-    ? [{ tool, targetPath: null, writes: inferWrites(tool, input.writes) }]
-    : targetPaths.map((targetPath) => ({ tool, targetPath, writes: inferWrites(tool, input.writes) }));
+    ? [{ tool, targetPath: null, writes: inferWrites(tool, input.writes), ...(command ? { command } : {}) }]
+    : targetPaths.map((targetPath) => ({ tool, targetPath, writes: inferWrites(tool, input.writes), ...(command ? { command } : {}) }));
   return {
     schema: 'ccpanes.hook-dry-run-batch.v1',
     task,

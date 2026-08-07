@@ -59,7 +59,7 @@ describe('adaptHookEventToBatch', () => {
     });
 
     expect(batch.calls).toEqual([
-      { tool: 'shell', targetPath: 'D:/cc-pane/project-alpha', writes: false }
+      { tool: 'shell', targetPath: 'D:/cc-pane/project-alpha', writes: false, command: 'npm test' }
     ]);
   });
 
@@ -72,7 +72,7 @@ describe('adaptHookEventToBatch', () => {
     });
 
     expect(batch.calls).toEqual([
-      { tool: 'shell', targetPath: 'C:/Users/AI001/.codex/config.toml', writes: true }
+      { tool: 'shell', targetPath: 'C:/Users/AI001/.codex/config.toml', writes: true, command: 'Set-Content -Path C:/Users/AI001/.codex/config.toml -Value x' }
     ]);
   });
 
@@ -119,6 +119,7 @@ describe('adaptHookEventToBatch', () => {
         tool: 'shell',
         targetPath: 'D:/cc-pane/project-alpha',
         writes: true,
+        command: 'git push origin HEAD',
         policyReason: 'external_publication_git_push'
       }
     ]);
@@ -136,7 +137,8 @@ describe('adaptHookEventToBatch', () => {
     expect(batch.calls[0]).toEqual({
       tool: 'apply_patch',
       targetPath: 'D:/cc-pane/project-alpha/src/a.ts',
-      writes: true
+      writes: true,
+      command: '*** Begin Patch\n*** Update File: D:/cc-pane/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
     });
   });
 
@@ -152,7 +154,8 @@ describe('adaptHookEventToBatch', () => {
     expect(batch.calls[0]).toEqual({
       tool: 'apply_patch',
       targetPath: 'D:/cc-pane/project-alpha/src/from-command.ts',
-      writes: true
+      writes: true,
+      command: '*** Begin Patch\n*** Add File: D:/cc-pane/project-alpha/src/from-command.ts\n+export const value = 1;\n*** End Patch\n'
     });
   });
 
