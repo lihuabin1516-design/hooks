@@ -1,12 +1,12 @@
 # CC-Panes Hooks Phase 29 — One-shot Project Bootstrap Plan
 
-日期：2026-08-07  
-目标仓库：`D:\cc-pane\tool\repos\hooks`  
+日期：2026-08-07
+目标仓库：`D:\cc-pane\tool\repos\hooks`
 远端仓库：`https://github.com/lihuabin1516-design/hooks.git`
 
 ## Change Contract
 
-Intent: 将新项目接入收敛为一个 `bootstrap-project` 命令，避免用户或 CC-Panes 分别调用多条 setup 命令。  
+Intent: 将新项目接入收敛为一个 `bootstrap-project` 命令，避免用户或 CC-Panes 分别调用多条 setup 命令。
 Authorized Mutation:
 - 修改 hooks 仓库源码、测试、模板、README、smoke、production toolkit。
 - commit 并 push 到远端 `main`。
