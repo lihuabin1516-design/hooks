@@ -53,6 +53,22 @@ When the user says a rule such as "禁止 X", "不要再建议 Y", "开放 X",
    `.ccpanes-task/policy.json`; do not write user-level Codex config for
    project-specific policy.
 
+Preferred CLI form when the CC-Panes hooks CLI is available:
+
+```powershell
+node <ccpanes-hooks-root>\dist\src\cli.js policy-add --root <project-root> --id <rule-id> --effect block --reason <reason> --tool shell --command-contains <text>
+node <ccpanes-hooks-root>\dist\src\cli.js policy-add --root <project-root> --id <rule-id> --effect allow --reason <reason> --tool apply_patch --path-contains docs/ --phase shape
+node <ccpanes-hooks-root>\dist\src\cli.js policy-disable --root <project-root> --id <rule-id>
+node <ccpanes-hooks-root>\dist\src\cli.js policy-clear --root <project-root>
+node <ccpanes-hooks-root>\dist\src\cli.js policy-validate --root <project-root>
+```
+
+Known local default for this workstation:
+
+```powershell
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js policy-validate --root <project-root>
+```
+
 Mechanical hooks enforce tool/file/command boundaries from `current-task.json`
 and optional project-local rules from `.ccpanes-task/policy.json`.
 `policy.md` remains the model-readable ledger; `policy.json` is the executable

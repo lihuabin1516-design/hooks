@@ -1,8 +1,20 @@
-import { mkdtemp, mkdir, writeFile } from 'node:fs/promises';
+import { mkdtemp, mkdir, readFile, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { applyProjectPolicyToCall, readProjectPolicy, validateProjectPolicy } from '../src/project-policy.js';
+import {
+  addProjectPolicyRule,
+  applyProjectPolicyToCall,
+  clearProjectPolicyRules,
+  createProjectPolicyRule,
+  disableProjectPolicyRule,
+  emptyProjectPolicy,
+  projectPolicyPath,
+  readProjectPolicy,
+  readProjectPolicyOrEmpty,
+  validateProjectPolicy,
+  writeProjectPolicyAtomic
+} from '../src/project-policy.js';
 import type { CurrentTask, HookCall } from '../src/types.js';
 
 function task(worktreeRoot = 'D:/cc-pane/project-alpha', phase: CurrentTask['phase'] = 'build'): CurrentTask {
@@ -117,5 +129,54 @@ describe('project policy', () => {
     }), 'utf8');
 
     await expect(readProjectPolicy(root)).rejects.toThrow('effect must be allow or block');
+  });
+
+  test('creates, adds, disables, and clears rules without changing schema', () => {
+    const rule = createProjectPolicyRule({
+      id: 'block-publish',
+      effect: 'block',
+      reason: 'user_blocked_publish',
+      match: { tools: ['shell'], commandContains: ['publish-artifact'] }
+    });
+    const added = addProjectPolicyRule(emptyProjectPolicy(), rule);
+    const disabled = disableProjectPolicyRule(added, 'block-publish');
+    const cleared = clearProjectPolicyRules(addProjectPolicyRule(disabled, createProjectPolicyRule({
+      id: 'allow-docs',
+      effect: 'allow',
+      reason: 'user_opened_docs',
+      match: { tools: ['apply_patch'], pathContains: ['docs/'], phases: ['shape'] }
+    })));
+
+    expect(added.rules).toHaveLength(1);
+    expect(disabled.rules[0].enabled).toBe(false);
+    expect(cleared.schema).toBe('ccpanes.project-policy.v1');
+    expect(cleared.rules.every((candidate) => candidate.enabled === false)).toBe(true);
+  });
+
+  test('refuses duplicate rule ids unless replace is requested', () => {
+    const rule = createProjectPolicyRule({
+      id: 'block-publish',
+      effect: 'block',
+      reason: 'user_blocked_publish',
+      match: { tools: ['shell'] }
+    });
+    const policy = addProjectPolicyRule(emptyProjectPolicy(), rule);
+
+    expect(() => addProjectPolicyRule(policy, rule)).toThrow('rule already exists: block-publish');
+    expect(addProjectPolicyRule(policy, { ...rule, reason: 'replacement' }, { replace: true }).rules[0].reason).toBe('replacement');
+  });
+
+  test('writes policy atomically under the project task directory', async () => {
+    const root = await mkdtemp(path.join(os.tmpdir(), 'ccpanes-policy-'));
+    const policy = addProjectPolicyRule(emptyProjectPolicy(), createProjectPolicyRule({
+      id: 'block-publish',
+      effect: 'block',
+      reason: 'user_blocked_publish',
+      match: { tools: ['shell'] }
+    }));
+
+    await writeProjectPolicyAtomic(root, policy);
+    await expect(readProjectPolicyOrEmpty(root)).resolves.toMatchObject(policy);
+    expect(JSON.parse(await readFile(projectPolicyPath(root), 'utf8')).rules[0].id).toBe('block-publish');
   });
 });

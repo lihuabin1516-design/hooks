@@ -27,6 +27,17 @@ import { verifyInstalledHooks } from './installed-hooks.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
 import { createProductionToolkit } from './production-toolkit.js';
+import {
+  addProjectPolicyRule,
+  clearProjectPolicyRules,
+  createProjectPolicyRule,
+  disableProjectPolicyRule,
+  projectPolicyPath,
+  readProjectPolicyOrEmpty,
+  validateProjectPolicy,
+  writeProjectPolicyAtomic,
+  type ProjectPolicyRuleInput
+} from './project-policy.js';
 import { probeResume } from './resume-probe.js';
 import { createSessionStartHookOutput, createStopCheckHookOutput } from './session-lifecycle.js';
 import type { CurrentTask, GitState, HookCall, TaskPhase } from './types.js';
@@ -113,6 +124,16 @@ function parseHookInstallTarget(value: string | null): HookInstallTarget {
   throw new Error(`invalid hook install target: ${value}`);
 }
 
+function parseProjectPolicyEffect(value: string | null): ProjectPolicyRuleInput['effect'] {
+  if (value === 'allow' || value === 'block') return value;
+  throw new Error(`invalid policy effect: ${value}`);
+}
+
+function parseProjectPolicyTool(value: string): HookCall['tool'] {
+  if (value === 'read' || value === 'grep' || value === 'glob' || value === 'edit' || value === 'write' || value === 'apply_patch' || value === 'shell') return value;
+  throw new Error(`invalid policy tool: ${value}`);
+}
+
 function extractHookCwd(event: unknown): string | null {
   if (!event || typeof event !== 'object') return null;
   const record = event as Record<string, unknown>;
@@ -173,6 +194,17 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString('utf8');
 }
 
+function projectPolicyCliResult(command: string, root: string, changed: boolean, policy: unknown, extra: Record<string, unknown> = {}): string {
+  return `${JSON.stringify({
+    schema: 'ccpanes.project-policy-cli-result.v1',
+    command,
+    path: projectPolicyPath(root),
+    changed,
+    policy,
+    ...extra
+  }, null, 2)}\n`;
+}
+
 export async function runCli(args: string[], stdinText?: string): Promise<string> {
   const command = args[0];
 
@@ -203,6 +235,66 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const task = makeTask(root, taskId, phase);
     await writeCurrentTaskAtomic(root, task);
     return `${JSON.stringify({ path: currentTaskPath(root), taskId, phase }, null, 2)}\n`;
+  }
+
+  if (command === 'policy-validate') {
+    const root = valueAfter(args, '--root');
+    if (!root) throw new Error('missing --root');
+    const exists = fs.existsSync(projectPolicyPath(root));
+    const policy = await readProjectPolicyOrEmpty(root);
+    validateProjectPolicy(policy);
+    return projectPolicyCliResult(command, root, false, policy, { valid: true, exists, ruleCount: policy.rules.length });
+  }
+
+  if (command === 'policy-list') {
+    const root = valueAfter(args, '--root');
+    if (!root) throw new Error('missing --root');
+    const exists = fs.existsSync(projectPolicyPath(root));
+    const policy = await readProjectPolicyOrEmpty(root);
+    return projectPolicyCliResult(command, root, false, policy, { exists, ruleCount: policy.rules.length });
+  }
+
+  if (command === 'policy-add') {
+    const root = valueAfter(args, '--root');
+    const id = valueAfter(args, '--id');
+    const reason = valueAfter(args, '--reason');
+    if (!root) throw new Error('missing --root');
+    if (!id) throw new Error('missing --id');
+    if (!reason) throw new Error('missing --reason');
+    const rule = createProjectPolicyRule({
+      id,
+      enabled: !args.includes('--disabled'),
+      effect: parseProjectPolicyEffect(valueAfter(args, '--effect')),
+      reason,
+      match: {
+        tools: valuesAfter(args, '--tool').map((tool) => parseProjectPolicyTool(tool)),
+        pathContains: valuesAfter(args, '--path-contains'),
+        commandContains: valuesAfter(args, '--command-contains'),
+        phases: valuesAfter(args, '--phase').map((phase) => parsePhase(phase)),
+        reasons: valuesAfter(args, '--match-reason')
+      }
+    });
+    const policy = addProjectPolicyRule(await readProjectPolicyOrEmpty(root), rule, { replace: args.includes('--replace') });
+    await writeProjectPolicyAtomic(root, policy);
+    return projectPolicyCliResult(command, root, true, policy, { ruleId: id });
+  }
+
+  if (command === 'policy-disable') {
+    const root = valueAfter(args, '--root');
+    const id = valueAfter(args, '--id');
+    if (!root) throw new Error('missing --root');
+    if (!id) throw new Error('missing --id');
+    const policy = disableProjectPolicyRule(await readProjectPolicyOrEmpty(root), id);
+    await writeProjectPolicyAtomic(root, policy);
+    return projectPolicyCliResult(command, root, true, policy, { ruleId: id });
+  }
+
+  if (command === 'policy-clear') {
+    const root = valueAfter(args, '--root');
+    if (!root) throw new Error('missing --root');
+    const policy = clearProjectPolicyRules(await readProjectPolicyOrEmpty(root));
+    await writeProjectPolicyAtomic(root, policy);
+    return projectPolicyCliResult(command, root, true, policy, { disabledRuleCount: policy.rules.length });
   }
 
   if (command === 'dry-run-hook') {

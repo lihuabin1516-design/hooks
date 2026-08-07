@@ -86,6 +86,83 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
   });
 
+  test('manages project policy rules through CLI commands', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+
+    const addOutput = await runCli([
+      'policy-add',
+      '--root',
+      projectRoot,
+      '--id',
+      'block-publish',
+      '--effect',
+      'block',
+      '--reason',
+      'user_blocked_publish',
+      '--tool',
+      'shell',
+      '--command-contains',
+      'publish-artifact'
+    ]);
+    const addParsed = JSON.parse(addOutput);
+    const listParsed = JSON.parse(await runCli(['policy-list', '--root', projectRoot]));
+    const validateParsed = JSON.parse(await runCli(['policy-validate', '--root', projectRoot]));
+
+    expect(addParsed.changed).toBe(true);
+    expect(addParsed.policy.rules[0]).toMatchObject({
+      id: 'block-publish',
+      enabled: true,
+      effect: 'block',
+      reason: 'user_blocked_publish',
+      match: { tools: ['shell'], commandContains: ['publish-artifact'] }
+    });
+    expect(listParsed.ruleCount).toBe(1);
+    expect(validateParsed.valid).toBe(true);
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).resolves.toBeTruthy();
+  });
+
+  test('policy-disable and policy-clear preserve rules but disable enforcement', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    await runCli([
+      'policy-add',
+      '--root',
+      projectRoot,
+      '--id',
+      'block-generated',
+      '--effect',
+      'block',
+      '--reason',
+      'user_blocked_generated',
+      '--tool',
+      'apply_patch',
+      '--path-contains',
+      'generated/'
+    ]);
+    await runCli([
+      'policy-add',
+      '--root',
+      projectRoot,
+      '--id',
+      'allow-docs',
+      '--effect',
+      'allow',
+      '--reason',
+      'user_opened_docs',
+      '--tool',
+      'apply_patch',
+      '--path-contains',
+      'docs/',
+      '--phase',
+      'shape'
+    ]);
+    const disabled = JSON.parse(await runCli(['policy-disable', '--root', projectRoot, '--id', 'block-generated']));
+    const cleared = JSON.parse(await runCli(['policy-clear', '--root', projectRoot]));
+
+    expect(disabled.policy.rules.find((rule: { id: string }) => rule.id === 'block-generated').enabled).toBe(false);
+    expect(cleared.disabledRuleCount).toBe(2);
+    expect(cleared.policy.rules.every((rule: { enabled: boolean }) => rule.enabled === false)).toBe(true);
+  });
+
   test('prints hook dry-run decision JSON', async () => {
     const output = await runCli(['dry-run-hook', '--root', tempRoot, '--phase', 'shape', '--target', path.join(tempRoot, 'src', 'a.ts'), '--tool', 'write']);
     const parsed = JSON.parse(output);

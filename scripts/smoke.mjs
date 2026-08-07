@@ -77,6 +77,32 @@ try {
   const writeCurrent = parseJson(run(['write-current', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
   assert(writeCurrent.taskId === 'task-alpha', 'write-current did not return task-alpha');
 
+  const policyAdd = parseJson(run([
+    'policy-add',
+    '--root',
+    project,
+    '--id',
+    'block-publish-smoke',
+    '--effect',
+    'block',
+    '--reason',
+    'smoke_block_publish',
+    '--tool',
+    'shell',
+    '--command-contains',
+    'publish-artifact'
+  ]));
+  assert(policyAdd.schema === 'ccpanes.project-policy-cli-result.v1', 'policy-add schema mismatch');
+  assert(policyAdd.changed === true, 'policy-add expected changed=true');
+  const policyList = parseJson(run(['policy-list', '--root', project]));
+  assert(policyList.ruleCount === 1, 'policy-list expected one rule');
+  const policyValidate = parseJson(run(['policy-validate', '--root', project]));
+  assert(policyValidate.valid === true, 'policy-validate expected valid=true');
+  const policyDisable = parseJson(run(['policy-disable', '--root', project, '--id', 'block-publish-smoke']));
+  assert(policyDisable.policy.rules[0].enabled === false, 'policy-disable expected disabled rule');
+  const policyClear = parseJson(run(['policy-clear', '--root', project]));
+  assert(policyClear.disabledRuleCount === 1, 'policy-clear expected one disabled rule');
+
   const probe = parseJson(run(['probe', '--utterance', '继续', '--session', 'leader-1', '--workspace-root', fixture]));
   assert(probe.schema === 'ccpanes.resume-probe.v1', 'probe schema mismatch');
   assert(probe.action === 'auto_resume', `probe expected auto_resume, got ${probe.action}`);

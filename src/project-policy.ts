@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isPathInside } from './paths.js';
 import type { CurrentTask, HookCall, TaskPhase } from './types.js';
@@ -22,6 +22,20 @@ export interface ProjectPolicyRule {
 export interface ProjectPolicy {
   schema: 'ccpanes.project-policy.v1';
   rules: ProjectPolicyRule[];
+}
+
+export interface ProjectPolicyRuleInput {
+  id: string;
+  enabled?: boolean;
+  effect: 'allow' | 'block';
+  reason: string;
+  match?: Partial<{
+    tools: HookCall['tool'][];
+    pathContains: string[];
+    commandContains: string[];
+    phases: TaskPhase[];
+    reasons: string[];
+  }>;
 }
 
 export class ProjectPolicyError extends Error {
@@ -106,6 +120,13 @@ export function projectPolicyPath(worktreeRoot: string): string {
   return path.join(worktreeRoot, '.ccpanes-task', 'policy.json');
 }
 
+export function emptyProjectPolicy(): ProjectPolicy {
+  return {
+    schema: 'ccpanes.project-policy.v1',
+    rules: []
+  };
+}
+
 export async function readProjectPolicy(worktreeRoot: string): Promise<ProjectPolicy | null> {
   const policyPath = projectPolicyPath(worktreeRoot);
   if (!isPathInside(worktreeRoot, policyPath)) {
@@ -124,6 +145,75 @@ export async function readProjectPolicy(worktreeRoot: string): Promise<ProjectPo
     if (error instanceof ProjectPolicyError) throw error;
     throw new ProjectPolicyError(error instanceof Error ? error.message : String(error));
   }
+}
+
+export async function readProjectPolicyOrEmpty(worktreeRoot: string): Promise<ProjectPolicy> {
+  return (await readProjectPolicy(worktreeRoot)) ?? emptyProjectPolicy();
+}
+
+export async function writeProjectPolicyAtomic(worktreeRoot: string, policy: ProjectPolicy): Promise<void> {
+  const validated = validateProjectPolicy(policy);
+  const dir = path.join(worktreeRoot, '.ccpanes-task');
+  const finalPath = projectPolicyPath(worktreeRoot);
+  if (!isPathInside(worktreeRoot, finalPath)) {
+    throw new ProjectPolicyError('policy path must stay inside worktree root');
+  }
+  await mkdir(dir, { recursive: true });
+  const tempPath = path.join(dir, `policy.${process.pid}.${Date.now()}.tmp`);
+  await writeFile(tempPath, `${JSON.stringify(validated, null, 2)}\n`, 'utf8');
+  await rename(tempPath, finalPath);
+}
+
+export function createProjectPolicyRule(input: ProjectPolicyRuleInput): ProjectPolicyRule {
+  return validateRule({
+    id: input.id,
+    enabled: input.enabled,
+    effect: input.effect,
+    reason: input.reason,
+    match: {
+      tools: input.match?.tools ?? [],
+      pathContains: input.match?.pathContains ?? [],
+      commandContains: input.match?.commandContains ?? [],
+      phases: input.match?.phases ?? [],
+      reasons: input.match?.reasons ?? []
+    }
+  }, 0);
+}
+
+export function addProjectPolicyRule(policy: ProjectPolicy, rule: ProjectPolicyRule, options: { replace?: boolean } = {}): ProjectPolicy {
+  const validated = validateProjectPolicy(policy);
+  const nextRule = createProjectPolicyRule(rule);
+  const existingIndex = validated.rules.findIndex((candidate) => candidate.id === nextRule.id);
+  if (existingIndex !== -1 && !options.replace) {
+    throw new ProjectPolicyError(`rule already exists: ${nextRule.id}`);
+  }
+  const rules = [...validated.rules];
+  if (existingIndex === -1) {
+    rules.push(nextRule);
+  } else {
+    rules[existingIndex] = nextRule;
+  }
+  return validateProjectPolicy({ schema: 'ccpanes.project-policy.v1', rules });
+}
+
+export function disableProjectPolicyRule(policy: ProjectPolicy, id: string): ProjectPolicy {
+  const validated = validateProjectPolicy(policy);
+  const rules = validated.rules.map((rule) => {
+    if (rule.id !== id) return rule;
+    return { ...rule, enabled: false };
+  });
+  if (!validated.rules.some((rule) => rule.id === id)) {
+    throw new ProjectPolicyError(`rule not found: ${id}`);
+  }
+  return validateProjectPolicy({ schema: 'ccpanes.project-policy.v1', rules });
+}
+
+export function clearProjectPolicyRules(policy: ProjectPolicy): ProjectPolicy {
+  const validated = validateProjectPolicy(policy);
+  return validateProjectPolicy({
+    schema: 'ccpanes.project-policy.v1',
+    rules: validated.rules.map((rule) => ({ ...rule, enabled: false }))
+  });
 }
 
 function includesAny(haystack: string | null | undefined, needles: string[], normalize: (value: string) => string): boolean {
