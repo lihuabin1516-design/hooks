@@ -26,6 +26,8 @@ manual recovery:
 
 ```powershell
 node dist/src/cli.js write-current --root <project-root> --task-id <task-id> --phase shape
+node dist/src/cli.js agents-install --root <project-root>
+node dist/src/cli.js agents-validate --root <project-root>
 ```
 
 Conversation-level rules such as "禁止继续建议 X", "开放 Y", or "清除限制"
@@ -59,34 +61,35 @@ npm run smoke
 `npm run smoke` runs an end-to-end synthetic fixture covering:
 
 1. `write-current`
-2. `policy-add` / `policy-list` / `policy-validate` / `policy-disable` / `policy-clear`
-3. `probe --workspace-root`
-4. `dry-run-hook --input`
-5. `adapt-hook-event --task --event`
-6. adapted batch -> `dry-run-hook --input`
-7. `hook-runner --task` with stdin event
-8. `hook-enforce --task` Codex `PreToolUse` deny-shape output for blocked calls
-9. `permission-enforce` Codex `PermissionRequest` deny/no-decision output
-10. `post-enforce` append-only `PostToolUse` audit output
-11. `session-start` Codex `SessionStart` additionalContext output
-12. `stop-check` Codex `Stop` non-blocking verification reminder
-13. `verify-installed-hooks` read-only production hook self-check
-14. `create-production-toolkit` reviewable production toolkit generation
-15. `hook-shadow --task` with stdin event and optional audit output
-16. `plan-hook-install` review-only install plan generation
-17. `create-hook-package` review-only rollback package generation
-18. `rehearse-hook-package` dry-run package rehearsal
-19. `release-gate` final preflight report
-20. `create-hook-apply-plan` staged apply-plan generation
-21. `check-hook-approval` manual approval preflight
-22. `preview-hook-write` dry-run config write preview
-23. `apply-hook-write` guarded synthetic config write
-24. `restore-hook-write` guarded synthetic config restore
-25. `production-readiness` final readiness report
-26. `create-go-live-approval-package` manual approval package generation
-27. `create-final-runbook` manual execution runbook generation
-28. `record-acceptance`
-29. `verify-acceptance`
+2. `agents-install` / `agents-validate`
+3. `policy-add` / `policy-list` / `policy-validate` / `policy-disable` / `policy-clear`
+4. `probe --workspace-root`
+5. `dry-run-hook --input`
+6. `adapt-hook-event --task --event`
+7. adapted batch -> `dry-run-hook --input`
+8. `hook-runner --task` with stdin event
+9. `hook-enforce --task` Codex `PreToolUse` deny-shape output for blocked calls
+10. `permission-enforce` Codex `PermissionRequest` deny/no-decision output
+11. `post-enforce` append-only `PostToolUse` audit output
+12. `session-start` Codex `SessionStart` additionalContext output
+13. `stop-check` Codex `Stop` non-blocking verification reminder
+14. `verify-installed-hooks` read-only production hook self-check
+15. `create-production-toolkit` reviewable production toolkit generation
+16. `hook-shadow --task` with stdin event and optional audit output
+17. `plan-hook-install` review-only install plan generation
+18. `create-hook-package` review-only rollback package generation
+19. `rehearse-hook-package` dry-run package rehearsal
+20. `release-gate` final preflight report
+21. `create-hook-apply-plan` staged apply-plan generation
+22. `check-hook-approval` manual approval preflight
+23. `preview-hook-write` dry-run config write preview
+24. `apply-hook-write` guarded synthetic config write
+25. `restore-hook-write` guarded synthetic config restore
+26. `production-readiness` final readiness report
+27. `create-go-live-approval-package` manual approval package generation
+28. `create-final-runbook` manual execution runbook generation
+29. `record-acceptance`
+30. `verify-acceptance`
 
 Expected final line:
 
@@ -98,6 +101,8 @@ SMOKE_PASS
 
 ```powershell
 node dist/src/cli.js write-current --root <task-dir> --task-id <id> --phase build
+node dist/src/cli.js agents-install --root <project-root>
+node dist/src/cli.js agents-validate --root <project-root>
 node dist/src/cli.js policy-add --root <project-root> --id block-publish --effect block --reason user_blocked_publish --tool shell --command-contains publish-artifact
 node dist/src/cli.js policy-add --root <project-root> --id allow-docs-shape --effect allow --reason user_opened_docs --tool apply_patch --path-contains docs/ --phase shape
 node dist/src/cli.js policy-list --root <project-root>
@@ -170,6 +175,7 @@ See `examples/` for synthetic input files and schema examples:
 - `permission-enforce` is the Phase 20 Codex `PermissionRequest` entrypoint. Blocked requests emit the documented `PermissionRequest` deny JSON shape. Allowed requests emit no stdout so Codex continues the normal approval flow; the tool intentionally does not auto-approve escalations.
 - Phase 25 project policy reads `<project>/.ccpanes-task/policy.json` when present. A malformed file fails closed with a `project_policy_invalid` deny reason. Rules support `allow` / `block`, `enabled`, `tools` / `tool`, `pathContains`, `commandContains`, `phases` / `phase`, and `reasons` / `reason`. Later matching rules win among project rules. Project `allow` rules can open phase or project-policy blocks inside the active worktree, but they do not override hard boundaries such as user config paths, reference repositories, destructive Git commands, global installs, or writes without target paths.
 - Phase 27 adds project policy management commands. `policy-add` creates or replaces a rule with `--replace`; `policy-disable` turns one rule off while preserving it; `policy-clear` disables all rules in the executable JSON file; `policy-list` and `policy-validate` are read-oriented inspection commands. These commands write only `<project>/.ccpanes-task/policy.json`.
+- Phase 28 adds `agents-install` / `agents-validate`. `agents-install` creates or merges a managed CC-Panes hook block in `<project>/AGENTS.md` using `<!-- ccpanes-hooks:begin -->` / `<!-- ccpanes-hooks:end -->` markers, preserving other project instructions. Re-running it replaces only the managed block and is idempotent. `BOOTSTRAP-PROJECT.ps1` now runs `write-current`, `agents-install`, and `agents-validate`.
 - `post-enforce` is the Phase 21 Codex `PostToolUse` audit entrypoint. It appends compact JSONL records to `<audit-root>/<base64url(taskId)>/post-tool-use-audit.jsonl` and emits no stdout, so it does not alter Codex's normal tool result handling.
 - `session-start` is the Phase 22 Codex `SessionStart` entrypoint. It emits compact `hookSpecificOutput.additionalContext` for the resolved current task and audit paths.
 - `stop-check` is the Phase 22 Codex `Stop` entrypoint. It emits a JSON `systemMessage` reminder and `continue: true`; it does not emit `decision: "block"` or create continuation prompts.
@@ -188,6 +194,8 @@ Initialize a project during planning or project startup:
 
 ```powershell
 node dist/src/cli.js write-current --root <project-root> --task-id <task-id> --phase shape
+node dist/src/cli.js agents-install --root <project-root>
+node dist/src/cli.js agents-validate --root <project-root>
 ```
 
 Update the phase when the task moves:

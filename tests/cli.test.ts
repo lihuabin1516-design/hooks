@@ -86,6 +86,32 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
   });
 
+  test('installs and validates AGENTS.md hook entry through CLI', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    await fs.mkdir(projectRoot, { recursive: true });
+    await fs.writeFile(path.join(projectRoot, 'AGENTS.md'), '# Project Rules\n\nKeep this project section.\n', 'utf8');
+
+    const install = JSON.parse(await runCli(['agents-install', '--root', projectRoot]));
+    const validate = JSON.parse(await runCli(['agents-validate', '--root', projectRoot]));
+    const secondInstall = JSON.parse(await runCli(['agents-install', '--root', projectRoot]));
+    const text = await fs.readFile(path.join(projectRoot, 'AGENTS.md'), 'utf8');
+
+    expect(install).toMatchObject({
+      schema: 'ccpanes.agents-entry-result.v1',
+      changed: true,
+      action: 'updated'
+    });
+    expect(validate).toMatchObject({
+      schema: 'ccpanes.agents-entry-validate.v1',
+      exists: true,
+      markerPresent: true,
+      valid: true
+    });
+    expect(secondInstall.changed).toBe(false);
+    expect(text).toContain('Keep this project section.');
+    expect(text).toContain('<!-- ccpanes-hooks:begin -->');
+  });
+
   test('manages project policy rules through CLI commands', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
 

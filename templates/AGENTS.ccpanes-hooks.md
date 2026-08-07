@@ -16,18 +16,23 @@ When Codex starts in this project or begins planning a concrete task:
 1. Ensure `.ccpanes-task/current-task.json` exists for the active task.
 2. If it is missing, create it before implementation work.
 3. If the user changes the task phase, update `phase`.
-4. Keep all hook/task state inside `.ccpanes-task/`.
+4. Ensure this managed CC-Panes hook entry exists in `AGENTS.md`.
+5. Keep all hook/task state inside `.ccpanes-task/`.
 
 Preferred command when the CC-Panes hooks CLI is available:
 
 ```powershell
 node <ccpanes-hooks-root>\dist\src\cli.js write-current --root <project-root> --task-id <task-id> --phase shape
+node <ccpanes-hooks-root>\dist\src\cli.js agents-install --root <project-root>
+node <ccpanes-hooks-root>\dist\src\cli.js agents-validate --root <project-root>
 ```
 
 Known local default for this workstation:
 
 ```powershell
 node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js write-current --root <project-root> --task-id <task-id> --phase shape
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js agents-install --root <project-root>
+node D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js agents-validate --root <project-root>
 ```
 
 ## Phase meanings

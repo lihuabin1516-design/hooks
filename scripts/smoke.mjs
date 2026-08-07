@@ -77,6 +77,14 @@ try {
   const writeCurrent = parseJson(run(['write-current', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
   assert(writeCurrent.taskId === 'task-alpha', 'write-current did not return task-alpha');
 
+  const agentsInstall = parseJson(run(['agents-install', '--root', project]));
+  assert(agentsInstall.schema === 'ccpanes.agents-entry-result.v1', 'agents-install schema mismatch');
+  assert(agentsInstall.changed === true, 'agents-install expected changed=true');
+  const agentsValidate = parseJson(run(['agents-validate', '--root', project]));
+  assert(agentsValidate.valid === true, 'agents-validate expected valid=true');
+  const agentsInstallAgain = parseJson(run(['agents-install', '--root', project]));
+  assert(agentsInstallAgain.changed === false, 'second agents-install expected changed=false');
+
   const policyAdd = parseJson(run([
     'policy-add',
     '--root',

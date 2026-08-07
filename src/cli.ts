@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createAcceptanceEvidence, type AcceptanceEvidence } from './acceptance.js';
+import { installAgentsEntry, validateAgentsEntry } from './agents-entry.js';
 import { verifyAcceptanceEvidence } from './acceptance-verify.js';
 import { validateCurrentTask, currentTaskPath, resolveCurrentTaskFromCwd, writeCurrentTaskAtomic } from './current-task.js';
 import { readGitState } from './git-state.js';
@@ -235,6 +236,19 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const task = makeTask(root, taskId, phase);
     await writeCurrentTaskAtomic(root, task);
     return `${JSON.stringify({ path: currentTaskPath(root), taskId, phase }, null, 2)}\n`;
+  }
+
+  if (command === 'agents-install') {
+    const root = valueAfter(args, '--root');
+    const templatePath = valueAfter(args, '--template');
+    if (!root) throw new Error('missing --root');
+    return `${JSON.stringify(await installAgentsEntry(root, templatePath), null, 2)}\n`;
+  }
+
+  if (command === 'agents-validate') {
+    const root = valueAfter(args, '--root');
+    if (!root) throw new Error('missing --root');
+    return `${JSON.stringify(await validateAgentsEntry(root), null, 2)}\n`;
   }
 
   if (command === 'policy-validate') {

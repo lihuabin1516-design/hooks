@@ -119,8 +119,11 @@ function createBootstrapScript(input: CreateProductionToolkitInput): string {
     '  [ValidateSet("shape","build","verify","archive")][string]$Phase = "shape"',
     ')',
     '$ErrorActionPreference = "Stop"',
-    `node ${psSingleQuote(path.join(input.prototypeRoot, 'dist', 'src', 'cli.js'))} write-current --root $ProjectRoot --task-id $TaskId --phase $Phase`,
-    'Write-Output "Bootstrap complete. Start Codex in the project root to activate lifecycle hooks."',
+    `$cli = ${psSingleQuote(path.join(input.prototypeRoot, 'dist', 'src', 'cli.js'))}`,
+    'node $cli write-current --root $ProjectRoot --task-id $TaskId --phase $Phase',
+    'node $cli agents-install --root $ProjectRoot',
+    'node $cli agents-validate --root $ProjectRoot',
+    'Write-Output "Bootstrap complete. Start Codex in the project root to activate lifecycle hooks and AGENTS rules."',
     ''
   ].join('\n');
 }
@@ -156,7 +159,7 @@ function createReadme(input: CreateProductionToolkitInput): string {
     '',
     '- `INSTALL-HOOKS.ps1`: backs up and merges hook entries into hooks.json.',
     '- `VERIFY-INSTALLED.ps1`: runs read-only installed hook verification.',
-    '- `BOOTSTRAP-PROJECT.ps1`: writes `<project>/.ccpanes-task/current-task.json`.',
+    '- `BOOTSTRAP-PROJECT.ps1`: writes `<project>/.ccpanes-task/current-task.json` and injects the managed `AGENTS.md` hook entry.',
     '- `ROLLBACK-HOOKS.ps1`: restores hooks.json from a captured backup.',
     '',
     '## Required review order',
