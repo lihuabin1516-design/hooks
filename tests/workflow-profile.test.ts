@@ -43,6 +43,7 @@ describe('classifyWorkflowProfile', () => {
       requiresLiveVerification: true
     });
     expect(result.checks.map((check) => check.name)).toContain('installed-hooks');
+    expect(result.checks.map((check) => check.name)).toContain('live-consistency');
     expect(result.checks.map((check) => check.name)).toContain('user-config-snapshots');
   });
 

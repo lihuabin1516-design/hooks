@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { CCPANES_RUNTIME_PROFILE } from './runtime-profile.js';
 
 export type ExpectedHookEvent = 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PermissionRequest' | 'PostToolUse' | 'Stop';
 
@@ -66,8 +67,8 @@ function commandFor(prototypeRoot: string, command: string, auditRoot: string): 
   return `node "${cliPath(prototypeRoot)}" ${command} --resolve-task-from-cwd --audit-root "${auditRoot}"`;
 }
 
-const skillsHubHookPath = 'C:\\Users\\AI001\\skills-hub\\bin\\skills-hub-hook.exe';
-const ccPanesCodexHookPath = 'D:\\cc-pane\\cc-pane-main\\src-tauri\\binaries\\cc-panes-cli-hook.exe';
+const skillsHubHookPath = CCPANES_RUNTIME_PROFILE.skillsHubHookPath;
+const ccPanesCodexHookPath = CCPANES_RUNTIME_PROFILE.ccPanesCodexHookPath;
 
 function executableCommand(executablePath: string, args: string[] = []): string {
   const command = `"${executablePath}"`;

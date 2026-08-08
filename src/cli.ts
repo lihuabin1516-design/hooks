@@ -26,6 +26,7 @@ import { createHookGoLiveApprovalPackage } from './hook-go-live-approval.js';
 import { createHookFinalRunbook } from './hook-final-runbook.js';
 import { createHostAdapterRegistry, getHostAdapter } from './host-adapter-registry.js';
 import { verifyInstalledHooks } from './installed-hooks.js';
+import { verifyLiveConsistency } from './live-consistency.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from './post-tool-audit.js';
 import { createPlanIntake, normalizePlanLifecycleEvent, planIntakeAuditPathFromRoot, writePlanIntakeAuditAtomic } from './plan-intake.js';
@@ -45,6 +46,7 @@ import {
   type ProjectPolicyRuleInput
 } from './project-policy.js';
 import { probeResume } from './resume-probe.js';
+import { CCPANES_RUNTIME_PROFILE } from './runtime-profile.js';
 import { analyzeStopCheckEvent, createSessionStartHookOutput, createStopCheckHookOutput } from './session-lifecycle.js';
 import { classifyTaskRisk } from './task-risk.js';
 import type { CurrentTask, GitState, HookCall, TaskPhase } from './types.js';
@@ -811,7 +813,7 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const outDir = valueAfter(args, '--out-dir');
     const approvedBy = valueAfter(args, '--approved-by');
     const approvalNote = valueAfter(args, '--approval-note') ?? '';
-    const upstreamHookPath = valueAfter(args, '--upstream-hook') ?? 'C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe';
+    const upstreamHookPath = valueAfter(args, '--upstream-hook') ?? CCPANES_RUNTIME_PROFILE.skillsHubHookPath;
     if (!readinessPath) throw new Error('missing --readiness');
     if (!outDir) throw new Error('missing --out-dir');
     if (!approvedBy) throw new Error('missing --approved-by');
@@ -837,6 +839,19 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     if (!prototypeRoot) throw new Error('missing --prototype-root');
     if (!auditRoot) throw new Error('missing --audit-root');
     const report = await verifyInstalledHooks({ hooksJsonPath, prototypeRoot, auditRoot, configTomlPath });
+    return `${JSON.stringify(report, null, 2)}\n`;
+  }
+
+  if (command === 'verify-live-consistency') {
+    const sourcePrefixes = valuesAfter(args, '--source-prefix');
+    const rootFiles = valuesAfter(args, '--root-file');
+    const report = await verifyLiveConsistency({
+      repoRoot: valueAfter(args, '--repo-root'),
+      liveRoot: valueAfter(args, '--live-root'),
+      sourcePrefixes: sourcePrefixes.length > 0 ? sourcePrefixes : undefined,
+      rootFiles: rootFiles.length > 0 ? rootFiles : undefined,
+      distPrefix: valueAfter(args, '--dist-prefix') ?? undefined
+    });
     return `${JSON.stringify(report, null, 2)}\n`;
   }
 

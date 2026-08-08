@@ -43,12 +43,14 @@ hook-shell-analyzer.ts       shell 命令读写目标和高风险分类
 task-risk.ts                 prompt 级 Light/Standard/Heavy 风险分类
 workflow-profile.ts          SBA 风格任务路由、闭环强度和必要检查建议
 host-adapter-registry.ts     宿主适配能力、surface、验证和边界的机器可读 registry
+runtime-profile.ts           本机运行路径、live/root/user config/reference repo 集中声明
 hook-dry-run.ts              单次 HookCall allow/block 决策
 hook-batch.ts                批量 dry-run 输入输出模型
 hook-runner.ts               Hook 事件 + project policy 的 dry-run 执行器
 post-tool-audit.ts           PostToolUse JSONL 审计
 session-lifecycle.ts         SessionStart / Stop 输出
 installed-hooks.ts           已安装 hooks 只读自检
+live-consistency.ts          repo/live 源码与 dist 哈希一致性只读自检
 production-toolkit.ts        生产工具包生成
 hook-*-*.ts                  Hook 发布、审批、写入预览、恢复、runbook 相关 artifact 生成
 acceptance*.ts               验收证据记录与校验
@@ -77,6 +79,7 @@ hook-event-adapter.test.ts        Hook 事件适配
 hook-dry-run.test.ts              allow/block 决策
 hook-runner.test.ts               Hook runner 与项目策略集成
 installed-hooks.test.ts           已安装 hooks 自检
+live-consistency.test.ts          repo/live 一致性自检
 smoke-script.test.ts              smoke 脚本存在性和基本行为
 workflow-profile.test.ts          SBA 风格工作流路由和闭环强度
 host-adapter-registry.test.ts     宿主适配 registry 契约
@@ -158,4 +161,5 @@ live 运行副本：D:\cc-pane\tool\experiments\ccpanes-task-probe
 7. `git diff --check`。
 8. commit + push。
 9. 同步 live。
-10. live 重跑完整验收。
+10. 运行 `verify-live-consistency`。
+11. live 重跑完整验收。

@@ -43,6 +43,7 @@ post-enforce           PostToolUse 审计 JSONL
 session-start          注入当前任务上下文
 stop-check             停止阶段验收提醒
 verify-installed-hooks 已安装 hooks 只读自检
+verify-live-consistency repo/live 源码与 dist 哈希一致性只读自检
 record/verify acceptance 分层验收证据与 completionAllowed 汇总
 ```
 
@@ -144,6 +145,7 @@ npm run typecheck
 npm run build
 npm run smoke
 node dist/src/cli.js verify-installed-hooks --hooks-json C:\Users\AI001\.codex\hooks.json --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config C:\Users\AI001\.codex\config.toml
+node dist/src/cli.js verify-live-consistency --repo-root D:\cc-pane\tool\repos\hooks --live-root D:\cc-pane\tool\experiments\ccpanes-task-probe
 ```
 
 ## 停止条件

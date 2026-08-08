@@ -1088,6 +1088,35 @@ describe('runCli', () => {
     expect(parsed.passed).toBe(true);
   });
 
+  test('verify-live-consistency prints a read-only repo/live consistency report', async () => {
+    const repoRoot = path.join(tempRoot, 'repo');
+    const liveRoot = path.join(tempRoot, 'live');
+    for (const root of [repoRoot, liveRoot]) {
+      await fs.mkdir(path.join(root, 'src'), { recursive: true });
+      await fs.mkdir(path.join(root, 'dist', 'src'), { recursive: true });
+      await fs.writeFile(path.join(root, 'package.json'), '{"name":"fixture"}\n', 'utf8');
+      await fs.writeFile(path.join(root, 'src', 'cli.ts'), 'export const cli = true;\n', 'utf8');
+      await fs.writeFile(path.join(root, 'dist', 'src', 'cli.js'), 'export const cli = true;\n', 'utf8');
+    }
+    execFileSync('git', ['init'], { cwd: repoRoot, stdio: 'ignore' });
+    execFileSync('git', ['add', '-A'], { cwd: repoRoot, stdio: 'ignore' });
+
+    const output = await runCli([
+      'verify-live-consistency',
+      '--repo-root',
+      repoRoot,
+      '--live-root',
+      liveRoot
+    ]);
+    const parsed = JSON.parse(output);
+
+    expect(parsed.schema).toBe('ccpanes.live-consistency.verify.v1');
+    expect(parsed.mode).toBe('read-only');
+    expect(parsed.passed).toBe(true);
+    expect(parsed.summary.sourceCompared).toBeGreaterThan(0);
+    expect(parsed.summary.distCompared).toBeGreaterThan(0);
+  });
+
   test('create-production-toolkit writes production scripts and manifest', async () => {
     const outDir = path.join(tempRoot, 'phase23-toolkit');
     const output = await runCli([

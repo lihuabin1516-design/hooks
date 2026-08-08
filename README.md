@@ -166,6 +166,7 @@ hook-enforce        PreToolUse 执行前拦截
 permission-enforce  PermissionRequest 拦截高风险授权请求
 post-enforce        PostToolUse 追加审计记录
 stop-check          Stop 阶段给出验收提醒
+verify-live-consistency  repo/live 源码与 dist 一致性只读自检
 ```
 
 ## 目录说明
@@ -215,6 +216,9 @@ node dist/src/cli.js verify-installed-hooks `
   --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe `
   --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits `
   --config C:\Users\AI001\.codex\config.toml
+node dist/src/cli.js verify-live-consistency `
+  --repo-root D:\cc-pane\tool\repos\hooks `
+  --live-root D:\cc-pane\tool\experiments\ccpanes-task-probe
 ```
 
 ## 安全边界
@@ -243,6 +247,7 @@ host-adapter-registry
 hook-enforce / permission-enforce / post-enforce
 session-start / stop-check
 verify-installed-hooks
+verify-live-consistency
 record-acceptance / verify-acceptance with layered truth summary
 production toolkit / release gate / runbook artifact generation
 ```

@@ -97,6 +97,13 @@ const productionChecks: WorkflowCheck[] = [
     reason: 'checks the real Codex hook registration contract without applying writes'
   },
   {
+    name: 'live-consistency',
+    command: 'node dist/src/cli.js verify-live-consistency --repo-root D:\\cc-pane\\tool\\repos\\hooks --live-root D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe',
+    required: true,
+    phase: 'production',
+    reason: 'hash-compares repo source/build surfaces against the live hook runtime after synchronization'
+  },
+  {
     name: 'acceptance-evidence',
     command: 'node dist/src/cli.js record-acceptance ... && node dist/src/cli.js verify-acceptance --input <acceptance.json>',
     required: true,

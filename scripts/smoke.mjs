@@ -40,6 +40,8 @@ const goLiveApprovalPackage = join(fixture, 'go-live-approval-package');
 const finalRunbook = join(fixture, 'final-runbook');
 const productionToolkit = join(fixture, 'production-toolkit');
 const installedHooksFixture = join(fixture, 'installed-hooks.json');
+const consistencyRepo = join(fixture, 'consistency-repo');
+const consistencyLive = join(fixture, 'consistency-live');
 const hookEnforceAuditRoot = join(fixture, 'hook-enforce-audits');
 const acceptance = join(fixture, 'acceptance.json');
 const upstreamHook = 'C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe';
@@ -424,6 +426,27 @@ try {
   assert(installedHooksReport.discovered.length === 7, 'installed hooks verify expected seven hooks');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit skills-hub'), 'installed hooks verify missing skills-hub UserPromptSubmit hook');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit cc-panes prompt-before'), 'installed hooks verify missing CC-Panes UserPromptSubmit hook');
+
+  for (const consistencyRoot of [consistencyRepo, consistencyLive]) {
+    mkdirSync(join(consistencyRoot, 'src'), { recursive: true });
+    mkdirSync(join(consistencyRoot, 'dist', 'src'), { recursive: true });
+    writeFileSync(join(consistencyRoot, 'package.json'), '{"name":"smoke-consistency"}\n', 'utf8');
+    writeFileSync(join(consistencyRoot, 'src', 'cli.ts'), 'export const smokeConsistency = true;\n', 'utf8');
+    writeFileSync(join(consistencyRoot, 'dist', 'src', 'cli.js'), 'export const smokeConsistency = true;\n', 'utf8');
+  }
+  execFileSync('git', ['init'], { cwd: consistencyRepo, stdio: 'ignore' });
+  execFileSync('git', ['add', '-A'], { cwd: consistencyRepo, stdio: 'ignore' });
+  const liveConsistencyReport = parseJson(run([
+    'verify-live-consistency',
+    '--repo-root',
+    consistencyRepo,
+    '--live-root',
+    consistencyLive
+  ]));
+  assert(liveConsistencyReport.schema === 'ccpanes.live-consistency.verify.v1', 'live consistency schema mismatch');
+  assert(liveConsistencyReport.passed === true, 'live consistency expected passed=true');
+  assert(liveConsistencyReport.summary.sourceCompared > 0, 'live consistency expected source comparisons');
+  assert(liveConsistencyReport.summary.distCompared > 0, 'live consistency expected dist comparisons');
 
   const productionToolkitManifest = parseJson(run([
     'create-production-toolkit',
