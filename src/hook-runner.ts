@@ -1,7 +1,8 @@
 import { adaptHookEventToBatch } from './hook-event-adapter.js';
 import { runHookDryRunBatch, validateHookDryRunBatch, type HookDryRunBatchInput, type HookDryRunBatchResult } from './hook-batch.js';
 import { applyProjectPolicyToCalls, ProjectPolicyError, projectPolicyPath, readProjectPolicy } from './project-policy.js';
-import type { CurrentTask, TaskBindingCheck, TaskBindingStatus } from './types.js';
+import { authorizeTaskBindingBootstrapWrite } from './task-binding-bootstrap.js';
+import type { CurrentTask, HookCall, TaskBindingCheck, TaskBindingStatus } from './types.js';
 
 export interface HookRunnerResult {
   schema: 'ccpanes.hook-runner-result.v1';
@@ -10,6 +11,11 @@ export interface HookRunnerResult {
   allowed: boolean;
   batch: HookDryRunBatchInput;
   dryRun: HookDryRunBatchResult;
+}
+
+export interface TaskBindingMismatchOptions {
+  trustedCliPath?: string | null;
+  processExecPath?: string | null;
 }
 
 export function createTaskBindingMismatchGateTask(check: TaskBindingCheck): CurrentTask {
@@ -49,20 +55,47 @@ export function runHookEventDryRun(task: CurrentTask, event: unknown): HookRunne
 export function runHookEventWithTaskBindingMismatch(
   task: CurrentTask,
   event: unknown,
-  status: TaskBindingStatus
+  mismatch: TaskBindingStatus | TaskBindingCheck,
+  options: TaskBindingMismatchOptions = {}
 ): HookRunnerResult {
+  const status = typeof mismatch === 'string' ? mismatch : mismatch.status;
   if (status === 'matched' || status === 'missing') {
     throw new Error(`invalid task binding mismatch status: ${status}`);
   }
   const batch = validateHookDryRunBatch(adaptHookEventToBatch(task, event));
   return resultFromBatch(task, validateHookDryRunBatch({
     ...batch,
-    calls: batch.calls.map((call) => call.writes ? {
-      ...call,
-      policyEffect: undefined,
-      policyReason: `task_binding_scope_mismatch:${status}`
-    } : call)
+    calls: batch.calls.map((call) => rewriteMismatchCall(call, mismatch, status, options))
   }));
+}
+
+function rewriteMismatchCall(
+  call: HookCall,
+  mismatch: TaskBindingStatus | TaskBindingCheck,
+  status: TaskBindingStatus,
+  options: TaskBindingMismatchOptions
+): HookCall {
+  if (!call.writes) return call;
+  if (typeof mismatch !== 'string') {
+    const bootstrap = authorizeTaskBindingBootstrapWrite({
+      check: mismatch,
+      call,
+      trustedCliPath: options.trustedCliPath,
+      processExecPath: options.processExecPath
+    });
+    if (bootstrap.allowed) {
+      return {
+        ...call,
+        policyEffect: 'allow',
+        policyReason: bootstrap.reason
+      };
+    }
+  }
+  return {
+    ...call,
+    policyEffect: undefined,
+    policyReason: `task_binding_scope_mismatch:${status}`
+  };
 }
 
 function resultFromBatch(task: CurrentTask, batch: HookDryRunBatchInput): HookRunnerResult {

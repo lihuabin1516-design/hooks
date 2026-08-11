@@ -65,6 +65,15 @@ export function decideHookDryRun(task: CurrentTask, call: HookCall): HookDryRunD
     };
   }
 
+  if (call.policyEffect === 'allow' && call.policyReason === 'task_binding_bootstrap_write') {
+    return {
+      action: 'allow',
+      reason: 'task_binding_bootstrap_write',
+      targetInsideWorktree: true,
+      phase
+    };
+  }
+
   if (phase === 'build') {
     return {
       action: 'allow',

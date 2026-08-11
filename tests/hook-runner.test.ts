@@ -3,7 +3,7 @@ import {
   runHookEventDryRun,
   runHookEventWithTaskBindingMismatch
 } from '../src/hook-runner.js';
-import type { CurrentTask } from '../src/types.js';
+import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
 
 function task(phase: CurrentTask['phase'] = 'build'): CurrentTask {
   return {
@@ -21,6 +21,24 @@ function task(phase: CurrentTask['phase'] = 'build'): CurrentTask {
     updatedAt: '2026-08-06T00:00:01.000Z',
     source: 'manual-import',
     notes: 'hook-runner fixture task'
+  };
+}
+
+function staleParentCheck(): TaskBindingCheck {
+  return {
+    schema: 'ccpanes.task-binding-check.v1',
+    status: 'stale-parent-binding',
+    reason: 'task_found_above_current_git_root',
+    cwd: 'D:\\cc-pane\\project-alpha',
+    gitRoot: 'D:\\cc-pane\\project-alpha',
+    gitCommonDir: 'D:\\cc-pane\\project-alpha\\.git',
+    canonicalProjectRoot: 'D:\\cc-pane\\project-alpha',
+    taskPath: 'D:\\cc-pane\\.ccpanes-task\\current-task.json',
+    taskFileRoot: 'D:\\cc-pane',
+    declaredProjectPath: 'D:\\cc-pane',
+    declaredWorktreeRoot: 'D:\\cc-pane',
+    declaredMainRepoRoot: null,
+    taskId: 'parent-task'
   };
 }
 
@@ -81,6 +99,69 @@ describe('runHookEventDryRun', () => {
       writes: true,
       command: 'npm run build'
     });
+    expect(result.dryRun.decisions[0].reason)
+      .toBe('task_binding_scope_mismatch:stale-parent-binding');
+  });
+
+  test('allows only exact write-current bootstrap shell command during stale-parent-binding', () => {
+    const trustedCliPath = 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js';
+    const result = runHookEventWithTaskBindingMismatch(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build --workspace "project-alpha" --notes "bootstrap"`
+      }
+    }, staleParentCheck(), {
+      trustedCliPath,
+      processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
+    });
+
+    expect(result.allowed).toBe(true);
+    expect(result.dryRun.decisions[0]).toMatchObject({
+      action: 'allow',
+      reason: 'task_binding_bootstrap_write',
+      tool: 'shell',
+      targetPath: 'D:/cc-pane/project-alpha'
+    });
+  });
+
+  test.each([
+    ['leading newline', '\n'],
+    ['trailing newline', '']
+  ])('rejects exact write-current bootstrap with %s before shell analyzer trimming', (_label, prefix) => {
+    const trustedCliPath = 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js';
+    const exactCommand = `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build`;
+    const command = prefix ? `${prefix}${exactCommand}` : `${exactCommand}\n`;
+
+    const result = runHookEventWithTaskBindingMismatch(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: { command }
+    }, staleParentCheck(), {
+      trustedCliPath,
+      processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.dryRun.decisions[0].reason)
+      .toBe('task_binding_scope_mismatch:stale-parent-binding');
+  });
+
+  test('keeps ordinary ApplyPatch writes blocked during stale-parent-binding', () => {
+    const result = runHookEventWithTaskBindingMismatch(task(), {
+      hook_event_name: 'PreToolUse',
+      tool_name: 'apply_patch',
+      tool_input: {
+        patch: '*** Begin Patch\n*** Update File: D:/cc-pane/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
+      }
+    }, staleParentCheck(), {
+      trustedCliPath: 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js',
+      processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
+    });
+
+    expect(result.allowed).toBe(false);
     expect(result.dryRun.decisions[0].reason)
       .toBe('task_binding_scope_mismatch:stale-parent-binding');
   });

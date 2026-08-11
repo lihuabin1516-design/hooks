@@ -29,6 +29,7 @@ function validateHookCall(value: unknown, index: number): HookCall {
   if (!(typeof record.targetPath === 'string' || record.targetPath === null)) throw new Error(`invalid hook batch: calls[${index}].targetPath`);
   if (typeof record.writes !== 'boolean') throw new Error(`invalid hook batch: calls[${index}].writes`);
   if (!(typeof record.command === 'string' || record.command === undefined)) throw new Error(`invalid hook batch: calls[${index}].command`);
+  if (!(typeof record.rawCommand === 'string' || record.rawCommand === undefined)) throw new Error(`invalid hook batch: calls[${index}].rawCommand`);
   if (!(record.policyEffect === 'allow' || record.policyEffect === 'block' || record.policyEffect === undefined)) throw new Error(`invalid hook batch: calls[${index}].policyEffect`);
   if (!(typeof record.policyReason === 'string' || record.policyReason === undefined)) throw new Error(`invalid hook batch: calls[${index}].policyReason`);
   return record as unknown as HookCall;

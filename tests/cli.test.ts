@@ -324,6 +324,81 @@ describe('runCli', () => {
       .toContain('taskBindingStatus: stale-parent-binding');
   });
 
+  test('stale parent binding allows exact write-current bootstrap in PreToolUse only', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditOut = path.join(tempRoot, 'bootstrap-audit.json');
+    const trustedCliPath = path.join(tempRoot, 'dist', 'src', 'cli.js');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const output = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" write-current --root "${projectRoot}" --task-id "task-alpha" --phase build --workspace "project-alpha" --notes "bootstrap"`
+      }
+    }), { trustedCliPath, processExecPath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    expect(output).toBe('');
+    const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+    expect(audit.allowed).toBe(true);
+    expect(audit.dryRun.decisions[0].reason).toBe('task_binding_bootstrap_write');
+  });
+
+  test('stale parent binding allows exact write-current bootstrap in PermissionRequest only', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditOut = path.join(tempRoot, 'permission-bootstrap-audit.json');
+    const trustedCliPath = path.join(tempRoot, 'dist', 'src', 'cli.js');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const output = await runCli([
+      'permission-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PermissionRequest',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" write-current --root "${projectRoot}" --task-id "task-alpha" --phase build`
+      }
+    }), { trustedCliPath, processExecPath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    expect(output).toBe('');
+    const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+    expect(audit.allowed).toBe(true);
+    expect(audit.dryRun.decisions[0].reason).toBe('task_binding_bootstrap_write');
+  });
+
+  test('stale parent binding rejects write-current bootstrap with unknown flags', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const trustedCliPath = path.join(tempRoot, 'dist', 'src', 'cli.js');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const output = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" write-current --root "${projectRoot}" --task-id "task-alpha" --phase build --bad value`
+      }
+    }), { trustedCliPath, processExecPath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    expect(output).toContain('task_binding_scope_mismatch:stale-parent-binding');
+  });
+
   test('permission mismatch blocks compound shell writes under a neutral gate identity', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const auditOut = path.join(tempRoot, 'permission-mismatch-audit.json');

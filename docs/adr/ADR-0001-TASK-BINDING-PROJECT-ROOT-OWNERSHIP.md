@@ -191,8 +191,8 @@ interface TaskBindingCheck {
 |---|---|---|---|
 | `verify-task-binding` | pass JSON | missing JSON | mismatch JSON |
 | `session-start` | 正常 task context | no-op | mismatch context |
-| `hook-enforce` | 现有规则 | no-op | 写调用 fail-closed；只读调用 no-op |
-| `permission-enforce` | 现有规则 | no-op | 涉及写入的授权请求 fail-closed |
+| `hook-enforce` | 现有规则 | no-op | 写调用 fail-closed；只读调用 no-op；仅 `stale-parent-binding` 精确 `write-current` bootstrap 例外 |
+| `permission-enforce` | 现有规则 | no-op | 涉及写入的授权请求 fail-closed；仅 `stale-parent-binding` 精确 `write-current` bootstrap 例外 |
 | `post-enforce` | 现有审计 | no-op | 不向 candidate task audit dir 写入 |
 | `stop-check` | 现有提醒 | no-op | 提示先修复 binding |
 | `plan-lifecycle-intake` | 现有流程 | no-op | 不写 candidate task audit |
@@ -208,6 +208,20 @@ interface TaskBindingCheck {
 ```text
 task_binding_scope_mismatch:<TaskBindingStatus>
 ```
+
+唯一放行例外用于解除 `stale-parent-binding` bootstrap deadlock。该例外不继承
+candidate task authority，只验证当前 `TaskBindingCheck.gitRoot` 和当前 hook
+进程入口：单条 shell command 必须是 `node` / `node.exe` / `process.execPath`
+加 trusted CLI path 加 `write-current`；`--root` 等于 `gitRoot`，`--task-id`
+非空，`--phase` 合法；可选参数只接受 `--workspace`、`--leader-session-id`、
+`--notes`。命中时决策 reason 固定为：
+
+```text
+task_binding_bootstrap_write
+```
+
+其他 mismatch status、普通 Edit / ApplyPatch / Shell 写入、错误 root / CLI、
+未知或重复参数、缺值、重定向、复合 shell 语法均保持 fail-closed。
 
 ### 7. Task writer 必须使用同一个 topology-aware factory
 
@@ -344,14 +358,16 @@ Phase51 只明确语义并保持字段。
    未结构化进程错误。
 10. stale/mismatch 下写事件被阻断，只读事件不绑定错误 task；未识别 Shell
     命令以及带重定向、管道、连接符的复合命令默认视为可能写入。
-11. mismatch 下不写 candidate task 的 audit。
-12. 相对、空字符串或非规范声明路径在 schema 边界被拒绝。
-13. `write-current` / `bootstrap-project` 对 linked worktree 写入真实 topology、
+11. `stale-parent-binding` 下只有精确 `write-current` bootstrap shell command
+    可返回 `task_binding_bootstrap_write`；PreToolUse 与 PermissionRequest 行为一致。
+12. mismatch 下不写 candidate task 的 audit。
+13. 相对、空字符串或非规范声明路径在 schema 边界被拒绝。
+14. `write-current` / `bootstrap-project` 对 linked worktree 写入真实 topology、
     branch 和 HEAD。
-14. workspace resume 不接受 false canonical project 或其他 mismatch task。
-15. separate Git dir 即使以 `.git` 结尾也不得冒充 canonical main worktree。
-16. 原子 writer 不得把 task 写入不同于 `task.worktreeRoot` 的目录。
-17. 现有测试、typecheck、build 和 smoke 保持通过。
+15. workspace resume 不接受 false canonical project 或其他 mismatch task。
+16. separate Git dir 即使以 `.git` 结尾也不得冒充 canonical main worktree。
+17. 原子 writer 不得把 task 写入不同于 `task.worktreeRoot` 的目录。
+18. 现有测试、typecheck、build 和 smoke 保持通过。
 
 ## Rollback / reversal condition
 
@@ -371,6 +387,7 @@ Phase51 只明确语义并保持字段。
 - `src/git-state.ts`：Git topology facts provider。
 - `src/types.ts`：公开 task binding check 类型。
 - `src/cli.ts`：参数解析与 consumer 编排。
-- `src/hook-runner.ts`：mismatch write deny result。
+- `src/hook-runner.ts`：mismatch write deny result 与 bootstrap allow 编排。
+- `src/task-binding-bootstrap.ts`：stale-parent-binding bootstrap 命令纯解析与鉴权。
 - `src/session-lifecycle.ts`：SessionStart / Stop 诊断。
 - `tests/**`：边界、失败与恢复证据。

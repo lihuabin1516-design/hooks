@@ -29,12 +29,19 @@ function normalizeShellPath(candidate: string, cwd: string): string {
   return resolved.replace(/\\/g, '/');
 }
 
-function call(command: string, targetPath: string | null, writes: boolean, policyReason?: string): HookCall {
+function call(
+  command: string,
+  targetPath: string | null,
+  writes: boolean,
+  policyReason?: string,
+  rawCommand?: string
+): HookCall {
   return {
     tool: 'shell',
     targetPath,
     writes,
     command,
+    ...(rawCommand !== undefined ? { rawCommand } : {}),
     ...(policyReason ? { policyReason } : {})
   };
 }
@@ -121,10 +128,12 @@ function isReadOnlyCommand(command: string): boolean {
 }
 
 export function analyzeShellCommand(input: ShellCommandInput): HookCall[] {
-  const command = input.command.trim();
+  const rawCommand = input.command;
+  const command = rawCommand.trim();
+  const rawCommandForAudit = rawCommand === command ? undefined : rawCommand;
   const cwd = normalizeShellPath(input.cwd, process.cwd());
   const policyReason = classifyPolicy(command);
-  if (policyReason) return [call(command, cwd, true, policyReason)];
+  if (policyReason) return [call(command, cwd, true, policyReason, rawCommandForAudit)];
 
   const targets = [
     ...extractRedirectionTargets(command, cwd),
@@ -135,20 +144,20 @@ export function analyzeShellCommand(input: ShellCommandInput): HookCall[] {
   if (packageWriteTarget) targets.push(packageWriteTarget);
 
   if (targets.length > 0) {
-    return targets.map((targetPath) => call(command, targetPath, true));
+    return targets.map((targetPath) => call(command, targetPath, true, undefined, rawCommandForAudit));
   }
 
   if (/\b(set-content|add-content|out-file|new-item|remove-item|move-item|copy-item|apply_patch)\b|(?:^|[^>])(?:>>|>)/i.test(command)) {
-    return [call(command, null, true)];
+    return [call(command, null, true, undefined, rawCommandForAudit)];
   }
 
   if (hasCompoundShellSyntax(command)) {
-    return [call(command, cwd, true)];
+    return [call(command, cwd, true, undefined, rawCommandForAudit)];
   }
 
   if (isReadOnlyCommand(command)) {
-    return [call(command, cwd, false)];
+    return [call(command, cwd, false, undefined, rawCommandForAudit)];
   }
 
-  return [call(command, cwd, true)];
+  return [call(command, cwd, true, undefined, rawCommandForAudit)];
 }

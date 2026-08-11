@@ -67,7 +67,7 @@ import {
   createTaskBindingMismatchStopOutput
 } from './session-lifecycle.js';
 import { classifyTaskRisk } from './task-risk.js';
-import type { CurrentTask, GitState, HookCall, TaskBindingStatus, TaskPhase } from './types.js';
+import type { CurrentTask, GitState, HookCall, TaskBindingCheck, TaskPhase } from './types.js';
 import { classifyWorkflowProfile } from './workflow-profile.js';
 import { scanWorkspaceTasks } from './workspace-scan.js';
 
@@ -221,7 +221,20 @@ function projectPolicyCliResult(command: string, root: string, changed: boolean,
   }, null, 2)}\n`;
 }
 
-export async function runCli(args: string[], stdinText?: string): Promise<string> {
+export interface RunCliOptions {
+  trustedCliPath?: string | null;
+  processExecPath?: string | null;
+}
+
+function cliPathForBootstrapAuthorization(options: RunCliOptions): string | null {
+  return options.trustedCliPath ?? process.argv[1] ?? null;
+}
+
+function processExecPathForBootstrapAuthorization(options: RunCliOptions): string | null {
+  return options.processExecPath ?? process.execPath ?? null;
+}
+
+export async function runCli(args: string[], stdinText?: string, options: RunCliOptions = {}): Promise<string> {
   const command = args[0];
 
   if (command === 'probe') {
@@ -556,13 +569,13 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const event = JSON.parse(eventText);
     const cwd = extractHookCwd(event);
     let task: CurrentTask;
-    let mismatchStatus: TaskBindingStatus | null = null;
+    let mismatchCheck: TaskBindingCheck | null = null;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
       const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
       if (binding.check.status === 'missing') return '';
       if (binding.check.status !== 'matched') {
-        mismatchStatus = binding.check.status;
+        mismatchCheck = binding.check;
         task = createTaskBindingMismatchGateTask(binding.check);
       } else {
         if (!binding.candidate) return '';
@@ -572,11 +585,14 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     }
-    if (!mismatchStatus && cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    const result = mismatchStatus
-      ? runHookEventWithTaskBindingMismatch(task, event, mismatchStatus)
+    if (!mismatchCheck && cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
+    const result = mismatchCheck
+      ? runHookEventWithTaskBindingMismatch(task, event, mismatchCheck, {
+        trustedCliPath: cliPathForBootstrapAuthorization(options),
+        processExecPath: processExecPathForBootstrapAuthorization(options)
+      })
       : await runHookEventDryRunWithProjectPolicy(task, event);
-    const resolvedAuditOut = mismatchStatus
+    const resolvedAuditOut = mismatchCheck
       ? auditOut
       : auditOut ?? (auditRoot ? auditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
@@ -597,13 +613,13 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const event = JSON.parse(eventText);
     const cwd = extractHookCwd(event);
     let task: CurrentTask;
-    let mismatchStatus: TaskBindingStatus | null = null;
+    let mismatchCheck: TaskBindingCheck | null = null;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
       const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
       if (binding.check.status === 'missing') return '';
       if (binding.check.status !== 'matched') {
-        mismatchStatus = binding.check.status;
+        mismatchCheck = binding.check;
         task = createTaskBindingMismatchGateTask(binding.check);
       } else {
         if (!binding.candidate) return '';
@@ -613,11 +629,14 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     }
-    if (!mismatchStatus && cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    const result = mismatchStatus
-      ? runHookEventWithTaskBindingMismatch(task, event, mismatchStatus)
+    if (!mismatchCheck && cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
+    const result = mismatchCheck
+      ? runHookEventWithTaskBindingMismatch(task, event, mismatchCheck, {
+        trustedCliPath: cliPathForBootstrapAuthorization(options),
+        processExecPath: processExecPathForBootstrapAuthorization(options)
+      })
       : await runHookEventDryRunWithProjectPolicy(task, event);
-    const resolvedAuditOut = mismatchStatus
+    const resolvedAuditOut = mismatchCheck
       ? auditOut
       : auditOut ?? (auditRoot ? permissionAuditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {

@@ -85,6 +85,7 @@ export interface HookCall {
   targetPath: string | null;
   writes: boolean;
   command?: string;
+  rawCommand?: string;
   policyEffect?: 'allow' | 'block';
   policyReason?: string;
 }

@@ -42,6 +42,7 @@ host-adapter-registry  机器可读宿主适配能力目录
 hook-enforce           PreToolUse 执行前拦截
 permission-enforce     PermissionRequest 高风险授权拦截
 post-enforce           PostToolUse 审计 JSONL
+task-binding-bootstrap stale-parent-binding 下精确 write-current 自修复放行
 session-start          注入当前任务上下文
 stop-check             停止阶段验收提醒
 verify-installed-hooks 已安装 hooks 只读自检
@@ -118,12 +119,13 @@ fastctx exe SHA256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA
 2. 明确本轮唯一目标和文件范围。
 3. 先写或更新测试；纯文档任务至少执行 `git diff --check`。
 4. 修改源码、测试、文档。
-5. 在 repo 路径跑完整门禁。
-6. 提交并 push 到 `origin/main`。
-7. 备份 live 目录对应内容。
-8. 同步 repo 到 live。
-9. 在 live 路径跑完整门禁和实机 fixture。
-10. 最终记录远端 HEAD、repo/live 一致性、用户配置哈希。
+5. 若触碰 task binding / hook gate，覆盖 PreToolUse 与 PermissionRequest 的同构行为。
+6. 在 repo 路径跑完整门禁。
+7. 提交并 push 到 `origin/main`。
+8. 备份 live 目录对应内容。
+9. 同步 repo 到 live。
+10. 在 live 路径跑完整门禁和实机 fixture。
+11. 最终记录远端 HEAD、repo/live 一致性、用户配置哈希。
 
 ## 必要检查
 

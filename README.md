@@ -167,6 +167,15 @@ checkout 和所有 task-scoped 写入边界。父级 workspace binding 不会跨
 会复核物理目录身份。Shell 命令只有命中明确只读分类时才按只读处理，未知命令
 或带额外写入参数/复合语法的命令默认视为可能写入。
 
+`stale-parent-binding` 只开放一个自修复 bootstrap 例外：PreToolUse 与
+PermissionRequest 都仅接受单条 `node` / `node.exe` / 当前 `process.execPath`
+调用当前 hook CLI 入口执行 `write-current`，且 `--root` 必须等于当前
+`TaskBindingCheck.gitRoot`，`--task-id` 非空，`--phase` 为合法 task phase。
+可选参数仅限 `--workspace`、`--leader-session-id`、`--notes`；未知参数、重复
+参数、缺值、重定向、换行、管道、连接符、反引号和 `$()` 均继续 fail-closed。
+放行 reason 固定为 `task_binding_bootstrap_write`，普通 mismatch 写入仍使用
+`task_binding_scope_mismatch:<TaskBindingStatus>` 阻断。
+
 主要入口：
 
 ```text
