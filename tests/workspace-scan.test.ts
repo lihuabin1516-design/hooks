@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,6 +8,24 @@ import { writeCurrentTaskAtomic } from '../src/current-task.js';
 import type { CurrentTask } from '../src/types.js';
 
 let workspaceRoot: string;
+
+function git(args: string[], cwd: string): string {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe']
+  }).trim();
+}
+
+async function initGitRepo(root: string): Promise<void> {
+  await fs.mkdir(root, { recursive: true });
+  git(['init'], root);
+  git(['config', 'user.name', 'Phase51 Fixture'], root);
+  git(['config', 'user.email', 'phase51@example.invalid'], root);
+  await fs.writeFile(path.join(root, 'README.md'), '# fixture\n', 'utf8');
+  git(['add', 'README.md'], root);
+  git(['commit', '-m', 'fixture'], root);
+}
 
 function task(root: string, taskId: string): CurrentTask {
   return {
@@ -68,6 +87,38 @@ describe('scanWorkspaceTasks', () => {
     expect(result.tasks.map((item) => item.task.taskId)).toEqual(['task-good']);
     expect(result.errors).toHaveLength(1);
     expect(result.errors[0]?.reason).toContain('invalid current task: schema');
+  });
+
+  test('records stale-parent-binding for a Git project without a local task', async () => {
+    const projectRoot = path.join(workspaceRoot, 'project-alpha');
+    await writeCurrentTaskAtomic(workspaceRoot, task(workspaceRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const result = await scanWorkspaceTasks(workspaceRoot);
+
+    expect(result.tasks).toEqual([]);
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        worktreeRoot: projectRoot,
+        bindingStatus: 'stale-parent-binding'
+      })
+    ]);
+  });
+
+  test('records broken Git topology without requiring a local task file', async () => {
+    const projectRoot = path.join(workspaceRoot, 'broken-project');
+    await fs.mkdir(projectRoot, { recursive: true });
+    await fs.writeFile(path.join(projectRoot, '.git'), 'gitdir: missing-git-dir\n', 'utf8');
+
+    const result = await scanWorkspaceTasks(workspaceRoot);
+
+    expect(result.tasks).toEqual([]);
+    expect(result.errors).toEqual([
+      expect.objectContaining({
+        worktreeRoot: projectRoot,
+        bindingStatus: 'git-topology-unavailable'
+      })
+    ]);
   });
 
   test('skips noisy infrastructure directories', async () => {

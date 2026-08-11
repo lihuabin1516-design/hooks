@@ -5,12 +5,24 @@ import { pathToFileURL } from 'node:url';
 import { createAcceptanceEvidence, type AcceptanceEvidence, type AcceptanceTruthLayerInput, type AcceptanceTruthLayerName } from './acceptance.js';
 import { installAgentsEntry, validateAgentsEntry } from './agents-entry.js';
 import { verifyAcceptanceEvidence } from './acceptance-verify.js';
-import { validateCurrentTask, currentTaskPath, resolveCurrentTaskFromCwd, writeCurrentTaskAtomic } from './current-task.js';
+import {
+  createCurrentTask,
+  currentTaskPath,
+  inspectCurrentTaskBindingFromCwd,
+  resolveCurrentTaskBindingFromCwd,
+  validateCurrentTask,
+  writeCurrentTaskAtomic
+} from './current-task.js';
 import { readGitState } from './git-state.js';
 import { decideHookDryRun } from './hook-dry-run.js';
 import { adaptHookEventToBatch } from './hook-event-adapter.js';
 import { runHookDryRunBatch, validateHookDryRunBatch } from './hook-batch.js';
-import { runHookEventDryRunWithProjectPolicy, type HookRunnerResult } from './hook-runner.js';
+import {
+  createTaskBindingMismatchGateTask,
+  runHookEventDryRunWithProjectPolicy,
+  runHookEventWithTaskBindingMismatch,
+  type HookRunnerResult
+} from './hook-runner.js';
 import { createHookShadowAudit, writeHookShadowAuditAtomic } from './hook-shadow.js';
 import { createHookInstallPlan, writeHookInstallPlanAtomic, type HookInstallTarget } from './hook-install-plan.js';
 import { createHookPackage } from './hook-package.js';
@@ -47,9 +59,15 @@ import {
 } from './project-policy.js';
 import { probeResume } from './resume-probe.js';
 import { CCPANES_RUNTIME_PROFILE } from './runtime-profile.js';
-import { analyzeStopCheckEvent, createSessionStartHookOutput, createStopCheckHookOutput } from './session-lifecycle.js';
+import {
+  analyzeStopCheckEvent,
+  createSessionStartHookOutput,
+  createStopCheckHookOutput,
+  createTaskBindingMismatchSessionStartOutput,
+  createTaskBindingMismatchStopOutput
+} from './session-lifecycle.js';
 import { classifyTaskRisk } from './task-risk.js';
-import type { CurrentTask, GitState, HookCall, TaskPhase } from './types.js';
+import type { CurrentTask, GitState, HookCall, TaskBindingStatus, TaskPhase } from './types.js';
 import { classifyWorkflowProfile } from './workflow-profile.js';
 import { scanWorkspaceTasks } from './workspace-scan.js';
 
@@ -84,26 +102,6 @@ function parseTruthLayer(value: string): AcceptanceTruthLayerInput {
   const required = !name.endsWith('?');
   const normalizedName = (required ? name : name.slice(0, -1)) as AcceptanceTruthLayerName;
   return { name: normalizedName, state, required, evidence: evidenceParts.join('=') };
-}
-
-function makeTask(root: string, taskId: string, phase: TaskPhase): CurrentTask {
-  const now = new Date().toISOString();
-  return {
-    schema: 'ccpanes.task-selection.v1',
-    taskId,
-    workspace: 'cc-pane',
-    projectPath: root,
-    worktreeRoot: root,
-    mainRepoRoot: null,
-    branch: null,
-    head: null,
-    owner: { leaderSessionId: null, paneId: null, layoutId: null },
-    phase,
-    createdAt: now,
-    updatedAt: now,
-    source: 'manual-import',
-    notes: 'synthetic fixture task'
-  };
 }
 
 function gitStateForTask(task: CurrentTask): GitState {
@@ -278,9 +276,25 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const phase = parsePhase(valueAfter(args, '--phase'));
     if (!root) throw new Error('missing --root');
     if (!taskId) throw new Error('missing --task-id');
-    const task = makeTask(root, taskId, phase);
-    await writeCurrentTaskAtomic(root, task);
-    return `${JSON.stringify({ path: currentTaskPath(root), taskId, phase }, null, 2)}\n`;
+    const requestedRoot = path.resolve(root);
+    fs.mkdirSync(requestedRoot, { recursive: true });
+    const leaderSessionId = valueAfter(args, '--leader-session-id');
+    const task = createCurrentTask({
+      root: requestedRoot,
+      taskId,
+      phase,
+      workspace: valueAfter(args, '--workspace'),
+      owner: { leaderSessionId, paneId: null, layoutId: null },
+      source: leaderSessionId ? 'leader' : 'manual-import',
+      notes: valueAfter(args, '--notes')
+    });
+    await writeCurrentTaskAtomic(task.worktreeRoot, task);
+    return `${JSON.stringify({ path: currentTaskPath(task.worktreeRoot), taskId, phase }, null, 2)}\n`;
+  }
+
+  if (command === 'verify-task-binding') {
+    const cwd = valueAfter(args, '--cwd') ?? process.cwd();
+    return `${JSON.stringify(await inspectCurrentTaskBindingFromCwd(cwd), null, 2)}\n`;
   }
 
   if (command === 'bootstrap-project') {
@@ -411,9 +425,9 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
 
     let task: CurrentTask;
     if (resolveTaskFromCwd) {
-      const resolved = await resolveCurrentTaskFromCwd(eventCwd ?? process.cwd());
-      if (!resolved) return '';
-      task = resolved.task;
+      const binding = await resolveCurrentTaskBindingFromCwd(eventCwd ?? process.cwd());
+      if (binding.check.status !== 'matched' || !binding.candidate) return '';
+      task = binding.candidate.task;
     } else {
       if (!taskPath) throw new Error('missing --task or --resolve-task-from-cwd');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
@@ -498,7 +512,12 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     if (!root) throw new Error('missing --root');
     if (!target) throw new Error('missing --target');
     if (!tool) throw new Error('missing --tool');
-    const task = makeTask(root, 'synthetic-task', phase);
+    const task = createCurrentTask({
+      root,
+      taskId: 'synthetic-task',
+      phase,
+      notes: 'synthetic dry-run task'
+    });
     const call: HookCall = { tool, targetPath: target, writes: ['edit', 'write', 'apply_patch', 'shell'].includes(tool) };
     return `${JSON.stringify(decideHookDryRun(task, call), null, 2)}\n`;
   }
@@ -537,18 +556,29 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const event = JSON.parse(eventText);
     const cwd = extractHookCwd(event);
     let task: CurrentTask;
+    let mismatchStatus: TaskBindingStatus | null = null;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
-      const resolved = await resolveCurrentTaskFromCwd(startCwd);
-      if (!resolved) return '';
-      task = resolved.task;
+      const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
+      if (binding.check.status === 'missing') return '';
+      if (binding.check.status !== 'matched') {
+        mismatchStatus = binding.check.status;
+        task = createTaskBindingMismatchGateTask(binding.check);
+      } else {
+        if (!binding.candidate) return '';
+        task = binding.candidate.task;
+      }
     } else {
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     }
-    if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    const result = await runHookEventDryRunWithProjectPolicy(task, event);
-    const resolvedAuditOut = auditOut ?? (auditRoot ? auditPathFromRoot(auditRoot, task) : null);
+    if (!mismatchStatus && cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
+    const result = mismatchStatus
+      ? runHookEventWithTaskBindingMismatch(task, event, mismatchStatus)
+      : await runHookEventDryRunWithProjectPolicy(task, event);
+    const resolvedAuditOut = mismatchStatus
+      ? auditOut
+      : auditOut ?? (auditRoot ? auditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
       fs.mkdirSync(path.dirname(resolvedAuditOut), { recursive: true });
       fs.writeFileSync(resolvedAuditOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
@@ -567,18 +597,29 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     const event = JSON.parse(eventText);
     const cwd = extractHookCwd(event);
     let task: CurrentTask;
+    let mismatchStatus: TaskBindingStatus | null = null;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
-      const resolved = await resolveCurrentTaskFromCwd(startCwd);
-      if (!resolved) return '';
-      task = resolved.task;
+      const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
+      if (binding.check.status === 'missing') return '';
+      if (binding.check.status !== 'matched') {
+        mismatchStatus = binding.check.status;
+        task = createTaskBindingMismatchGateTask(binding.check);
+      } else {
+        if (!binding.candidate) return '';
+        task = binding.candidate.task;
+      }
     } else {
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
     }
-    if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    const result = await runHookEventDryRunWithProjectPolicy(task, event);
-    const resolvedAuditOut = auditOut ?? (auditRoot ? permissionAuditPathFromRoot(auditRoot, task) : null);
+    if (!mismatchStatus && cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
+    const result = mismatchStatus
+      ? runHookEventWithTaskBindingMismatch(task, event, mismatchStatus)
+      : await runHookEventDryRunWithProjectPolicy(task, event);
+    const resolvedAuditOut = mismatchStatus
+      ? auditOut
+      : auditOut ?? (auditRoot ? permissionAuditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
       fs.mkdirSync(path.dirname(resolvedAuditOut), { recursive: true });
       fs.writeFileSync(resolvedAuditOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
@@ -599,9 +640,9 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     let task: CurrentTask;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
-      const resolved = await resolveCurrentTaskFromCwd(startCwd);
-      if (!resolved) return '';
-      task = resolved.task;
+      const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
+      if (binding.check.status !== 'matched' || !binding.candidate) return '';
+      task = binding.candidate.task;
     } else {
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
@@ -627,10 +668,14 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     let resolvedTaskPath: string;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
-      const resolved = await resolveCurrentTaskFromCwd(startCwd);
-      if (!resolved) return '';
-      task = resolved.task;
-      resolvedTaskPath = resolved.taskPath;
+      const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
+      if (binding.check.status === 'missing') return '';
+      if (binding.check.status !== 'matched') {
+        return `${JSON.stringify(createTaskBindingMismatchSessionStartOutput(binding.check), null, 2)}\n`;
+      }
+      if (!binding.candidate) return '';
+      task = binding.candidate.task;
+      resolvedTaskPath = binding.candidate.taskPath;
     } else {
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
@@ -653,10 +698,14 @@ export async function runCli(args: string[], stdinText?: string): Promise<string
     let resolvedTaskPath: string;
     if (resolveTaskFromCwd) {
       const startCwd = cwd ?? process.cwd();
-      const resolved = await resolveCurrentTaskFromCwd(startCwd);
-      if (!resolved) return '';
-      task = resolved.task;
-      resolvedTaskPath = resolved.taskPath;
+      const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
+      if (binding.check.status === 'missing') return '';
+      if (binding.check.status !== 'matched') {
+        return `${JSON.stringify(createTaskBindingMismatchStopOutput(binding.check), null, 2)}\n`;
+      }
+      if (!binding.candidate) return '';
+      task = binding.candidate.task;
+      resolvedTaskPath = binding.candidate.taskPath;
     } else {
       if (!taskPath) throw new Error('missing --task');
       task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));

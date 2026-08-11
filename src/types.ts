@@ -32,6 +32,37 @@ export interface GitState {
   statusShort: string;
 }
 
+export interface GitTopology {
+  worktreeRoot: string;
+  commonDir: string;
+  mainRepoRoot: string | null;
+}
+
+export type TaskBindingStatus =
+  | 'matched'
+  | 'missing'
+  | 'stale-parent-binding'
+  | 'git-topology-unavailable'
+  | 'task-root-mismatch'
+  | 'git-root-mismatch'
+  | 'project-root-mismatch';
+
+export interface TaskBindingCheck {
+  schema: 'ccpanes.task-binding-check.v1';
+  status: TaskBindingStatus;
+  reason: string;
+  cwd: string;
+  gitRoot: string | null;
+  gitCommonDir: string | null;
+  canonicalProjectRoot: string | null;
+  taskPath: string | null;
+  taskFileRoot: string | null;
+  declaredProjectPath: string | null;
+  declaredWorktreeRoot: string | null;
+  declaredMainRepoRoot: string | null;
+  taskId: string | null;
+}
+
 export interface ResumeCandidate {
   taskId: string;
   worktreeRoot: string;

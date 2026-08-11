@@ -28,6 +28,10 @@ Codex 全局 hooks 当前指向 live 路径下的 CLI：
 D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js
 ```
 
+仓库能力与 live 生效状态分开判断：仓库文档描述当前 repo 版本，live 是否已
+获得同一能力，必须以最近一次 `verify-live-consistency`、
+`verify-installed-hooks` 和 live 完整门禁结果为准。
+
 详细远端记录见 [`REMOTE.md`](./REMOTE.md)。
 
 ## 日常使用
@@ -147,11 +151,21 @@ node dist/src/cli.js policy-clear --root <project-root>
 ```text
 Codex hook event
   -> dist/src/cli.js
-  -> resolve-task-from-cwd
-  -> <project>\.ccpanes-task\current-task.json
-  -> <project>\.ccpanes-task\policy.json
+  -> resolve-task-from-cwd / verify-task-binding
+  -> Git worktree root + common-dir topology
+  -> <worktreeRoot>\.ccpanes-task\current-task.json
+  -> <worktreeRoot>\.ccpanes-task\policy.json
   -> allow / deny / audit
 ```
+
+`projectPath` 表示 canonical 项目目录，`worktreeRoot` 表示当前 task 的实际
+checkout 和所有 task-scoped 写入边界。父级 workspace binding 不会跨 Git root
+授权嵌套项目写入；三个声明路径只接受规范化绝对路径。Git topology 探测失败
+返回 `git-topology-unavailable`，无法推导 canonical project 的 Git topology
+返回 `project-root-mismatch`，两类 mismatch 写调用都 fail-closed。
+`.ccpanes-task` 目录和 `current-task.json` 不接受 symlink/junction，原子写入前
+会复核物理目录身份。Shell 命令只有命中明确只读分类时才按只读处理，未知命令
+或带额外写入参数/复合语法的命令默认视为可能写入。
 
 主要入口：
 
@@ -166,6 +180,7 @@ hook-enforce        PreToolUse 执行前拦截
 permission-enforce  PermissionRequest 拦截高风险授权请求
 post-enforce        PostToolUse 追加审计记录
 stop-check          Stop 阶段给出验收提醒
+verify-task-binding 校验 task 文件、active worktree 与 canonical project topology
 verify-live-consistency  repo/live 源码与 dist 一致性只读自检
 ```
 
@@ -229,7 +244,9 @@ node dist/src/cli.js verify-live-consistency `
 - `D:\cc-pane\tool\repos\comet` 和 `D:\cc-pane\tool\repos\fastctx` 是参考仓库，上游分别固定为 `https://github.com/rpamis/comet.git` 和 `https://github.com/yc-duan/fastctx.git`；常规维护只检查 status、remote 和 HEAD。
 - 真实写入应限定在本仓库、live prototype、或合成 fixture 目录内。
 
-## 当前能力状态
+## 仓库能力状态
+
+以下清单描述当前 repo 版本；不得仅凭此清单推断 live/global hook 已完成同步。
 
 已实现并验证的主链路：
 
@@ -246,6 +263,7 @@ classify-workflow
 host-adapter-registry
 hook-enforce / permission-enforce / post-enforce
 session-start / stop-check
+verify-task-binding
 verify-installed-hooks
 verify-live-consistency
 record-acceptance / verify-acceptance with layered truth summary

@@ -6,13 +6,10 @@ export interface ShellCommandInput {
   cwd: string;
 }
 
-const readOnlyPrefixes = [
-  /^npm\s+(test|t|run\s+(test|typecheck|lint|check))(\s|$)/i,
-  /^pnpm\s+(test|run\s+(test|typecheck|lint|check))(\s|$)/i,
-  /^yarn\s+(test|run\s+(test|typecheck|lint|check))(\s|$)/i,
-  /^git\s+(status|diff|log|show|rev-parse|branch)(\s|$)/i,
-  /^get-filehash(\s|$)/i,
-  /^get-childitem(\s|$)/i
+const exactReadOnlyCommands = [
+  /^npm\s+(test|t|run\s+(test|typecheck|lint|check))$/i,
+  /^pnpm\s+(test|run\s+(test|typecheck|lint|check))$/i,
+  /^yarn\s+(test|run\s+(test|typecheck|lint|check))$/i
 ];
 
 function tokenize(command: string): string[] {
@@ -111,15 +108,23 @@ function extractPackageManagerWriteTarget(command: string, cwd: string): string 
   return null;
 }
 
+function hasCompoundShellSyntax(command: string): boolean {
+  return /[\r\n;&|`]|\$\(/.test(command);
+}
+
+function isReadOnlyCommand(command: string): boolean {
+  if (exactReadOnlyCommands.some((pattern) => pattern.test(command))) return true;
+  if (/^git\s+(status|diff|log|show|rev-parse)(\s|$)/i.test(command)) {
+    return !/\s--output(?:=|\s|$)/i.test(command);
+  }
+  return /^get-filehash(\s|$)/i.test(command) || /^get-childitem(\s|$)/i.test(command);
+}
+
 export function analyzeShellCommand(input: ShellCommandInput): HookCall[] {
   const command = input.command.trim();
   const cwd = normalizeShellPath(input.cwd, process.cwd());
   const policyReason = classifyPolicy(command);
   if (policyReason) return [call(command, cwd, true, policyReason)];
-
-  if (readOnlyPrefixes.some((pattern) => pattern.test(command))) {
-    return [call(command, cwd, false)];
-  }
 
   const targets = [
     ...extractRedirectionTargets(command, cwd),
@@ -137,5 +142,13 @@ export function analyzeShellCommand(input: ShellCommandInput): HookCall[] {
     return [call(command, null, true)];
   }
 
-  return [call(command, cwd, false)];
+  if (hasCompoundShellSyntax(command)) {
+    return [call(command, cwd, true)];
+  }
+
+  if (isReadOnlyCommand(command)) {
+    return [call(command, cwd, false)];
+  }
+
+  return [call(command, cwd, true)];
 }

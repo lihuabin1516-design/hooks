@@ -10,6 +10,50 @@ describe('analyzeShellCommand', () => {
     ]);
   });
 
+  test.each([
+    'npm run build',
+    'git checkout feature/other',
+    'git branch feature/new',
+    'custom-executable --flag'
+  ])('treats unproven shell command as write-capable: %s', (command) => {
+    expect(analyzeShellCommand({ command, cwd })).toEqual([
+      { tool: 'shell', targetPath: cwd, writes: true, command }
+    ]);
+  });
+
+  test('treats output redirection on a read-only command as a write', () => {
+    expect(analyzeShellCommand({ command: 'git status > status.txt', cwd })).toEqual([
+      {
+        tool: 'shell',
+        targetPath: 'D:/cc-pane/project-alpha/status.txt',
+        writes: true,
+        command: 'git status > status.txt'
+      }
+    ]);
+  });
+
+  test('treats a compound command with a read-only prefix as write-capable', () => {
+    expect(analyzeShellCommand({ command: 'npm test && npm install foo', cwd })).toEqual([
+      {
+        tool: 'shell',
+        targetPath: cwd,
+        writes: true,
+        command: 'npm test && npm install foo'
+      }
+    ]);
+  });
+
+  test.each([
+    'git status & npm install foo',
+    'git diff --output=status.txt',
+    'npm run lint -- --fix',
+    'npm test -- --update'
+  ])('does not treat a write-capable read-only prefix variant as read-only: %s', (command) => {
+    expect(analyzeShellCommand({ command, cwd })).toEqual([
+      { tool: 'shell', targetPath: cwd, writes: true, command }
+    ]);
+  });
+
   test('extracts PowerShell Set-Content path as a write target', () => {
     expect(analyzeShellCommand({ command: 'Set-Content -Path C:/Users/AI001/.codex/config.toml -Value x', cwd })).toEqual([
       { tool: 'shell', targetPath: 'C:/Users/AI001/.codex/config.toml', writes: true, command: 'Set-Content -Path C:/Users/AI001/.codex/config.toml -Value x' }

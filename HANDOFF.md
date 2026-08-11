@@ -9,7 +9,7 @@
 1. `README.md`：中文主说明和日常命令。
 2. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
 3. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
-4. `docs/plans/`：Phase 24 到 Phase 35 的分阶段设计与实施计划。
+4. `docs/plans/`：Phase 24 到 Phase 51 的分阶段设计与实施计划。
 5. `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
 6. `docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md`：Codex plugin 分发后续设计。
 7. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
@@ -26,10 +26,12 @@ Node：>=22
 构建：tsc -p tsconfig.json
 ```
 
-当前核心能力：
+当前仓库核心能力；live 是否已生效以 `verify-live-consistency`、
+`verify-installed-hooks` 和 live 完整门禁为准：
 
 ```text
 bootstrap-project      一键初始化项目上下文
+verify-task-binding    校验 canonical project、active worktree 与 task 文件归属
 policy-capture         对话规则同时落 policy.md + policy.json
 plan-intake            plan 阶段 workflow/policy dry-run 和 audit
 plan-lifecycle-intake  从真实 plan lifecycle event 解析 task 并写 task-scoped dry-run audit
@@ -76,6 +78,7 @@ npm test
 npm run typecheck
 npm run build
 npm run smoke
+node dist/src/cli.js verify-task-binding --cwd <active-worktree>
 git diff --check
 ```
 

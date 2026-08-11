@@ -28,7 +28,8 @@ D:\cc-pane\tool\repos\hooks
 
 ```text
 cli.ts                       CLI 路由和参数解析薄层
-current-task.ts              .ccpanes-task/current-task.json 的读写校验
+current-task.ts              task binding schema、持久化、topology 校验与解析 authority
+git-state.ts                 Git worktree/common-dir/main-worktree 只读事实 provider
 workspace-scan.ts            在 workspace 中扫描 current-task
 resume-probe.ts              “继续”等会话恢复判断
 agents-entry.ts              AGENTS.md 托管块安装和校验
@@ -64,6 +65,12 @@ paths.ts                     路径归一化和边界判断
 3. Hook 事件适配只放 `hook-event-adapter.ts`，决策只放 `hook-dry-run.ts`。
 4. 涉及生产发布、审批、写入、恢复的 artifact 生成保持在 `hook-*` 独立模块。
 5. 公共路径判断统一走 `paths.ts`。
+6. `projectPath` 表示 canonical project；`worktreeRoot` 表示 active checkout 和
+   task-scoped 写入边界，二者在 linked worktree 中不得混写。
+7. task binding 的 `projectPath`、`worktreeRoot` 和非空 `mainRepoRoot` 必须是
+   规范化绝对路径；Git topology 不可验证时返回显式 mismatch。
+8. `hook-shell-analyzer.ts` 只对完整、单一的白名单命令证明只读；带重定向、
+   管道、命令连接符或未识别内容的 Shell 命令默认按可能写入处理。
 
 ## 测试目录职责
 

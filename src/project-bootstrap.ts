@@ -1,10 +1,10 @@
 import { mkdir, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { installAgentsEntry, validateAgentsEntry, type AgentsInstallResult, type AgentsValidateResult } from './agents-entry.js';
-import { currentTaskPath, validateCurrentTask, writeCurrentTaskAtomic } from './current-task.js';
+import { createCurrentTask, currentTaskPath, writeCurrentTaskAtomic } from './current-task.js';
 import { emptyProjectPolicy, projectPolicyPath, readProjectPolicy, writeProjectPolicyAtomic, type ProjectPolicy } from './project-policy.js';
 import { ensureProjectPolicyLedger, projectPolicyLedgerPath } from './project-policy-ledger.js';
-import type { CurrentTask, TaskPhase } from './types.js';
+import type { TaskPhase } from './types.js';
 
 export interface ProjectBootstrapInput {
   projectRoot: string;
@@ -39,27 +39,6 @@ export interface ProjectBootstrapResult {
   reportPath: string;
 }
 
-function makeTask(input: ProjectBootstrapInput): CurrentTask {
-  const root = path.resolve(input.projectRoot);
-  const now = input.now ?? new Date().toISOString();
-  return validateCurrentTask({
-    schema: 'ccpanes.task-selection.v1',
-    taskId: input.taskId,
-    workspace: input.workspace ?? 'cc-pane',
-    projectPath: root,
-    worktreeRoot: root,
-    mainRepoRoot: null,
-    branch: null,
-    head: null,
-    owner: { leaderSessionId: null, paneId: null, layoutId: null },
-    phase: input.phase,
-    createdAt: now,
-    updatedAt: now,
-    source: 'manual-import',
-    notes: input.notes ?? 'project bootstrapped by CC-Panes hooks'
-  });
-}
-
 function bootstrapReportPath(projectRoot: string): string {
   return path.join(projectRoot, '.ccpanes-task', 'bootstrap-report.json');
 }
@@ -81,8 +60,17 @@ async function writeBootstrapReport(projectRoot: string, result: Omit<ProjectBoo
 }
 
 export async function bootstrapProject(input: ProjectBootstrapInput): Promise<ProjectBootstrapResult> {
-  const projectRoot = path.resolve(input.projectRoot);
-  const task = makeTask({ ...input, projectRoot });
+  const requestedRoot = path.resolve(input.projectRoot);
+  await mkdir(requestedRoot, { recursive: true });
+  const task = createCurrentTask({
+    root: requestedRoot,
+    taskId: input.taskId,
+    phase: input.phase,
+    workspace: input.workspace,
+    notes: input.notes ?? 'project bootstrapped by CC-Panes hooks',
+    now: input.now
+  });
+  const projectRoot = task.worktreeRoot;
   await writeCurrentTaskAtomic(projectRoot, task);
   const agents = await installAgentsEntry(projectRoot);
   const agentsValidation = await validateAgentsEntry(projectRoot);

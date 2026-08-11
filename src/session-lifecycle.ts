@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import type { CurrentTask } from './types.js';
+import type { CurrentTask, TaskBindingCheck } from './types.js';
 
 export interface LifecycleOutputInput {
   task: CurrentTask;
@@ -245,6 +245,32 @@ export function createSessionStartHookOutput(input: LifecycleOutputInput): Sessi
   };
 }
 
+export function createTaskBindingMismatchSessionStartOutput(
+  check: TaskBindingCheck
+): SessionStartHookOutput {
+  return {
+    hookSpecificOutput: {
+      hookEventName: 'SessionStart',
+      additionalContext: [
+        'ccpanes-task-probe task binding mismatch',
+        `taskBindingStatus: ${check.status}`,
+        `reason: ${check.reason}`,
+        `cwd: ${check.cwd}`,
+        `gitRoot: ${formatOptional(check.gitRoot)}`,
+        `gitCommonDir: ${formatOptional(check.gitCommonDir)}`,
+        `canonicalProjectRoot: ${formatOptional(check.canonicalProjectRoot)}`,
+        `candidateTaskId: ${formatOptional(check.taskId)}`,
+        `taskPath: ${formatOptional(check.taskPath)}`,
+        `taskFileRoot: ${formatOptional(check.taskFileRoot)}`,
+        `declaredProjectPath: ${formatOptional(check.declaredProjectPath)}`,
+        `declaredWorktreeRoot: ${formatOptional(check.declaredWorktreeRoot)}`,
+        `declaredMainRepoRoot: ${formatOptional(check.declaredMainRepoRoot)}`,
+        `action: run verify-task-binding --cwd "${check.cwd}" and refresh the active worktree task binding before project writes.`
+      ].join('\n')
+    }
+  };
+}
+
 export function createStopCheckHookOutput(input: LifecycleOutputInput): StopCheckHookOutput {
   const auditDirectory = auditDir(input.auditRoot, input.task);
   const targeted = input.stopAnalysis?.targetedReminder === true;
@@ -258,5 +284,16 @@ export function createStopCheckHookOutput(input: LifecycleOutputInput): StopChec
       `currentTaskPath=${input.taskPath}`,
       auditDirectory ? `auditDir=${auditDirectory}` : 'auditDir=null'
     ].join(' ')
+  };
+}
+
+export function createTaskBindingMismatchStopOutput(
+  check: TaskBindingCheck
+): StopCheckHookOutput {
+  return {
+    continue: true,
+    systemMessage:
+      `ccpanes-task-probe task binding mismatch (${check.status}): ` +
+      `run verify-task-binding --cwd "${check.cwd}" and refresh the active worktree task binding before continuing writes.`
   };
 }

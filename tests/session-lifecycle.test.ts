@@ -2,8 +2,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { describe, expect, test } from 'vitest';
-import { analyzeStopCheckEvent, createSessionStartHookOutput, createStopCheckHookOutput } from '../src/session-lifecycle.js';
-import type { CurrentTask } from '../src/types.js';
+import {
+  analyzeStopCheckEvent,
+  createSessionStartHookOutput,
+  createStopCheckHookOutput,
+  createTaskBindingMismatchSessionStartOutput,
+  createTaskBindingMismatchStopOutput
+} from '../src/session-lifecycle.js';
+import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
 
 function task(root: string): CurrentTask {
   return {
@@ -21,6 +27,24 @@ function task(root: string): CurrentTask {
     updatedAt: '2026-08-06T00:00:01.000Z',
     source: 'manual-import',
     notes: 'lifecycle fixture task'
+  };
+}
+
+function bindingCheck(): TaskBindingCheck {
+  return {
+    schema: 'ccpanes.task-binding-check.v1',
+    status: 'project-root-mismatch',
+    reason: 'declared_project_path_or_main_repo_root_does_not_match_git_topology',
+    cwd: 'D:/hooks-linked',
+    gitRoot: 'D:/hooks-linked',
+    gitCommonDir: 'D:/hooks-main/.git',
+    canonicalProjectRoot: 'D:/hooks-main',
+    taskPath: 'D:/hooks-linked/.ccpanes-task/current-task.json',
+    taskFileRoot: 'D:/hooks-linked',
+    declaredProjectPath: 'D:/hooks-linked',
+    declaredWorktreeRoot: 'D:/hooks-linked',
+    declaredMainRepoRoot: 'D:/hooks-linked',
+    taskId: 'task-alpha'
   };
 }
 
@@ -47,6 +71,16 @@ describe('SessionStart lifecycle output', () => {
     expect(output.hookSpecificOutput.additionalContext).toContain('current-task.json');
     expect(output.hookSpecificOutput.additionalContext).toContain('post-tool-use-audit.jsonl');
     expect(output.hookSpecificOutput.additionalContext.length).toBeLessThan(1800);
+  });
+
+  test('creates mismatch context with canonical and active roots', () => {
+    const output = createTaskBindingMismatchSessionStartOutput(bindingCheck());
+    const context = output.hookSpecificOutput.additionalContext;
+
+    expect(context).toContain('taskBindingStatus: project-root-mismatch');
+    expect(context).toContain('canonicalProjectRoot: D:/hooks-main');
+    expect(context).toContain('declaredWorktreeRoot: D:/hooks-linked');
+    expect(context).toContain('verify-task-binding');
   });
 });
 
@@ -126,5 +160,13 @@ describe('Stop lifecycle output', () => {
     expect(stopAnalysis.targetedReminder).toBe(false);
     expect(output.systemMessage).not.toContain('targeted verification reminder');
     expect(output.systemMessage).toContain('npm run smoke');
+  });
+
+  test('creates a non-blocking mismatch Stop reminder', () => {
+    const output = createTaskBindingMismatchStopOutput(bindingCheck());
+
+    expect(output.continue).toBe(true);
+    expect(output.systemMessage).toContain('verify-task-binding');
+    expect(output.systemMessage).toContain('project-root-mismatch');
   });
 });

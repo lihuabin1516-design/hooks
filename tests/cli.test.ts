@@ -12,6 +12,34 @@ import type { CurrentTask } from '../src/types.js';
 
 let tempRoot: string;
 
+function git(args: string[], cwd: string): string {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe']
+  }).trim();
+}
+
+async function initGitRepo(root: string): Promise<void> {
+  await fs.mkdir(root, { recursive: true });
+  git(['init'], root);
+  git(['config', 'user.name', 'Phase51 Fixture'], root);
+  git(['config', 'user.email', 'phase51@example.invalid'], root);
+  await fs.writeFile(path.join(root, 'README.md'), '# fixture\n', 'utf8');
+  git(['add', 'README.md'], root);
+  git(['commit', '-m', 'fixture'], root);
+}
+
+async function initSeparateGitDirRepo(root: string, gitDir: string): Promise<void> {
+  await fs.mkdir(root, { recursive: true });
+  git(['init', '--separate-git-dir', gitDir, root], tempRoot);
+  git(['config', 'user.name', 'Phase51 Fixture'], root);
+  git(['config', 'user.email', 'phase51@example.invalid'], root);
+  await fs.writeFile(path.join(root, 'README.md'), '# separate fixture\n', 'utf8');
+  git(['add', 'README.md'], root);
+  git(['commit', '-m', 'separate fixture'], root);
+}
+
 async function sha256File(filePath: string): Promise<string> {
   return createHash('sha256').update(await fs.readFile(filePath)).digest('hex').toUpperCase();
 }
@@ -66,6 +94,38 @@ describe('runCli', () => {
     expect(parsed.reason).toBe('single_clean_matching_candidate');
     expect(parsed.candidates[0].taskId).toBe('task-alpha');
     expect(parsed.scanErrors).toEqual([]);
+  });
+
+  test('does not auto-resume a linked task whose canonical project binding is false', async () => {
+    const mainRoot = path.join(tempRoot, 'hooks-main');
+    const linkedRoot = path.join(tempRoot, 'hooks-linked');
+    await initGitRepo(mainRoot);
+    git(['worktree', 'add', '-b', 'phase51-linked', linkedRoot], mainRoot);
+    await writeCurrentTaskAtomic(linkedRoot, {
+      ...task(linkedRoot, 'task-linked'),
+      projectPath: linkedRoot,
+      mainRepoRoot: linkedRoot,
+      worktreeRoot: linkedRoot
+    });
+
+    const parsed = JSON.parse(await runCli([
+      'probe',
+      '--utterance',
+      '继续',
+      '--session',
+      'leader-1',
+      '--workspace-root',
+      tempRoot
+    ]));
+
+    expect(parsed.action).toBe('none');
+    expect(parsed.reason).toBe('no_candidates');
+    expect(parsed.scanErrors).toEqual([
+      expect.objectContaining({
+        worktreeRoot: linkedRoot,
+        bindingStatus: 'project-root-mismatch'
+      })
+    ]);
   });
 
   test('classifies task risk through CLI', async () => {
@@ -139,6 +199,276 @@ describe('runCli', () => {
     const output = await runCli(['write-current', '--root', tempRoot, '--task-id', 'task-alpha', '--phase', 'build']);
     expect(JSON.parse(output).path).toBe(path.join(tempRoot, '.ccpanes-task', 'current-task.json'));
     await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
+  });
+
+  test('creates a missing non-Git root before writing current-task metadata', async () => {
+    const projectRoot = path.join(tempRoot, 'new-project');
+
+    const output = await runCli([
+      'write-current',
+      '--root',
+      projectRoot,
+      '--task-id',
+      'task-new',
+      '--phase',
+      'shape'
+    ]);
+
+    expect(JSON.parse(output).path)
+      .toBe(path.join(projectRoot, '.ccpanes-task', 'current-task.json'));
+    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'current-task.json')))
+      .resolves.toBeTruthy();
+  });
+
+  test('writes linked-worktree task metadata from Git topology', async () => {
+    const mainRoot = path.join(tempRoot, 'hooks-main');
+    const linkedRoot = path.join(tempRoot, 'hooks-linked');
+    await initGitRepo(mainRoot);
+    git(['worktree', 'add', '-b', 'phase51-linked', linkedRoot], mainRoot);
+
+    await runCli([
+      'write-current',
+      '--root',
+      linkedRoot,
+      '--task-id',
+      'task-linked',
+      '--phase',
+      'build'
+    ]);
+    const written = JSON.parse(
+      await fs.readFile(path.join(linkedRoot, '.ccpanes-task', 'current-task.json'), 'utf8')
+    );
+
+    expect(written.projectPath).toBe(mainRoot);
+    expect(written.mainRepoRoot).toBe(mainRoot);
+    expect(written.worktreeRoot).toBe(linkedRoot);
+    expect(written.branch).toBe('phase51-linked');
+    expect(written.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
+    expect(written.notes).toBe('task binding written by CC-Panes hooks');
+  });
+
+  test('verify-task-binding reports a matched linked worktree', async () => {
+    const mainRoot = path.join(tempRoot, 'hooks-main');
+    const linkedRoot = path.join(tempRoot, 'hooks-linked');
+    await initGitRepo(mainRoot);
+    git(['worktree', 'add', '-b', 'phase51-linked', linkedRoot], mainRoot);
+    await runCli([
+      'write-current',
+      '--root',
+      linkedRoot,
+      '--task-id',
+      'task-linked',
+      '--phase',
+      'build'
+    ]);
+
+    const parsed = JSON.parse(await runCli([
+      'verify-task-binding',
+      '--cwd',
+      linkedRoot
+    ]));
+
+    expect(parsed).toMatchObject({
+      schema: 'ccpanes.task-binding-check.v1',
+      status: 'matched',
+      gitRoot: linkedRoot,
+      canonicalProjectRoot: mainRoot,
+      taskFileRoot: linkedRoot,
+      declaredProjectPath: mainRoot,
+      declaredWorktreeRoot: linkedRoot,
+      declaredMainRepoRoot: mainRoot,
+      taskId: 'task-linked'
+    });
+  });
+
+  test('stale parent binding blocks dynamic writes and emits mismatch lifecycle context', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditOut = path.join(tempRoot, 'mismatch-audit.json');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const check = JSON.parse(await runCli([
+      'verify-task-binding',
+      '--cwd',
+      projectRoot
+    ]));
+    expect(check.status).toBe('stale-parent-binding');
+    expect(check.taskId).toBe('parent-task');
+
+    const denied = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Edit',
+      tool_input: { file_path: path.join(projectRoot, 'src', 'a.ts') }
+    }));
+    expect(denied).toContain('task_binding_scope_mismatch:stale-parent-binding');
+    const mismatchAudit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+    expect(mismatchAudit.allowed).toBe(false);
+    expect(mismatchAudit.batch.task.taskId).toBe('unresolved-task-binding');
+    expect(mismatchAudit.batch.task.taskId).not.toBe('parent-task');
+
+    const sessionOutput = JSON.parse(await runCli([
+      'session-start',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'SessionStart',
+      source: 'startup',
+      cwd: projectRoot
+    })));
+    expect(sessionOutput.hookSpecificOutput.additionalContext)
+      .toContain('taskBindingStatus: stale-parent-binding');
+  });
+
+  test('permission mismatch blocks compound shell writes under a neutral gate identity', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditOut = path.join(tempRoot, 'permission-mismatch-audit.json');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const output = await runCli([
+      'permission-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PermissionRequest',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: { command: 'npm test && npm install foo' }
+    }));
+    const parsed = JSON.parse(output);
+    const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+
+    expect(parsed.hookSpecificOutput.decision.behavior).toBe('deny');
+    expect(parsed.hookSpecificOutput.decision.message)
+      .toContain('task_binding_scope_mismatch:stale-parent-binding');
+    expect(audit.batch.task.taskId).toBe('unresolved-task-binding');
+    expect(audit.batch.task.taskId).not.toBe('parent-task');
+  });
+
+  test('Git topology probe failures emit mismatch JSON and block dynamic writes', async () => {
+    const brokenRoot = path.join(tempRoot, 'broken-worktree');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await fs.mkdir(brokenRoot, { recursive: true });
+    await fs.writeFile(path.join(brokenRoot, '.git'), 'gitdir: missing-git-dir\n', 'utf8');
+
+    const check = JSON.parse(await runCli([
+      'verify-task-binding',
+      '--cwd',
+      brokenRoot
+    ]));
+    expect(check).toMatchObject({
+      status: 'git-topology-unavailable',
+      reason: 'git_topology_probe_failed',
+      taskId: 'parent-task'
+    });
+
+    const denied = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: brokenRoot,
+      tool_name: 'Bash',
+      tool_input: { command: 'npm run build' }
+    }));
+    expect(denied).toContain('task_binding_scope_mismatch:git-topology-unavailable');
+
+    const sessionOutput = JSON.parse(await runCli([
+      'session-start',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'SessionStart',
+      source: 'startup',
+      cwd: brokenRoot
+    })));
+    expect(sessionOutput.hookSpecificOutput.additionalContext)
+      .toContain('taskBindingStatus: git-topology-unavailable');
+  });
+
+  test('Git topology probe failures block writes without a task candidate', async () => {
+    const brokenRoot = path.join(tempRoot, 'broken-worktree');
+    await fs.mkdir(brokenRoot, { recursive: true });
+    await fs.writeFile(path.join(brokenRoot, '.git'), 'gitdir: missing-git-dir\n', 'utf8');
+
+    const check = JSON.parse(await runCli([
+      'verify-task-binding',
+      '--cwd',
+      brokenRoot
+    ]));
+    expect(check).toMatchObject({
+      status: 'git-topology-unavailable',
+      reason: 'git_topology_probe_failed',
+      taskId: null
+    });
+
+    const denied = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: brokenRoot,
+      tool_name: 'Edit',
+      tool_input: { file_path: path.join(brokenRoot, 'src', 'a.ts') }
+    }));
+    expect(denied).toContain('task_binding_scope_mismatch:git-topology-unavailable');
+  });
+
+  test('unsupported Git topology blocks writes without a task candidate', async () => {
+    const projectRoot = path.join(tempRoot, 'separate-worktree');
+    const gitDir = path.join(tempRoot, 'separate-git-dir');
+    await initSeparateGitDirRepo(projectRoot, gitDir);
+
+    const check = JSON.parse(await runCli([
+      'verify-task-binding',
+      '--cwd',
+      projectRoot
+    ]));
+    expect(check).toMatchObject({
+      status: 'project-root-mismatch',
+      reason: 'unsupported_git_topology_cannot_derive_canonical_project',
+      taskId: null
+    });
+
+    const denied = await runCli([
+      'hook-enforce',
+      '--resolve-task-from-cwd'
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Edit',
+      tool_input: { file_path: path.join(projectRoot, 'src', 'a.ts') }
+    }));
+    expect(denied)
+      .toContain('task_binding_scope_mismatch:project-root-mismatch');
+  });
+
+  test('stale parent binding does not write PostToolUse audit', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditOut = path.join(tempRoot, 'post-mismatch.jsonl');
+    await writeCurrentTaskAtomic(tempRoot, task(tempRoot, 'parent-task'));
+    await initGitRepo(projectRoot);
+
+    const output = await runCli([
+      'post-enforce',
+      '--resolve-task-from-cwd',
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PostToolUse',
+      cwd: projectRoot,
+      tool_name: 'Edit',
+      tool_input: { file_path: path.join(projectRoot, 'src', 'a.ts') },
+      tool_response: { ok: true }
+    }));
+
+    expect(output).toBe('');
+    await expect(fs.stat(auditOut)).rejects.toThrow();
   });
 
   test('bootstraps a project with current task, AGENTS entry, policy files, and report', async () => {

@@ -44,6 +44,10 @@ const consistencyRepo = join(fixture, 'consistency-repo');
 const consistencyLive = join(fixture, 'consistency-live');
 const hookEnforceAuditRoot = join(fixture, 'hook-enforce-audits');
 const acceptance = join(fixture, 'acceptance.json');
+const bindingWorkspace = join(fixture, 'binding-workspace');
+const bindingNestedRepo = join(bindingWorkspace, 'nested-repo');
+const bindingMainRepo = join(fixture, 'binding-main');
+const bindingLinkedWorktree = join(fixture, 'binding-linked');
 const upstreamHook = 'C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe';
 
 function run(args, input) {
@@ -51,8 +55,18 @@ function run(args, input) {
     cwd: root,
     encoding: 'utf8',
     input,
+    env: { ...process.env, GIT_CEILING_DIRECTORIES: fixture },
     stdio: input === undefined ? ['ignore', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe']
   });
+}
+
+function git(args, cwd) {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    env: { ...process.env, GIT_CEILING_DIRECTORIES: fixture },
+    stdio: ['ignore', 'pipe', 'pipe']
+  }).trim();
 }
 
 function parseJson(output) {
@@ -410,6 +424,40 @@ try {
     transcript_path: stopTranscript
   })));
   assert(targetedStopCheckOutput.systemMessage.includes('targeted verification reminder'), 'stop-check missing targeted reminder');
+
+  mkdirSync(bindingWorkspace, { recursive: true });
+  run(['write-current', '--root', bindingWorkspace, '--task-id', 'parent-binding', '--phase', 'build']);
+  mkdirSync(bindingNestedRepo, { recursive: true });
+  git(['init'], bindingNestedRepo);
+  git(['config', 'user.name', 'Phase51 Smoke'], bindingNestedRepo);
+  git(['config', 'user.email', 'phase51-smoke@example.invalid'], bindingNestedRepo);
+  writeFileSync(join(bindingNestedRepo, 'README.md'), '# nested binding fixture\n', 'utf8');
+  git(['add', 'README.md'], bindingNestedRepo);
+  git(['commit', '-m', 'nested binding fixture'], bindingNestedRepo);
+  const staleBinding = parseJson(run(['verify-task-binding', '--cwd', bindingNestedRepo]));
+  assert(staleBinding.status === 'stale-parent-binding', 'verify-task-binding expected stale-parent-binding');
+  assert(staleBinding.taskId === 'parent-binding', 'stale binding candidate mismatch');
+
+  mkdirSync(bindingMainRepo, { recursive: true });
+  git(['init'], bindingMainRepo);
+  git(['config', 'user.name', 'Phase51 Smoke'], bindingMainRepo);
+  git(['config', 'user.email', 'phase51-smoke@example.invalid'], bindingMainRepo);
+  writeFileSync(join(bindingMainRepo, 'README.md'), '# linked binding fixture\n', 'utf8');
+  git(['add', 'README.md'], bindingMainRepo);
+  git(['commit', '-m', 'linked binding fixture'], bindingMainRepo);
+  git(['worktree', 'add', '-b', 'phase51-smoke-linked', bindingLinkedWorktree], bindingMainRepo);
+  run(['write-current', '--root', bindingLinkedWorktree, '--task-id', 'linked-binding', '--phase', 'build']);
+  const matchedBinding = parseJson(run(['verify-task-binding', '--cwd', bindingLinkedWorktree]));
+  assert(matchedBinding.status === 'matched', 'verify-task-binding expected matched linked worktree');
+  assert(matchedBinding.canonicalProjectRoot === bindingMainRepo, 'linked canonical project mismatch');
+  assert(matchedBinding.declaredWorktreeRoot === bindingLinkedWorktree, 'linked active worktree mismatch');
+  const linkedTaskPath = join(bindingLinkedWorktree, '.ccpanes-task', 'current-task.json');
+  const falseProjectTask = JSON.parse(readFileSync(linkedTaskPath, 'utf8'));
+  falseProjectTask.projectPath = bindingLinkedWorktree;
+  falseProjectTask.mainRepoRoot = bindingLinkedWorktree;
+  writeFileSync(linkedTaskPath, `${JSON.stringify(falseProjectTask, null, 2)}\n`, 'utf8');
+  const projectMismatch = parseJson(run(['verify-task-binding', '--cwd', bindingLinkedWorktree]));
+  assert(projectMismatch.status === 'project-root-mismatch', 'verify-task-binding expected project-root-mismatch');
 
   writeFileSync(installedHooksFixture, JSON.stringify(buildExpectedHooksConfig({ prototypeRoot: root, auditRoot: hookEnforceAuditRoot }), null, 2), 'utf8');
   const installedHooksReport = parseJson(run([

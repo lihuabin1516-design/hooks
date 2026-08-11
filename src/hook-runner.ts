@@ -1,7 +1,7 @@
 import { adaptHookEventToBatch } from './hook-event-adapter.js';
 import { runHookDryRunBatch, validateHookDryRunBatch, type HookDryRunBatchInput, type HookDryRunBatchResult } from './hook-batch.js';
 import { applyProjectPolicyToCalls, ProjectPolicyError, projectPolicyPath, readProjectPolicy } from './project-policy.js';
-import type { CurrentTask } from './types.js';
+import type { CurrentTask, TaskBindingCheck, TaskBindingStatus } from './types.js';
 
 export interface HookRunnerResult {
   schema: 'ccpanes.hook-runner-result.v1';
@@ -10,6 +10,27 @@ export interface HookRunnerResult {
   allowed: boolean;
   batch: HookDryRunBatchInput;
   dryRun: HookDryRunBatchResult;
+}
+
+export function createTaskBindingMismatchGateTask(check: TaskBindingCheck): CurrentTask {
+  const worktreeRoot = check.gitRoot ?? check.cwd;
+  const projectPath = check.canonicalProjectRoot ?? worktreeRoot;
+  return {
+    schema: 'ccpanes.task-selection.v1',
+    taskId: 'unresolved-task-binding',
+    workspace: 'cc-pane',
+    projectPath,
+    worktreeRoot,
+    mainRepoRoot: check.canonicalProjectRoot,
+    branch: null,
+    head: null,
+    owner: { leaderSessionId: null, paneId: null, layoutId: null },
+    phase: 'build',
+    createdAt: '1970-01-01T00:00:00.000Z',
+    updatedAt: '1970-01-01T00:00:00.000Z',
+    source: 'manual-import',
+    notes: 'ephemeral task binding mismatch gate context'
+  };
 }
 
 export function runHookEventDryRun(task: CurrentTask, event: unknown): HookRunnerResult {
@@ -23,6 +44,25 @@ export function runHookEventDryRun(task: CurrentTask, event: unknown): HookRunne
     batch,
     dryRun
   };
+}
+
+export function runHookEventWithTaskBindingMismatch(
+  task: CurrentTask,
+  event: unknown,
+  status: TaskBindingStatus
+): HookRunnerResult {
+  if (status === 'matched' || status === 'missing') {
+    throw new Error(`invalid task binding mismatch status: ${status}`);
+  }
+  const batch = validateHookDryRunBatch(adaptHookEventToBatch(task, event));
+  return resultFromBatch(task, validateHookDryRunBatch({
+    ...batch,
+    calls: batch.calls.map((call) => call.writes ? {
+      ...call,
+      policyEffect: undefined,
+      policyReason: `task_binding_scope_mismatch:${status}`
+    } : call)
+  }));
 }
 
 function resultFromBatch(task: CurrentTask, batch: HookDryRunBatchInput): HookRunnerResult {

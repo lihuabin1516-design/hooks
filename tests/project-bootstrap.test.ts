@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
@@ -5,6 +6,24 @@ import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { bootstrapProject } from '../src/project-bootstrap.js';
 
 let tempRoot: string;
+
+function git(args: string[], cwd: string): string {
+  return execFileSync('git', args, {
+    cwd,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe']
+  }).trim();
+}
+
+async function initGitRepo(root: string): Promise<void> {
+  await fs.mkdir(root, { recursive: true });
+  git(['init'], root);
+  git(['config', 'user.name', 'Phase51 Fixture'], root);
+  git(['config', 'user.email', 'phase51@example.invalid'], root);
+  await fs.writeFile(path.join(root, 'README.md'), '# fixture\n', 'utf8');
+  git(['add', 'README.md'], root);
+  git(['commit', '-m', 'fixture'], root);
+}
 
 beforeEach(async () => {
   tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-project-bootstrap-'));
@@ -55,5 +74,29 @@ describe('bootstrapProject', () => {
     expect(agents).toContain('Keep project rules.');
     expect(agents).toContain('<!-- ccpanes-hooks:begin -->');
     expect(policyLedger).toBe('# Existing Policy\n');
+  });
+
+  test('bootstraps linked-worktree task metadata from Git topology', async () => {
+    const mainRoot = path.join(tempRoot, 'hooks-main');
+    const linkedRoot = path.join(tempRoot, 'hooks-linked');
+    await initGitRepo(mainRoot);
+    git(['worktree', 'add', '-b', 'phase51-linked', linkedRoot], mainRoot);
+
+    await bootstrapProject({
+      projectRoot: linkedRoot,
+      taskId: 'task-linked',
+      phase: 'shape',
+      now: '2026-08-10T00:00:00.000Z'
+    });
+    const written = JSON.parse(
+      await fs.readFile(path.join(linkedRoot, '.ccpanes-task', 'current-task.json'), 'utf8')
+    );
+
+    expect(written.projectPath).toBe(mainRoot);
+    expect(written.mainRepoRoot).toBe(mainRoot);
+    expect(written.worktreeRoot).toBe(linkedRoot);
+    expect(written.branch).toBe('phase51-linked');
+    expect(written.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
+    expect(written.notes).toBe('project bootstrapped by CC-Panes hooks');
   });
 });
