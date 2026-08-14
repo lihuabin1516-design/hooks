@@ -43,7 +43,7 @@ export interface HostAdapterRegistry {
 
 const sharedBoundaries = [
   'current-task.json remains the task scope authority',
-  'project-policy.json remains the executable allow/block authority',
+  '.ccpanes-task/policy.json remains the executable allow/block authority',
   'workflow profile and host registry are advisory unless consumed by hook-enforce or permission-enforce',
   'real user-config writes require a production approval package and rollback evidence'
 ];
@@ -82,16 +82,22 @@ const registry: HostAdapterRegistry = {
       id: 'codex',
       label: 'Codex',
       status: 'supported',
-      integration: 'Global Codex hooks point at live dist/src/cli.js; skills-hub-hook.exe remains an upstream prompt router reference.',
+      integration: 'Global Codex hooks point at live dist/src/cli.js; UserPromptSubmit chains skills-hub routing, CC-Panes lifecycle intake, and the workflow advisory.',
       surfaces: [
         { kind: 'hard-gate', name: 'PreToolUse', owner: 'hook-enforce', status: 'supported' },
         { kind: 'hard-gate', name: 'PermissionRequest', owner: 'permission-enforce', status: 'supported' },
         { kind: 'audit', name: 'PostToolUse', owner: 'post-enforce', status: 'supported' },
+        { kind: 'advisory', name: 'UserPromptSubmit workflow advisory', owner: 'workflow-advisory', status: 'supported' },
         { kind: 'advisory', name: 'SessionStart', owner: 'session-start', status: 'supported' },
         { kind: 'advisory', name: 'Stop', owner: 'stop-check', status: 'supported' }
       ],
       stateRoots: ['<project>/.ccpanes-task', 'D:/cc-pane/tool/experiments/ccpanes-task-probe/live/dynamic-audits/<task>'],
-      auditArtifacts: ['hook-enforce-audit.json', 'permission-enforce-audit.json', 'post-tool-use-audit.jsonl'],
+      auditArtifacts: [
+        'hook-enforce-audit.json',
+        'permission-enforce-audit.json',
+        'post-tool-use-audit.jsonl',
+        'workflow-advisory-audit.jsonl'
+      ],
       verification: [
         ...localVerification,
         {

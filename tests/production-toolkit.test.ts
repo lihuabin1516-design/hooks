@@ -46,6 +46,7 @@ describe('createProductionToolkit', () => {
       'SessionStart',
       'UserPromptSubmit',
       'UserPromptSubmit',
+      'UserPromptSubmit',
       'PreToolUse',
       'PermissionRequest',
       'PostToolUse',
@@ -66,6 +67,7 @@ describe('createProductionToolkit', () => {
     expect(rollbackScript).toContain('Rollback');
     expect(readme).toContain('SessionStart');
     expect(readme).toContain('UserPromptSubmit');
+    expect(readme).toContain('workflow advisory');
     expect(readme).toContain('AGENTS.md');
     expect(readme).toContain('bootstrap-report.json');
     expect(readme).toContain('Stop');

@@ -25,6 +25,8 @@ describe('verifyInstalledHooks', () => {
     await fs.writeFile(configTomlPath, [
       "[hooks.state.'hooks.json:user_prompt_submit:0:0']",
       'trusted_hash = "sha256:user-prompt-skills"',
+      "[hooks.state.'hooks.json:user_prompt_submit:2:0']",
+      'trusted_hash = "sha256:user-prompt-advisory"',
       "[hooks.state.'hooks.json:pre_tool_use:0:0']",
       'trusted_hash = "sha256:pre"',
       "[hooks.state.'hooks.json:permission_request:0:0']",
@@ -48,6 +50,7 @@ describe('verifyInstalledHooks', () => {
       ['SessionStart', 'SessionStart', true],
       ['UserPromptSubmit skills-hub', 'UserPromptSubmit', true],
       ['UserPromptSubmit cc-panes prompt-before', 'UserPromptSubmit', true],
+      ['UserPromptSubmit workflow advisory', 'UserPromptSubmit', true],
       ['PreToolUse', 'PreToolUse', true],
       ['PermissionRequest', 'PermissionRequest', true],
       ['PostToolUse', 'PostToolUse', true],
@@ -58,6 +61,7 @@ describe('verifyInstalledHooks', () => {
     }
     expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit skills-hub trusted hash', status: 'pass' }));
     expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit cc-panes prompt-before trusted hash advisory', status: 'pass' }));
+    expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit workflow advisory trusted hash', status: 'pass' }));
   });
 
   test('fails when a required hook event is missing', async () => {
@@ -88,6 +92,22 @@ describe('verifyInstalledHooks', () => {
 
     expect(report.passed).toBe(false);
     expect(report.failures.some((failure) => failure.includes('UserPromptSubmit cc-panes prompt-before installed'))).toBe(true);
+  });
+
+  test('fails when the workflow advisory UserPromptSubmit hook is missing', async () => {
+    const prototypeRoot = path.join(tempRoot, 'prototype');
+    const auditRoot = path.join(tempRoot, 'audits');
+    const hooksJsonPath = path.join(tempRoot, 'hooks.json');
+    const hooks = buildExpectedHooksConfig({ prototypeRoot, auditRoot });
+    const userPromptSubmit = hooks.hooks.UserPromptSubmit;
+    if (!Array.isArray(userPromptSubmit)) throw new Error('expected UserPromptSubmit fixture');
+    hooks.hooks.UserPromptSubmit = userPromptSubmit.slice(0, 2);
+    await fs.writeFile(hooksJsonPath, `${JSON.stringify(hooks, null, 2)}\n`, 'utf8');
+
+    const report = await verifyInstalledHooks({ hooksJsonPath, prototypeRoot, auditRoot });
+
+    expect(report.passed).toBe(false);
+    expect(report.failures.some((failure) => failure.includes('UserPromptSubmit workflow advisory installed'))).toBe(true);
   });
 
   test('finds a required command outside the first matcher group', async () => {

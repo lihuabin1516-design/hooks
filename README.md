@@ -184,6 +184,7 @@ plan-intake         plan 阶段 workflow/policy dry-run 和 audit
 plan-lifecycle-intake  从真实 plan lifecycle event 解析 task 并写 task-scoped dry-run audit
 classify-task-risk  prompt 级 Light / Standard / Heavy 风险分级
 classify-workflow   SBA 风格任务路由、闭环强度和检查建议
+workflow-advisory   Codex UserPromptSubmit 生产级实现建议与隐私保护审计
 host-adapter-registry  机器可读宿主适配能力目录
 hook-enforce        PreToolUse 执行前拦截
 permission-enforce  PermissionRequest 拦截高风险授权请求
@@ -269,6 +270,7 @@ policy-capture-plan
 policy-add / policy-list / policy-validate / policy-disable / policy-clear
 classify-task-risk
 classify-workflow
+workflow-advisory
 host-adapter-registry
 hook-enforce / permission-enforce / post-enforce
 session-start / stop-check

@@ -68,6 +68,11 @@ import {
 } from './session-lifecycle.js';
 import { classifyTaskRisk } from './task-risk.js';
 import type { CurrentTask, GitState, HookCall, TaskBindingCheck, TaskPhase } from './types.js';
+import {
+  appendWorkflowAdvisoryAudit,
+  createWorkflowAdvisory,
+  parseWorkflowAdvisoryHookEvent
+} from './workflow-advisory-hook.js';
 import { classifyWorkflowProfile } from './workflow-profile.js';
 import { scanWorkspaceTasks } from './workspace-scan.js';
 
@@ -202,6 +207,10 @@ function postToolUseAuditPathFromRoot(auditRoot: string, task: CurrentTask): str
   return path.join(auditRoot, safeName(task.taskId), 'post-tool-use-audit.jsonl');
 }
 
+function workflowAdvisoryAuditPathFromRoot(auditRoot: string, task: CurrentTask): string {
+  return path.join(auditRoot, safeName(task.taskId), 'workflow-advisory-audit.jsonl');
+}
+
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) {
@@ -271,6 +280,36 @@ export async function runCli(args: string[], stdinText?: string, options: RunCli
       cwd,
       changedPaths: valuesAfter(args, '--changed-path')
     }), null, 2)}\n`;
+  }
+
+  if (command === 'workflow-advisory') {
+    const auditRoot = valueAfter(args, '--audit-root');
+    if (!auditRoot || !args.includes('--resolve-task-from-cwd')) return '';
+    try {
+      const eventText = stdinText ?? await readStdin();
+      const event = JSON.parse(eventText);
+      const parsedEvent = parseWorkflowAdvisoryHookEvent(event);
+      if (!parsedEvent) return '';
+      const binding = await resolveCurrentTaskBindingFromCwd(parsedEvent.cwd);
+      if (binding.check.status !== 'matched' || !binding.candidate) return '';
+      const result = createWorkflowAdvisory({
+        task: binding.candidate.task,
+        event
+      });
+      if (result.audit) {
+        try {
+          await appendWorkflowAdvisoryAudit(
+            workflowAdvisoryAuditPathFromRoot(auditRoot, binding.candidate.task),
+            result.audit
+          );
+        } catch {
+          // Advisory audit failure must not block prompt submission.
+        }
+      }
+      return result.output ? `${JSON.stringify(result.output, null, 2)}\n` : '';
+    } catch {
+      return '';
+    }
   }
 
   if (command === 'host-adapter-registry') {

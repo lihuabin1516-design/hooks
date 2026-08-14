@@ -163,6 +163,107 @@ describe('runCli', () => {
       cwd: tempRoot
     });
     expect(parsed.checks.map((check: { command: string }) => check.command)).toContain('npm run smoke');
+    expect(parsed.implementationStandard).toMatchObject({
+      schema: 'ccpanes.implementation-standard.v1',
+      level: 'production-grade',
+      optimizationTarget: 'unnecessary-complexity'
+    });
+  });
+
+  test('emits workflow advisory context and audit for a matched Codex code prompt', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const nestedCwd = path.join(projectRoot, 'packages', 'demo');
+    const auditRoot = path.join(tempRoot, 'advisory-audits');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+    await fs.mkdir(nestedCwd, { recursive: true });
+
+    const output = await runCli([
+      'workflow-advisory',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot
+    ], JSON.stringify({
+      hook_event_name: 'UserPromptSubmit',
+      cwd: nestedCwd,
+      prompt: '实现生产级 hook runtime 并补充测试'
+    }));
+    const parsed = JSON.parse(output);
+
+    expect(parsed.hookSpecificOutput).toMatchObject({
+      hookEventName: 'UserPromptSubmit'
+    });
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('ccpanes.workflow-advisory.v1');
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('level: production-grade');
+    const auditPath = path.join(
+      auditRoot,
+      Buffer.from('task-alpha', 'utf8').toString('base64url'),
+      'workflow-advisory-audit.jsonl'
+    );
+    const audit = JSON.parse((await fs.readFile(auditPath, 'utf8')).trim());
+    expect(audit).toMatchObject({
+      taskId: 'task-alpha',
+      injected: true,
+      routeId: 'production-gate'
+    });
+  });
+
+  test('workflow advisory no-ops for documentation prompts but records classification', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditRoot = path.join(tempRoot, 'advisory-audits');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+
+    const output = await runCli([
+      'workflow-advisory',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot
+    ], JSON.stringify({
+      hook_event_name: 'UserPromptSubmit',
+      cwd: projectRoot,
+      prompt: '只更新 README 文档，不修改代码'
+    }));
+
+    expect(output).toBe('');
+    const auditPath = path.join(
+      auditRoot,
+      Buffer.from('task-alpha', 'utf8').toString('base64url'),
+      'workflow-advisory-audit.jsonl'
+    );
+    const audit = JSON.parse((await fs.readFile(auditPath, 'utf8')).trim());
+    expect(audit).toMatchObject({
+      injected: false,
+      routeId: 'documentation',
+      reason: 'implementation_standard_not_applicable'
+    });
+  });
+
+  test('workflow advisory no-ops when cwd has no task binding', async () => {
+    const orphanCwd = path.join(tempRoot, 'orphan');
+    await fs.mkdir(orphanCwd, { recursive: true });
+
+    const output = await runCli([
+      'workflow-advisory',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      path.join(tempRoot, 'advisory-audits')
+    ], JSON.stringify({
+      hook_event_name: 'UserPromptSubmit',
+      cwd: orphanCwd,
+      prompt: '修改代码'
+    }));
+
+    expect(output).toBe('');
+  });
+
+  test('workflow advisory fails open for malformed stdin', async () => {
+    const output = await runCli([
+      'workflow-advisory',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      path.join(tempRoot, 'advisory-audits')
+    ], '{not-json');
+
+    expect(output).toBe('');
   });
 
   test('prints host adapter registry and filters by host', async () => {

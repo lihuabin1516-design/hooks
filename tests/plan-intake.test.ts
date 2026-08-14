@@ -37,6 +37,10 @@ describe('createPlanIntake', () => {
         wouldChangeProjectPolicy: true
       }
     });
+    expect(result.workflow.implementationStandard).toMatchObject({
+      schema: 'ccpanes.implementation-standard.v1',
+      level: 'production-grade'
+    });
     expect(result.policyPreview.actions[0]).toMatchObject({
       status: 'would_capture',
       effect: 'block',
@@ -62,6 +66,7 @@ describe('createPlanIntake', () => {
     });
     expect(result.workflow.route.id).toBe('read-only-review');
     expect(result.workflow.closure.bucket).toBe('none');
+    expect(result.workflow.implementationStandard).toBeNull();
     expect(result.recommendedNextCommands.some((command) => command.includes('policy-capture-plan'))).toBe(false);
   });
 });
@@ -79,6 +84,10 @@ describe('writePlanIntakeAuditAtomic', () => {
     const audit = JSON.parse(await fs.readFile(outPath, 'utf8'));
 
     expect(audit.schema).toBe('ccpanes.plan-intake.v1');
+    expect(audit.workflow.implementationStandard).toMatchObject({
+      schema: 'ccpanes.implementation-standard.v1',
+      level: 'production-grade'
+    });
     expect(audit.policyPreview.actions[0]).toMatchObject({
       status: 'would_capture',
       effect: 'allow',

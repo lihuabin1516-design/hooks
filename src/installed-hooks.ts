@@ -19,6 +19,7 @@ export interface ExpectedHookDefinition {
   requiresPrototypeCli?: boolean;
   requiresAuditRoot?: boolean;
   trustRequired?: boolean;
+  requiredAdditionalContextLimit?: number;
 }
 
 export interface InstalledHookDiscovery {
@@ -85,7 +86,14 @@ function ccPanesPromptBeforeCommand(): string {
 
 export function expectedHookDefinitions(): ExpectedHookDefinition[] {
   return [
-    { event: 'SessionStart', name: 'SessionStart', commandToken: 'session-start', requiredMatcherTokens: ['startup', 'resume', 'clear', 'compact'], trustStateKey: 'session_start' },
+    {
+      event: 'SessionStart',
+      name: 'SessionStart',
+      commandToken: 'session-start',
+      requiredMatcherTokens: ['startup', 'resume', 'clear', 'compact'],
+      trustStateKey: 'session_start',
+      requiredAdditionalContextLimit: 1200
+    },
     {
       event: 'UserPromptSubmit',
       name: 'UserPromptSubmit skills-hub',
@@ -106,6 +114,15 @@ export function expectedHookDefinitions(): ExpectedHookDefinition[] {
       requiresPrototypeCli: false,
       requiresAuditRoot: false,
       trustRequired: false
+    },
+    {
+      event: 'UserPromptSubmit',
+      name: 'UserPromptSubmit workflow advisory',
+      commandToken: 'workflow-advisory',
+      requiredCommandTokens: ['workflow-advisory', '--resolve-task-from-cwd'],
+      requiredMatcherTokens: [],
+      trustStateKey: 'user_prompt_submit',
+      requiredAdditionalContextLimit: 1800
     },
     { event: 'PreToolUse', name: 'PreToolUse', commandToken: 'hook-enforce', requiredMatcherTokens: ['apply_patch', 'Bash', 'mcp__fastctx__'], trustStateKey: 'pre_tool_use' },
     { event: 'PermissionRequest', name: 'PermissionRequest', commandToken: 'permission-enforce', requiredMatcherTokens: ['apply_patch', 'Bash', 'mcp__fastctx__'], trustStateKey: 'permission_request' },
@@ -137,6 +154,18 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               commandWindows: ccPanesPromptBeforeCommand(),
               timeout: 10,
               statusMessage: 'CC-Panes plan lifecycle intake'
+            }
+          ]
+        },
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: commandFor(input.prototypeRoot, 'workflow-advisory', input.auditRoot),
+              commandWindows: commandFor(input.prototypeRoot, 'workflow-advisory', input.auditRoot),
+              timeout: 5,
+              statusMessage: 'CC-Panes production workflow advisory',
+              additionalContextLimit: 1800
             }
           ]
         }
@@ -354,9 +383,15 @@ export async function verifyInstalledHooks(input: VerifyInstalledHooksInput): Pr
       }
     }
 
-    if (definition.event === 'SessionStart') {
+    if (definition.requiredAdditionalContextLimit !== undefined) {
       const limit = candidate.handler.additionalContextLimit;
-      addCheck(checks, failures, 'SessionStart additionalContextLimit', typeof limit === 'number' && limit > 0, String(limit));
+      addCheck(
+        checks,
+        failures,
+        `${name} additionalContextLimit`,
+        limit === definition.requiredAdditionalContextLimit,
+        String(limit)
+      );
     }
   }
 

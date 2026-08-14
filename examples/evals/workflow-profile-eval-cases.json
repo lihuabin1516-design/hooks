@@ -21,6 +21,9 @@
           "touchesUserConfig": false,
           "production": false,
           "externalSideEffect": false
+        },
+        "implementationStandard": {
+          "present": false
         }
       }
     },
@@ -47,6 +50,11 @@
         "riskDimensions": {
           "production": false,
           "externalSideEffect": false
+        },
+        "implementationStandard": {
+          "present": true,
+          "level": "production-grade",
+          "optimizationTarget": "unnecessary-complexity"
         }
       }
     },
@@ -72,6 +80,11 @@
         "riskDimensions": {
           "destructive": false,
           "externalSideEffect": false
+        },
+        "implementationStandard": {
+          "present": true,
+          "level": "production-grade",
+          "optimizationTarget": "unnecessary-complexity"
         }
       }
     },
@@ -97,7 +110,18 @@
         ],
         "requiredGates": [
           "new host payloads need synthetic fixture tests before real hook configuration changes"
-        ]
+        ],
+        "implementationStandard": {
+          "present": true,
+          "level": "production-grade",
+          "optimizationTarget": "unnecessary-complexity",
+          "requiredNonNegotiables": [
+            "security, authorization, and privacy requirements",
+            "error semantics, unknown-outcome handling, recovery, and reconciliation",
+            "logging, auditability, metrics, tracing, and operational observability",
+            "tests, type checks, builds, smoke checks, and verification evidence"
+          ]
+        }
       }
     },
     {
@@ -128,6 +152,55 @@
         "riskDimensions": {
           "touchesUserConfig": true,
           "production": true
+        },
+        "implementationStandard": {
+          "present": true,
+          "level": "production-grade",
+          "optimizationTarget": "unnecessary-complexity",
+          "requiredNonNegotiables": [
+            "compatibility, migration, rollout, and rollback requirements",
+            "deployment, support, and maintainability requirements"
+          ]
+        }
+      }
+    },
+    {
+      "id": "pt-minimal-production-implementation",
+      "description": "A request for a minimal production implementation must keep production closure and production-grade safeguards.",
+      "prompt": "实现最小版本，但必须达到生产级可靠性",
+      "changedPaths": [
+        "src/feature.ts",
+        "tests/feature.test.ts"
+      ],
+      "expected": {
+        "routeId": "production-gate",
+        "rigor": "heavy",
+        "closureBucket": "production",
+        "requiredCheckNames": [
+          "unit-tests",
+          "typecheck",
+          "build",
+          "smoke",
+          "diff-check",
+          "status",
+          "acceptance-evidence",
+          "reference-repos"
+        ],
+        "riskDimensions": {
+          "production": true,
+          "touchesCode": true
+        },
+        "implementationStandard": {
+          "present": true,
+          "level": "production-grade",
+          "optimizationTarget": "unnecessary-complexity",
+          "requiredNonNegotiables": [
+            "correctness and explicit edge-case behavior",
+            "security, authorization, and privacy requirements",
+            "error semantics, unknown-outcome handling, recovery, and reconciliation",
+            "logging, auditability, metrics, tracing, and operational observability",
+            "tests, type checks, builds, smoke checks, and verification evidence"
+          ]
         }
       }
     },
@@ -145,7 +218,10 @@
         "requiredCheckNames": [
           "diff-check",
           "status"
-        ]
+        ],
+        "implementationStandard": {
+          "present": false
+        }
       }
     },
     {
@@ -167,7 +243,12 @@
           "smoke",
           "diff-check",
           "status"
-        ]
+        ],
+        "implementationStandard": {
+          "present": true,
+          "level": "production-grade",
+          "optimizationTarget": "unnecessary-complexity"
+        }
       }
     }
   ]

@@ -148,7 +148,7 @@ function createReadme(input: CreateProductionToolkitInput): string {
     'This package installs and verifies the CC-Panes task hook stack:',
     '',
     '- SessionStart: inject task lifecycle context.',
-    '- UserPromptSubmit: chain skills-hub routing and CC-Panes plan lifecycle intake.',
+    '- UserPromptSubmit: chain skills-hub routing, CC-Panes plan lifecycle intake, and the production workflow advisory.',
     '- PreToolUse: block out-of-bound writes before tool execution.',
     '- PermissionRequest: deny risky escalation requests.',
     '- PostToolUse: append per-task audit JSONL.',

@@ -1,4 +1,5 @@
 import { classifyTaskRisk, type TaskRiskResult, type TaskRiskTier } from './task-risk.js';
+import { createImplementationStandard, type ImplementationStandard } from './implementation-standard.js';
 
 export type WorkflowRouteId =
   | 'read-only-review'
@@ -52,6 +53,7 @@ export interface WorkflowProfileResult {
   checks: WorkflowCheck[];
   gates: string[];
   boundaries: string[];
+  implementationStandard: ImplementationStandard | null;
   changedPaths: string[];
   promptLength: number;
   cwd: string | null;
@@ -276,7 +278,7 @@ function checksFor(closure: WorkflowClosureProfile): WorkflowCheck[] {
 function gatesFor(route: WorkflowRoute, closure: WorkflowClosureProfile): string[] {
   const gates = [
     'current-task.json remains the task scope authority',
-    'project-policy.json remains the executable allow/block authority',
+    '.ccpanes-task/policy.json remains the executable allow/block authority',
     'task-risk and workflow-profile are advisory; hard writes still go through hook-enforce and permission-enforce'
   ];
   if (route.id === 'project-policy') {
@@ -310,6 +312,19 @@ function boundariesFor(route: WorkflowRoute, closure: WorkflowClosureProfile): s
   return boundaries;
 }
 
+function implementationStandardFor(route: WorkflowRoute): ImplementationStandard | null {
+  if (
+    route.id === 'project-bootstrap' ||
+    route.id === 'project-policy' ||
+    route.id === 'hook-runtime' ||
+    route.id === 'production-gate' ||
+    route.id === 'implementation'
+  ) {
+    return createImplementationStandard();
+  }
+  return null;
+}
+
 export function classifyWorkflowProfile(input: WorkflowProfileInput): WorkflowProfileResult {
   const changedPaths = normalizePaths(input.changedPaths);
   const risk = classifyTaskRisk({ prompt: input.prompt, cwd: input.cwd });
@@ -324,6 +339,7 @@ export function classifyWorkflowProfile(input: WorkflowProfileInput): WorkflowPr
     checks: checksFor(closure),
     gates: gatesFor(route, closure),
     boundaries: boundariesFor(route, closure),
+    implementationStandard: implementationStandardFor(route),
     changedPaths,
     promptLength: input.prompt.length,
     cwd: input.cwd ?? null,

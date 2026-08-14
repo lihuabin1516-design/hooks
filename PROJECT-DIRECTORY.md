@@ -143,7 +143,10 @@ live 路径：
 D:\cc-pane\tool\experiments\ccpanes-task-probe
 ```
 
-Codex 全局 hooks 指向 live 的 `dist/src/cli.js`。仓库修改完成、测试通过、提交并 push 后，需要同步 repo 到 live，再在 live 路径重复完整验收。
+Codex 全局 hooks 指向 live 的 `dist/src/cli.js`。`UserPromptSubmit` 保留
+skills-hub 与 CC-Panes prompt-before，并追加独立的 `workflow-advisory`
+消费链路。仓库修改完成、测试通过、提交并 push 后，需要同步 repo 到 live，
+重新信任变更的 hook，再在 live 路径重复完整验收。
 
 ## 维护边界
 

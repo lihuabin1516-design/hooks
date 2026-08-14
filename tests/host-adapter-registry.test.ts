@@ -13,9 +13,12 @@ describe('host adapter registry', () => {
     expect(codex).toMatchObject({ status: 'supported' });
     expect(codex?.surfaces).toEqual(expect.arrayContaining([
       expect.objectContaining({ kind: 'hard-gate', name: 'PreToolUse', owner: 'hook-enforce' }),
-      expect.objectContaining({ kind: 'hard-gate', name: 'PermissionRequest', owner: 'permission-enforce' })
+      expect.objectContaining({ kind: 'hard-gate', name: 'PermissionRequest', owner: 'permission-enforce' }),
+      expect.objectContaining({ kind: 'advisory', name: 'UserPromptSubmit workflow advisory', owner: 'workflow-advisory' })
     ]));
+    expect(codex?.auditArtifacts).toContain('workflow-advisory-audit.jsonl');
     expect(codex?.verification.map((check) => check.name)).toContain('installed-hooks');
+    expect(codex?.boundaries).toContain('.ccpanes-task/policy.json remains the executable allow/block authority');
   });
 
   test('keeps unproven hosts out of hard-gate authority', () => {

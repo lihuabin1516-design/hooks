@@ -227,6 +227,21 @@ try {
   assert(workflowProfile.route.id === 'hook-runtime', 'workflow profile expected hook-runtime route');
   assert(workflowProfile.closure.bucket === 'full', 'workflow profile expected full closure bucket');
   assert(workflowProfile.checks.some((check) => check.command === 'npm run smoke'), 'workflow profile missing smoke check');
+  assert(workflowProfile.implementationStandard?.level === 'production-grade', 'workflow profile expected production-grade implementation standard');
+  const workflowAdvisory = parseJson(run([
+    'workflow-advisory',
+    '--resolve-task-from-cwd',
+    '--audit-root',
+    hookEnforceAuditRoot
+  ], JSON.stringify({
+    hook_event_name: 'UserPromptSubmit',
+    cwd: project,
+    prompt: '实现生产级 hook runtime 并补充测试'
+  })));
+  assert(workflowAdvisory.hookSpecificOutput.hookEventName === 'UserPromptSubmit', 'workflow advisory hook event mismatch');
+  assert(workflowAdvisory.hookSpecificOutput.additionalContext.includes('ccpanes.workflow-advisory.v1'), 'workflow advisory schema context missing');
+  assert(workflowAdvisory.hookSpecificOutput.additionalContext.includes('level: production-grade'), 'workflow advisory production level missing');
+  assert(existsSync(join(hookEnforceAuditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'workflow-advisory-audit.jsonl')), 'workflow advisory audit missing');
   const hostRegistry = parseJson(run(['host-adapter-registry']));
   assert(hostRegistry.schema === 'ccpanes.host-adapter-registry.v1', 'host adapter registry schema mismatch');
   assert(hostRegistry.defaultHost === 'codex', 'host adapter registry expected codex default');
@@ -471,9 +486,10 @@ try {
   ]));
   assert(installedHooksReport.schema === 'ccpanes.installed-hooks.verify.v1', 'installed hooks verify schema mismatch');
   assert(installedHooksReport.passed === true, 'installed hooks verify expected passed=true');
-  assert(installedHooksReport.discovered.length === 7, 'installed hooks verify expected seven hooks');
+  assert(installedHooksReport.discovered.length === 8, 'installed hooks verify expected eight hooks');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit skills-hub'), 'installed hooks verify missing skills-hub UserPromptSubmit hook');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit cc-panes prompt-before'), 'installed hooks verify missing CC-Panes UserPromptSubmit hook');
+  assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit workflow advisory'), 'installed hooks verify missing workflow advisory UserPromptSubmit hook');
 
   for (const consistencyRoot of [consistencyRepo, consistencyLive]) {
     mkdirSync(join(consistencyRoot, 'src'), { recursive: true });
