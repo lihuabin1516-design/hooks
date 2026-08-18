@@ -41,6 +41,15 @@ D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js
 
 ## 日常使用
 
+### Codex 会话桥接
+
+外部只读会话索引、项目归因、留存检查、轻量交接，以及
+`sidebar-plan` / `sidebar-apply` / `sidebar-reconcile` /
+`sidebar-rollback-plan` 的两阶段 name + host pin artifact 流程见
+[`docs/codex-session-bridge.md`](./docs/codex-session-bridge.md)。本仓库当前 Codex
+0.147.0 adapter 中，pin/unpin 由 Codex App host 执行，App Server adapter 负责
+thread name。
+
 ### 1. 新项目接入
 
 在 CC-Panes 新开工作区并导入项目后，对项目根目录执行：

@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { createAcceptanceEvidence, type AcceptanceEvidence, type AcceptanceTruthLayerInput, type AcceptanceTruthLayerName } from './acceptance.js';
@@ -75,6 +76,33 @@ import {
 } from './workflow-advisory-hook.js';
 import { classifyWorkflowProfile } from './workflow-profile.js';
 import { scanWorkspaceTasks } from './workspace-scan.js';
+import { buildCodexSessionIndex, writeCodexSessionJson } from './codex-session-index.js';
+import {
+  validateCodexSessionIndexArtifact
+} from './codex-session-index-artifact.js';
+import {
+  renderCodexSessionResolution,
+  resolveCodexSessions,
+  validateCodexSessionResolutionArtifact
+} from './codex-session-resolver.js';
+import {
+  createRetentionManifest,
+  generateCodexHandoff,
+  validateCodexSessionRetentionManifest,
+  type HandoffMode
+} from './codex-session-handoff.js';
+import { validateCcPanesSessionSnapshot } from './ccpanes-session-snapshot.js';
+import {
+  assertCodexSessionFederationProject,
+  attachCcPanesAttribution,
+  buildSessionFederation
+} from './session-federation.js';
+import {
+  isCodexSidebarCliAction,
+  runCodexSidebarCli,
+  type CodexSidebarCliAction,
+  type CreateCodexAppServerClient
+} from './codex-sidebar-cli.js';
 
 function valueAfter(args: string[], flag: string): string | null {
   const index = args.indexOf(flag);
@@ -88,6 +116,251 @@ function valuesAfter(args: string[], flag: string): string[] {
     if (args[index] === flag && args[index + 1]) values.push(args[index + 1]);
   }
   return values;
+}
+
+type CodexSessionIndexAction = 'scan' | 'resolve' | 'retention' | 'graph';
+type CodexSessionsAction = CodexSessionIndexAction | CodexSidebarCliAction;
+
+const HANDOFF_GENERATE_VALUE_OPTIONS = [
+  '--mode',
+  '--project',
+  '--sessions-dir',
+  '--state-db',
+  '--thread-history-db',
+  '--task-context',
+  '--index'
+] as const;
+
+type HandoffGenerateOption =
+  typeof HANDOFF_GENERATE_VALUE_OPTIONS[number];
+
+interface HandoffGenerateOptions {
+  mode: HandoffMode;
+  project: string;
+  sessionsDir: string | null;
+  stateDb: string | null;
+  threadHistoryDb: string | null;
+  taskContextPath: string | null;
+  indexPath: string | null;
+}
+
+function isHandoffGenerateOption(
+  value: string
+): value is HandoffGenerateOption {
+  return (HANDOFF_GENERATE_VALUE_OPTIONS as readonly string[]).includes(value);
+}
+
+function parseHandoffGenerateOptions(args: string[]): HandoffGenerateOptions {
+  const values = new Map<HandoffGenerateOption, string>();
+  const seen = new Set<HandoffGenerateOption>();
+
+  for (let index = 0; index < args.length;) {
+    const token = args[index];
+    if (!token.startsWith('--')) {
+      throw new Error(`unexpected positional argument: ${token}`);
+    }
+    if (!isHandoffGenerateOption(token)) {
+      throw new Error(`unknown option: ${token}`);
+    }
+    if (seen.has(token)) {
+      throw new Error(`duplicate option: ${token}`);
+    }
+    seen.add(token);
+
+    const value = args[index + 1];
+    if (
+      value === undefined ||
+      value.startsWith('--') ||
+      value.trim().length === 0
+    ) {
+      throw new Error(`missing value for ${token}`);
+    }
+    values.set(token, value);
+    index += 2;
+  }
+
+  const project = values.get('--project');
+  if (!project) throw new Error('missing --project');
+  const mode = values.get('--mode');
+  if (mode !== 'ccpanes-worker' && mode !== 'codex-app-visual') {
+    throw new Error(`invalid handoff mode: ${mode ?? null}`);
+  }
+  return {
+    mode,
+    project,
+    sessionsDir: values.get('--sessions-dir') ?? null,
+    stateDb: values.get('--state-db') ?? null,
+    threadHistoryDb: values.get('--thread-history-db') ?? null,
+    taskContextPath: values.get('--task-context') ?? null,
+    indexPath: values.get('--index') ?? null
+  };
+}
+
+interface CodexSessionsCommonOptions {
+  sessionsDir: string | null;
+  stateDb: string | null;
+  threadHistoryDb: string | null;
+  project: string | null;
+  taskContextPath: string | null;
+  snapshotPath: string | null;
+}
+
+type CodexSessionsOptions =
+  | (CodexSessionsCommonOptions & {
+      action: 'scan' | 'retention';
+      outPath: string | null;
+    })
+  | (Omit<CodexSessionsCommonOptions, 'project'> & {
+      action: 'graph';
+      project: string;
+      outPath: string | null;
+    })
+  | (Omit<CodexSessionsCommonOptions, 'project'> & {
+      action: 'resolve';
+      project: string;
+      json: boolean;
+      includeArchived: boolean;
+      includeSubagents: boolean;
+      includeRelated: boolean;
+      includeAmbient: boolean;
+    });
+
+const CODEX_SESSIONS_OPTION_KINDS = {
+  '--sessions-dir': 'value',
+  '--state-db': 'value',
+  '--thread-history-db': 'value',
+  '--project': 'value',
+  '--task-context': 'value',
+  '--ccpanes-snapshot': 'value',
+  '--out': 'value',
+  '--json': 'boolean',
+  '--include-archived': 'boolean',
+  '--include-subagents': 'boolean',
+  '--include-related': 'boolean',
+  '--include-ambient': 'boolean'
+} as const;
+
+type CodexSessionsOption = keyof typeof CODEX_SESSIONS_OPTION_KINDS;
+
+const CODEX_SESSIONS_COMMON_OPTIONS = new Set<CodexSessionsOption>([
+  '--sessions-dir',
+  '--state-db',
+  '--thread-history-db',
+  '--project',
+  '--task-context',
+  '--ccpanes-snapshot'
+]);
+
+function isCodexSessionIndexAction(
+  value: CodexSessionsAction
+): value is CodexSessionIndexAction {
+  return value === 'scan' ||
+    value === 'resolve' ||
+    value === 'retention' ||
+    value === 'graph';
+}
+
+function isCodexSessionsAction(
+  value: string | undefined
+): value is CodexSessionsAction {
+  return value === 'scan' ||
+    value === 'resolve' ||
+    value === 'retention' ||
+    value === 'graph' ||
+    isCodexSidebarCliAction(value);
+}
+
+function isCodexSessionsOption(value: string): value is CodexSessionsOption {
+  return Object.hasOwn(CODEX_SESSIONS_OPTION_KINDS, value);
+}
+
+function codexSessionsOptionAllowed(action: CodexSessionIndexAction, option: CodexSessionsOption): boolean {
+  if (CODEX_SESSIONS_COMMON_OPTIONS.has(option)) return true;
+  if (action === 'resolve') {
+    return option === '--json' ||
+      option === '--include-archived' ||
+      option === '--include-subagents' ||
+      option === '--include-related' ||
+      option === '--include-ambient';
+  }
+  return option === '--out';
+}
+
+function parseCodexSessionsOptions(
+  action: CodexSessionIndexAction,
+  args: string[]
+): CodexSessionsOptions {
+  const values = new Map<CodexSessionsOption, string>();
+  const enabled = new Set<CodexSessionsOption>();
+  const seen = new Set<CodexSessionsOption>();
+
+  for (let index = 0; index < args.length;) {
+    const token = args[index];
+    if (!token.startsWith('--')) {
+      throw new Error(`unexpected positional argument: ${token}`);
+    }
+    if (!isCodexSessionsOption(token)) {
+      throw new Error(`unknown option: ${token}`);
+    }
+    if (!codexSessionsOptionAllowed(action, token)) {
+      throw new Error(`unsupported option for ${action}: ${token}`);
+    }
+    if (seen.has(token)) {
+      throw new Error(`duplicate option: ${token}`);
+    }
+    seen.add(token);
+
+    if (CODEX_SESSIONS_OPTION_KINDS[token] === 'value') {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith('--') || value.trim().length === 0) {
+        throw new Error(`missing value for ${token}`);
+      }
+      values.set(token, value);
+      index += 2;
+    } else {
+      enabled.add(token);
+      index += 1;
+    }
+  }
+
+  const common: CodexSessionsCommonOptions = {
+    sessionsDir: values.get('--sessions-dir') ?? null,
+    stateDb: values.get('--state-db') ?? null,
+    threadHistoryDb: values.get('--thread-history-db') ?? null,
+    project: values.get('--project') ?? null,
+    taskContextPath: values.get('--task-context') ?? null,
+    snapshotPath: values.get('--ccpanes-snapshot') ?? null
+  };
+  if (common.snapshotPath && !common.project) {
+    throw new Error('--ccpanes-snapshot requires --project');
+  }
+  if (action === 'resolve') {
+    if (!common.project) throw new Error('missing --project');
+    return {
+      action,
+      ...common,
+      project: common.project,
+      json: enabled.has('--json'),
+      includeArchived: enabled.has('--include-archived'),
+      includeSubagents: enabled.has('--include-subagents'),
+      includeRelated: enabled.has('--include-related'),
+      includeAmbient: enabled.has('--include-ambient')
+    };
+  }
+  if (action === 'graph') {
+    if (!common.project) throw new Error('missing --project');
+    return {
+      action,
+      ...common,
+      project: common.project,
+      outPath: values.get('--out') ?? null
+    };
+  }
+  return {
+    action,
+    ...common,
+    outPath: values.get('--out') ?? null
+  };
 }
 
 function parsePhase(value: string | null): TaskPhase {
@@ -233,6 +506,7 @@ function projectPolicyCliResult(command: string, root: string, changed: boolean,
 export interface RunCliOptions {
   trustedCliPath?: string | null;
   processExecPath?: string | null;
+  createCodexAppServerClient?: CreateCodexAppServerClient;
 }
 
 function cliPathForBootstrapAuthorization(options: RunCliOptions): string | null {
@@ -245,6 +519,119 @@ function processExecPathForBootstrapAuthorization(options: RunCliOptions): strin
 
 export async function runCli(args: string[], stdinText?: string, options: RunCliOptions = {}): Promise<string> {
   const command = args[0];
+
+  if (command === 'codex-sessions') {
+    const action = args[1];
+    if (!isCodexSessionsAction(action)) {
+      throw new Error(`unknown codex-sessions command: ${action}`);
+    }
+    if (isCodexSidebarCliAction(action)) {
+      return runCodexSidebarCli(
+        action,
+        args.slice(2),
+        options.createCodexAppServerClient
+      );
+    }
+    if (!isCodexSessionIndexAction(action)) {
+      throw new Error(`unknown codex-sessions command: ${action}`);
+    }
+    const parsed = parseCodexSessionsOptions(action, args.slice(2));
+    const project = parsed.project !== null && (
+      parsed.action === 'graph' || parsed.snapshotPath !== null
+    )
+      ? assertCodexSessionFederationProject(parsed.project)
+      : parsed.project;
+    const codexRoot = path.join(os.homedir(), '.codex');
+    const sessionsDir = parsed.sessionsDir ?? path.join(codexRoot, 'sessions');
+    const stateDb = parsed.stateDb ?? path.join(codexRoot, 'state_5.sqlite');
+    const threadHistoryDb = parsed.threadHistoryDb ?? path.join(codexRoot, 'thread_history_1.sqlite');
+    const taskContext = parsed.taskContextPath ??
+      (project && fs.existsSync(path.join(project, '.ccpanes-task', 'current-task.json'))
+        ? path.join(project, '.ccpanes-task', 'current-task.json')
+        : null);
+    const snapshot = parsed.snapshotPath
+      ? validateCcPanesSessionSnapshot(
+          JSON.parse(await readFile(path.resolve(parsed.snapshotPath), 'utf8'))
+        )
+      : null;
+    const index = await buildCodexSessionIndex({
+      sessionsDir,
+      stateDb,
+      threadHistoryDb,
+      taskContext,
+      project
+    });
+    const enrichedSessions = project
+      ? attachCcPanesAttribution({
+          project,
+          sessions: index.sessions,
+          ccpanes: snapshot
+        })
+      : index.sessions;
+    const enrichedIndex = validateCodexSessionIndexArtifact({
+      ...index,
+      sessions: enrichedSessions
+    });
+    const projectedSessions = enrichedIndex.sessions;
+    if (parsed.action === 'scan') {
+      const outPath = parsed.outPath ?? path.join(process.cwd(), 'live', 'codex-session-index.json');
+      await writeCodexSessionJson(outPath, enrichedIndex);
+      return `${JSON.stringify(enrichedIndex, null, 2)}\n`;
+    }
+    if (parsed.action === 'resolve') {
+      if (!project) throw new Error('missing --project');
+      const result = validateCodexSessionResolutionArtifact(
+        resolveCodexSessions(projectedSessions, project, {
+          includeArchived: parsed.includeArchived,
+          includeSubagents: parsed.includeSubagents,
+          includeRelated: parsed.includeRelated,
+          includeAmbient: parsed.includeAmbient
+        })
+      );
+      return parsed.json ? `${JSON.stringify(result, null, 2)}\n` : renderCodexSessionResolution(result);
+    }
+    if (parsed.action === 'retention') {
+      const manifest = validateCodexSessionRetentionManifest(
+        createRetentionManifest(projectedSessions)
+      );
+      const outPath = parsed.outPath ?? path.join(process.cwd(), 'live', 'session-retention-manifest.json');
+      await writeCodexSessionJson(outPath, manifest);
+      return `${JSON.stringify(manifest, null, 2)}\n`;
+    }
+    if (parsed.action === 'graph') {
+      if (!project) throw new Error('missing --project');
+      const federation = buildSessionFederation({
+        project,
+        codexSessions: projectedSessions,
+        ccpanes: snapshot
+      });
+      const outPath = parsed.outPath ??
+        path.join(process.cwd(), 'live', 'session-federation.json');
+      await writeCodexSessionJson(outPath, federation);
+      return `${JSON.stringify(federation, null, 2)}\n`;
+    }
+  }
+
+  if (command === 'handoff' && args[1] === 'generate') {
+    const parsed = parseHandoffGenerateOptions(args.slice(2));
+    const { project, mode } = parsed;
+    const codexRoot = path.join(os.homedir(), '.codex');
+    const sessionsDir = parsed.sessionsDir ?? path.join(codexRoot, 'sessions');
+    const stateDb = parsed.stateDb ?? path.join(codexRoot, 'state_5.sqlite');
+    const threadHistoryDb = parsed.threadHistoryDb ?? path.join(codexRoot, 'thread_history_1.sqlite');
+    const defaultTaskContextPath = path.join(
+      project,
+      '.ccpanes-task',
+      'current-task.json'
+    );
+    const taskContextPath = parsed.taskContextPath ??
+      (fs.existsSync(defaultTaskContextPath) ? defaultTaskContextPath : null);
+    const indexPath = parsed.indexPath ??
+      path.join(process.cwd(), 'live', 'codex-session-index.json');
+    const index = await buildCodexSessionIndex({ sessionsDir, stateDb, threadHistoryDb, taskContext: taskContextPath, project });
+    const resolution = resolveCodexSessions(index.sessions, project);
+    return `${await generateCodexHandoff({ mode, project, indexPath, taskContextPath, resolution })}\n`;
+  }
 
   if (command === 'probe') {
     const utterance = valueAfter(args, '--utterance') ?? '';
