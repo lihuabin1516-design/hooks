@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import type { Stats } from 'node:fs';
+import type { BigIntStats, Stats } from 'node:fs';
 import path from 'node:path';
 import { GitTopologyError, readGitState, readGitTopology } from './git-state.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
@@ -12,6 +12,36 @@ import type {
 } from './types.js';
 
 const MAX_CURRENT_TASK_BYTES = 16 * 1024;
+const CURRENT_TASK_ROOT_FIELDS = new Set([
+  'schema',
+  'taskId',
+  'workspace',
+  'projectPath',
+  'worktreeRoot',
+  'mainRepoRoot',
+  'branch',
+  'head',
+  'owner',
+  'phase',
+  'createdAt',
+  'updatedAt',
+  'source',
+  'notes'
+]);
+const CURRENT_TASK_OWNER_FIELDS = new Set([
+  'leaderSessionId',
+  'paneId',
+  'layoutId'
+]);
+const CURRENT_TASK_STRING_LIMITS = Object.freeze({
+  taskId: 256,
+  workspace: 256,
+  path: 4096,
+  reference: 512,
+  ownerReference: 256,
+  timestamp: 64,
+  notes: 4096
+});
 const phases: TaskPhase[] = ['shape', 'build', 'verify', 'archive'];
 const sources: CurrentTask['source'][] = ['leader', 'worker', 'manual-import'];
 
@@ -96,14 +126,48 @@ async function assertSafeTaskFile(file: string, boundary: TaskDirectoryBoundary)
   return stat;
 }
 
-function assertString(value: unknown, field: string): asserts value is string {
-  if (typeof value !== 'string' || value.length === 0) {
+function assertKnownFields(
+  value: Record<string, unknown>,
+  allowed: ReadonlySet<string>,
+  scope: string
+): void {
+  const unknown = Object.keys(value)
+    .filter((field) => !allowed.has(field))
+    .sort()[0];
+  if (unknown !== undefined) {
+    throw new Error(`invalid current task: unknown field ${scope}.${unknown}`);
+  }
+}
+
+function assertString(
+  value: unknown,
+  field: string,
+  maxLength: number
+): asserts value is string {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > maxLength
+  ) {
     throw new Error(`invalid current task: ${field}`);
   }
 }
 
-function assertNullableString(value: unknown, field: string): asserts value is string | null {
-  if (!(typeof value === 'string' || value === null)) {
+function assertNullableString(
+  value: unknown,
+  field: string,
+  maxLength: number
+): asserts value is string | null {
+  if (
+    !(
+      value === null ||
+      (
+        typeof value === 'string' &&
+        value.length > 0 &&
+        value.length <= maxLength
+      )
+    )
+  ) {
     throw new Error(`invalid current task: ${field}`);
   }
 }
@@ -113,7 +177,12 @@ function isCanonicalAbsolutePath(value: string): boolean {
 }
 
 function assertCanonicalAbsolutePath(value: unknown, field: string): asserts value is string {
-  if (typeof value !== 'string' || value.length === 0 || !isCanonicalAbsolutePath(value)) {
+  if (
+    typeof value !== 'string' ||
+    value.length === 0 ||
+    value.length > CURRENT_TASK_STRING_LIMITS.path ||
+    !isCanonicalAbsolutePath(value)
+  ) {
     throw new Error(`invalid current task: ${field} must be a canonical absolute path`);
   }
 }
@@ -131,25 +200,193 @@ export function validateCurrentTask(value: unknown): CurrentTask {
     throw new Error('invalid current task: object');
   }
   const record = value as Record<string, unknown>;
+  assertKnownFields(record, CURRENT_TASK_ROOT_FIELDS, 'root');
   if (record.schema !== 'ccpanes.task-selection.v1') throw new Error('invalid current task: schema');
-  assertString(record.taskId, 'taskId');
-  assertString(record.workspace, 'workspace');
+  assertString(record.taskId, 'taskId', CURRENT_TASK_STRING_LIMITS.taskId);
+  assertString(
+    record.workspace,
+    'workspace',
+    CURRENT_TASK_STRING_LIMITS.workspace
+  );
   assertCanonicalAbsolutePath(record.projectPath, 'projectPath');
   assertCanonicalAbsolutePath(record.worktreeRoot, 'worktreeRoot');
   assertNullableCanonicalAbsolutePath(record.mainRepoRoot, 'mainRepoRoot');
-  assertNullableString(record.branch, 'branch');
-  assertNullableString(record.head, 'head');
+  assertNullableString(
+    record.branch,
+    'branch',
+    CURRENT_TASK_STRING_LIMITS.reference
+  );
+  assertNullableString(
+    record.head,
+    'head',
+    CURRENT_TASK_STRING_LIMITS.reference
+  );
   if (!record.owner || typeof record.owner !== 'object') throw new Error('invalid current task: owner');
   const owner = record.owner as Record<string, unknown>;
-  assertNullableString(owner.leaderSessionId, 'owner.leaderSessionId');
-  assertNullableString(owner.paneId, 'owner.paneId');
-  assertNullableString(owner.layoutId, 'owner.layoutId');
+  assertKnownFields(owner, CURRENT_TASK_OWNER_FIELDS, 'owner');
+  assertNullableString(
+    owner.leaderSessionId,
+    'owner.leaderSessionId',
+    CURRENT_TASK_STRING_LIMITS.ownerReference
+  );
+  assertNullableString(
+    owner.paneId,
+    'owner.paneId',
+    CURRENT_TASK_STRING_LIMITS.ownerReference
+  );
+  assertNullableString(
+    owner.layoutId,
+    'owner.layoutId',
+    CURRENT_TASK_STRING_LIMITS.ownerReference
+  );
   if (!phases.includes(record.phase as TaskPhase)) throw new Error('invalid current task: phase');
-  assertString(record.createdAt, 'createdAt');
-  assertString(record.updatedAt, 'updatedAt');
+  assertString(
+    record.createdAt,
+    'createdAt',
+    CURRENT_TASK_STRING_LIMITS.timestamp
+  );
+  assertString(
+    record.updatedAt,
+    'updatedAt',
+    CURRENT_TASK_STRING_LIMITS.timestamp
+  );
   if (!sources.includes(record.source as CurrentTask['source'])) throw new Error('invalid current task: source');
-  assertString(record.notes, 'notes');
+  assertString(record.notes, 'notes', CURRENT_TASK_STRING_LIMITS.notes);
   return record as unknown as CurrentTask;
+}
+
+export type CurrentTaskFileReadErrorReason =
+  | 'read-failed'
+  | 'oversized'
+  | 'malformed-json'
+  | 'schema-invalid';
+
+export class CurrentTaskFileReadError extends Error {
+  readonly code = 'CURRENT_TASK_FILE_INVALID' as const;
+
+  constructor(readonly reason: CurrentTaskFileReadErrorReason) {
+    super(
+      reason === 'oversized'
+        ? 'current-task.json exceeds 16384 bytes'
+        : reason === 'malformed-json'
+          ? 'invalid current task: malformed JSON'
+          : reason === 'schema-invalid'
+            ? 'invalid current task: schema'
+            : 'current task file read failed'
+    );
+    this.name = 'CurrentTaskFileReadError';
+  }
+}
+
+export interface CurrentTaskFileReadOptions {
+  afterOpenForTest?: () => Promise<void>;
+  identityOperationsForTest?: {
+    lstat: (file: string) => Promise<BigIntStats>;
+    stat: (
+      handle: Awaited<ReturnType<typeof fs.open>>
+    ) => Promise<BigIntStats>;
+  };
+}
+
+interface FileEntityIdentity {
+  dev: bigint;
+  ino: bigint;
+  mode: bigint;
+}
+
+function fileEntityIdentity(stat: BigIntStats): FileEntityIdentity | null {
+  if (!stat.isFile() || stat.isSymbolicLink()) return null;
+  if (stat.dev < 0n || stat.ino <= 0n) return null;
+  return { dev: stat.dev, ino: stat.ino, mode: stat.mode };
+}
+
+function sameFileEntity(
+  left: FileEntityIdentity,
+  right: FileEntityIdentity
+): boolean {
+  return left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.mode === right.mode;
+}
+
+function currentTaskFileReadError(error: unknown): CurrentTaskFileReadError {
+  return error instanceof CurrentTaskFileReadError
+    ? error
+    : new CurrentTaskFileReadError('read-failed');
+}
+
+export async function readCurrentTaskFile(
+  file: string,
+  options: CurrentTaskFileReadOptions = {}
+): Promise<CurrentTask> {
+  let handle: Awaited<ReturnType<typeof fs.open>> | null = null;
+  let result: CurrentTask | null = null;
+  let failure: CurrentTaskFileReadError | null = null;
+  const lstatIdentity = options.identityOperationsForTest?.lstat ??
+    ((candidate: string) => fs.lstat(candidate, { bigint: true }));
+  const statIdentity = options.identityOperationsForTest?.stat ??
+    ((candidate: Awaited<ReturnType<typeof fs.open>>) =>
+      candidate.stat({ bigint: true }));
+  try {
+    const preStat = await lstatIdentity(file);
+    const preIdentity = fileEntityIdentity(preStat);
+    if (!preIdentity) {
+      throw new CurrentTaskFileReadError('read-failed');
+    }
+    handle = await fs.open(file, 'r');
+    await options.afterOpenForTest?.();
+    const handleIdentity = fileEntityIdentity(
+      await statIdentity(handle)
+    );
+    if (!handleIdentity || !sameFileEntity(preIdentity, handleIdentity)) {
+      throw new CurrentTaskFileReadError('read-failed');
+    }
+    const buffer = Buffer.alloc(MAX_CURRENT_TASK_BYTES + 1);
+    let bytesRead = 0;
+    while (bytesRead < buffer.length) {
+      const result = await handle.read(
+        buffer,
+        bytesRead,
+        buffer.length - bytesRead,
+        null
+      );
+      if (result.bytesRead === 0) break;
+      bytesRead += result.bytesRead;
+    }
+    if (bytesRead > MAX_CURRENT_TASK_BYTES) {
+      throw new CurrentTaskFileReadError('oversized');
+    }
+    const postIdentity = fileEntityIdentity(
+      await lstatIdentity(file)
+    );
+    if (!postIdentity || !sameFileEntity(handleIdentity, postIdentity)) {
+      throw new CurrentTaskFileReadError('read-failed');
+    }
+    let value: unknown;
+    try {
+      value = JSON.parse(buffer.subarray(0, bytesRead).toString('utf8'));
+    } catch {
+      throw new CurrentTaskFileReadError('malformed-json');
+    }
+    try {
+      result = validateCurrentTask(value);
+    } catch {
+      throw new CurrentTaskFileReadError('schema-invalid');
+    }
+  } catch (error) {
+    failure = currentTaskFileReadError(error);
+  } finally {
+    if (handle) {
+      try {
+        await handle.close();
+      } catch {
+        failure = new CurrentTaskFileReadError('read-failed');
+      }
+    }
+  }
+  if (failure) throw failure;
+  if (!result) throw new CurrentTaskFileReadError('read-failed');
+  return result;
 }
 
 export interface CreateCurrentTaskInput {
@@ -202,11 +439,7 @@ export async function readCurrentTask(worktreeRoot: string): Promise<CurrentTask
   const file = currentTaskPath(worktreeRoot);
   const stat = await assertSafeTaskFile(file, boundary);
   if (!stat) return null;
-  if (stat.size > MAX_CURRENT_TASK_BYTES) {
-    throw new Error('current-task.json exceeds 16384 bytes');
-  }
-  const text = await fs.readFile(file, 'utf8');
-  return validateCurrentTask(JSON.parse(text));
+  return readCurrentTaskFile(file);
 }
 
 export interface ResolvedCurrentTask {

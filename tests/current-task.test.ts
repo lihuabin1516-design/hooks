@@ -1,13 +1,16 @@
 import { execFileSync } from 'node:child_process';
+import type { BigIntStats } from 'node:fs';
 import fs from 'node:fs/promises';
+import type { FileHandle } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, test } from 'vitest';
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   createCurrentTask,
   currentTaskPath,
   inspectCurrentTaskBindingFromCwd,
   readCurrentTask,
+  readCurrentTaskFile,
   resolveCurrentTaskFromCwd,
   validateCurrentTask,
   writeCurrentTaskAtomic
@@ -82,11 +85,84 @@ function validTask(root: string): CurrentTask {
   };
 }
 
+type BigIntStatOverrides =
+  Partial<Pick<BigIntStats, 'dev' | 'ino' | 'mode'>> & {
+    isFile?: () => boolean;
+    isSymbolicLink?: () => boolean;
+  };
+
+function withBigIntStatOverrides(
+  stat: BigIntStats,
+  overrides: BigIntStatOverrides
+): BigIntStats {
+  return new Proxy(stat, {
+    get(target, property, receiver) {
+      if (Object.prototype.hasOwnProperty.call(overrides, property)) {
+        return overrides[property as keyof typeof overrides];
+      }
+      const value = Reflect.get(target, property, receiver) as unknown;
+      return typeof value === 'function' ? value.bind(target) : value;
+    }
+  });
+}
+
+function observeOpenedHandle(
+  target: string,
+  configure?: (handle: FileHandle) => Promise<void>,
+  closeFailure?: Error
+): {
+  closeCount: () => number;
+  openCount: () => number;
+} {
+  const requestedTarget = path.resolve(target);
+  const originalOpen = fs.open.bind(fs);
+  let closeCount = 0;
+  let openCount = 0;
+  vi.spyOn(fs, 'open').mockImplementation(
+    async (...args: Parameters<typeof fs.open>) => {
+      const handle = await originalOpen(...args);
+      if (path.resolve(String(args[0])) === requestedTarget) {
+        openCount += 1;
+        const originalClose = handle.close.bind(handle);
+        vi.spyOn(handle, 'close').mockImplementation(async () => {
+          closeCount += 1;
+          await originalClose();
+          if (closeFailure) throw closeFailure;
+        });
+        await configure?.(handle);
+      }
+      return handle;
+    }
+  );
+  return {
+    closeCount: () => closeCount,
+    openCount: () => openCount
+  };
+}
+
+async function writeExplicitTaskFile(
+  name: string,
+  taskId = name
+): Promise<{ file: string; task: CurrentTask }> {
+  const file = path.join(tempRoot, `${name}.json`);
+  const task = { ...validTask(tempRoot), taskId };
+  await fs.writeFile(file, `${JSON.stringify(task)}\n`, 'utf8');
+  return { file, task };
+}
+
+async function canRenameAfterRead(file: string): Promise<boolean> {
+  const renamed = `${file}.renamed`;
+  await fs.rename(file, renamed);
+  await fs.rename(renamed, file);
+  return true;
+}
+
 beforeEach(async () => {
   tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-task-'));
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await fs.rm(tempRoot, { recursive: true, force: true });
 });
 
@@ -115,6 +191,296 @@ describe('current-task persistence', () => {
     await fs.mkdir(path.join(tempRoot, '.ccpanes-task'), { recursive: true });
     await fs.writeFile(currentTaskPath(tempRoot), JSON.stringify({ schema: 'wrong' }), 'utf8');
     await expect(readCurrentTask(tempRoot)).rejects.toThrow('invalid current task: schema');
+  });
+
+  test.each([
+    ['root', { unexpected: true }],
+    ['owner', {
+      owner: {
+        ...validTask(tempRoot).owner,
+        unexpected: true
+      }
+    }]
+  ])('rejects an unknown %s field', (_scope, override) => {
+    expect(() => validateCurrentTask({
+      ...validTask(tempRoot),
+      ...override
+    })).toThrow('invalid current task: unknown field');
+  });
+
+  test('rejects overlong current-task fields', () => {
+    expect(() => validateCurrentTask({
+      ...validTask(tempRoot),
+      taskId: 'x'.repeat(513)
+    })).toThrow('invalid current task: taskId');
+  });
+
+  test('uses the canonical bounded reader for an explicit current-task file', async () => {
+    const file = path.join(tempRoot, 'explicit-current-task.json');
+    await fs.writeFile(file, 'x'.repeat(16 * 1024 + 1), 'utf8');
+    const opened = observeOpenedHandle(file);
+
+    await expect(readCurrentTaskFile(file)).rejects.toMatchObject({
+      name: 'CurrentTaskFileReadError',
+      reason: 'oversized'
+    });
+    expect(opened.openCount()).toBe(1);
+    expect(opened.closeCount()).toBe(1);
+    await expect(canRenameAfterRead(file)).resolves.toBe(true);
+  });
+
+  test('rejects a path replaced after open but before acceptance', async () => {
+    const fixture = await writeExplicitTaskFile('identity-swap');
+    const identityA = await fs.lstat(fixture.file, { bigint: true });
+    const identityB = withBigIntStatOverrides(identityA, {
+      ino: identityA.ino + 1n
+    });
+    const events: string[] = [];
+    let lstatCalls = 0;
+    let hookCompleted = false;
+
+    await expect(readCurrentTaskFile(fixture.file, {
+      afterOpenForTest: async () => {
+        events.push('hook-start');
+        await Promise.resolve();
+        hookCompleted = true;
+        events.push('hook-complete');
+      },
+      identityOperationsForTest: {
+        lstat: async (file) => {
+          expect(file).toBe(fixture.file);
+          lstatCalls += 1;
+          events.push(lstatCalls === 1 ? 'pre-lstat' : 'post-lstat');
+          return lstatCalls === 1 ? identityA : identityB;
+        },
+        stat: async () => {
+          expect(hookCompleted).toBe(true);
+          events.push('handle-stat');
+          return identityA;
+        }
+      }
+    })).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed'
+    });
+    expect(events).toEqual([
+      'pre-lstat',
+      'hook-start',
+      'hook-complete',
+      'handle-stat',
+      'post-lstat'
+    ]);
+    await expect(canRenameAfterRead(fixture.file)).resolves.toBe(true);
+  });
+
+  test('reads one stable regular file and closes the handle', async () => {
+    const fixture = await writeExplicitTaskFile('stable');
+    const opened = observeOpenedHandle(fixture.file);
+
+    await expect(readCurrentTaskFile(fixture.file))
+      .resolves.toMatchObject({ taskId: fixture.task.taskId });
+
+    expect(opened.openCount()).toBe(1);
+    expect(opened.closeCount()).toBe(1);
+    await expect(canRenameAfterRead(fixture.file)).resolves.toBe(true);
+  });
+
+  test.each([
+    ['symbolic link', { isSymbolicLink: () => true }],
+    ['non-regular file', { isFile: () => false }]
+  ])('rejects a pre-open %s without opening it', async (_label, overrides) => {
+    const fixture = await writeExplicitTaskFile('pre-open-type');
+    const stat = await fs.lstat(fixture.file, { bigint: true });
+    const openSpy = vi.spyOn(fs, 'open');
+    vi.spyOn(fs, 'lstat').mockResolvedValueOnce(
+      withBigIntStatOverrides(stat, overrides) as never
+    );
+
+    await expect(readCurrentTaskFile(fixture.file)).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed'
+    });
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['symbolic link', { isSymbolicLink: () => true }],
+    ['non-regular file', { isFile: () => false }]
+  ])('rejects a post-read %s and closes the handle', async (_label, overrides) => {
+    const fixture = await writeExplicitTaskFile('post-read-type');
+    const stat = await fs.lstat(fixture.file, { bigint: true });
+    vi.spyOn(fs, 'lstat')
+      .mockResolvedValueOnce(stat as never)
+      .mockResolvedValueOnce(withBigIntStatOverrides(stat, overrides) as never);
+    const opened = observeOpenedHandle(fixture.file);
+
+    await expect(readCurrentTaskFile(fixture.file)).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed'
+    });
+    expect(opened.closeCount()).toBe(1);
+  });
+
+  test.each([
+    ['negative device', { dev: -1n }],
+    ['missing inode', { ino: 0n }]
+  ])('fails closed when pre-open identity has %s', async (_label, overrides) => {
+    const fixture = await writeExplicitTaskFile('pre-open-identity');
+    const stat = await fs.lstat(fixture.file, { bigint: true });
+    const openSpy = vi.spyOn(fs, 'open');
+    vi.spyOn(fs, 'lstat').mockResolvedValueOnce(
+      withBigIntStatOverrides(stat, overrides) as never
+    );
+
+    await expect(readCurrentTaskFile(fixture.file)).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed'
+    });
+    expect(openSpy).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    ['unavailable', (stat: BigIntStats) => ({ ino: 0n })],
+    ['inode mismatch', (stat: BigIntStats) => ({ ino: stat.ino + 1n })],
+    ['device mismatch', (stat: BigIntStats) => ({ dev: stat.dev + 1n })],
+    ['mode mismatch', (stat: BigIntStats) => ({ mode: stat.mode ^ 0o100n })],
+    ['non-file', () => ({ isFile: () => false })]
+  ])('rejects a %s handle identity and closes the handle', async (_label, overridesFor) => {
+    const fixture = await writeExplicitTaskFile('handle-identity');
+    const opened = observeOpenedHandle(fixture.file, async (handle) => {
+      const stat = await handle.stat({ bigint: true });
+      vi.spyOn(handle, 'stat').mockResolvedValue(
+        withBigIntStatOverrides(stat, overridesFor(stat)) as never
+      );
+    });
+
+    await expect(readCurrentTaskFile(fixture.file)).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed'
+    });
+    expect(opened.closeCount()).toBe(1);
+  });
+
+  test.each([
+    ['unavailable', (stat: BigIntStats) => ({ dev: -1n })],
+    ['inode mismatch', (stat: BigIntStats) => ({ ino: stat.ino + 1n })],
+    ['device mismatch', (stat: BigIntStats) => ({ dev: stat.dev + 1n })]
+  ])('rejects a %s post-read path identity and closes the handle', async (_label, overridesFor) => {
+    const fixture = await writeExplicitTaskFile('post-read-identity');
+    const stat = await fs.lstat(fixture.file, { bigint: true });
+    vi.spyOn(fs, 'lstat')
+      .mockResolvedValueOnce(stat as never)
+      .mockResolvedValueOnce(
+        withBigIntStatOverrides(stat, overridesFor(stat)) as never
+      );
+    const opened = observeOpenedHandle(fixture.file);
+
+    await expect(readCurrentTaskFile(fixture.file)).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed'
+    });
+    expect(opened.closeCount()).toBe(1);
+  });
+
+  test('closes the handle after a read failure without leaking its message', async () => {
+    const fixture = await writeExplicitTaskFile('read-failure');
+    const secret = 'sensitive read failure';
+    const opened = observeOpenedHandle(fixture.file, async (handle) => {
+      vi.spyOn(handle, 'read').mockRejectedValue(new Error(secret));
+    });
+
+    const error = await readCurrentTaskFile(fixture.file).catch((caught) => caught);
+
+    expect(error).toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed',
+      message: 'current task file read failed'
+    });
+    expect(String(error)).not.toContain(secret);
+    expect(opened.closeCount()).toBe(1);
+  });
+
+  test.each([
+    ['malformed-json', '{'],
+    ['schema-invalid', JSON.stringify({ schema: 'wrong' })]
+  ])('closes the handle after a %s parse failure', async (reason, content) => {
+    const file = path.join(tempRoot, `${reason}.json`);
+    await fs.writeFile(file, content, 'utf8');
+    const opened = observeOpenedHandle(file);
+
+    await expect(readCurrentTaskFile(file)).rejects.toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason
+    });
+    expect(opened.closeCount()).toBe(1);
+  });
+
+  test.each([
+    [
+      'read',
+      () => `${JSON.stringify(validTask(tempRoot))}\n`,
+      async (handle: FileHandle, secret: string) => {
+        vi.spyOn(handle, 'read').mockRejectedValue(new Error(secret));
+      }
+    ],
+    [
+      'oversized',
+      (secret: string) => secret.repeat(17 * 1024),
+      undefined
+    ],
+    [
+      'parse',
+      (secret: string) => `{"secret":"${secret}`,
+      undefined
+    ]
+  ])(
+    'prioritizes close failure after an initial %s failure',
+    async (_label, contentFor, configure) => {
+      const file = path.join(tempRoot, `double-failure-${_label}.json`);
+      const innerSecret = `sensitive ${_label} failure`;
+      const closeSecret = `sensitive ${_label} close failure`;
+      await fs.writeFile(file, contentFor(innerSecret), 'utf8');
+      const opened = observeOpenedHandle(
+        file,
+        configure
+          ? async (handle) => configure(handle, innerSecret)
+          : undefined,
+        new Error(closeSecret)
+      );
+
+      const error = await readCurrentTaskFile(file).catch((caught) => caught);
+
+      expect(error).toMatchObject({
+        code: 'CURRENT_TASK_FILE_INVALID',
+        reason: 'read-failed',
+        message: 'current task file read failed'
+      });
+      expect(String(error)).not.toContain(innerSecret);
+      expect(String(error)).not.toContain(closeSecret);
+      expect(opened.openCount()).toBe(1);
+      expect(opened.closeCount()).toBe(1);
+    }
+  );
+
+  test('maps handle close failure to the stable read-failed contract', async () => {
+    const fixture = await writeExplicitTaskFile('close-failure');
+    const secret = 'sensitive close failure';
+    const opened = observeOpenedHandle(
+      fixture.file,
+      undefined,
+      new Error(secret)
+    );
+
+    const error = await readCurrentTaskFile(fixture.file).catch((caught) => caught);
+
+    expect(error).toMatchObject({
+      code: 'CURRENT_TASK_FILE_INVALID',
+      reason: 'read-failed',
+      message: 'current task file read failed'
+    });
+    expect(String(error)).not.toContain(secret);
+    expect(opened.openCount()).toBe(1);
+    expect(opened.closeCount()).toBe(1);
   });
 
   test.each([
