@@ -34,6 +34,11 @@ D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js
 
 详细远端记录见 [`REMOTE.md`](./REMOTE.md)。
 
+## 架构与运行状态
+
+- 架构总览见 [`docs/architecture.md`](./docs/architecture.md)
+- 运行状态与边界见 [`docs/runtime-state.md`](./docs/runtime-state.md)
+
 ## 日常使用
 
 ### 1. 新项目接入
@@ -221,21 +226,17 @@ dist/       构建产物，本仓库忽略，由 npm run build 生成
 
 ```powershell
 cd D:\cc-pane\tool\repos\hooks
-npm install
-npm test
-npm run typecheck
-npm run build
-npm run smoke
+npm ci
+npm run verify
 ```
+
+单项排查时可分别运行 `npm test`、`npm run typecheck`、`npm run build`、`npm run smoke`。
 
 生产路径同步后，在 live 路径重复执行：
 
 ```powershell
 cd D:\cc-pane\tool\experiments\ccpanes-task-probe
-npm test
-npm run typecheck
-npm run build
-npm run smoke
+npm run verify
 node dist/src/cli.js verify-installed-hooks `
   --hooks-json C:\Users\AI001\.codex\hooks.json `
   --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe `

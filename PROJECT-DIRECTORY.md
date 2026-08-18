@@ -100,6 +100,8 @@ host-adapter-registry.test.ts     宿主适配 registry 契约
 docs/plans/       分阶段实施计划；每个 Phase 一个文件
 docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md  宿主 hook 能力和适配边界
 docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md   Codex plugin 分发后续设计记录
+docs/architecture.md   当前源码分层、命令流和 owner 边界总览
+docs/runtime-state.md   repo/live/runtime state 边界与验收约定
 README.md         当前远端仓库默认中文说明
 HANDOFF.md        接手和运行交接
 PROJECT-DIRECTORY.md  目录职责和长期维护约定
@@ -167,7 +169,7 @@ live 运行副本：D:\cc-pane\tool\experiments\ccpanes-task-probe
 3. 修改 `src/` owner 模块。
 4. 更新 CLI 薄层。
 5. 更新 README / HANDOFF / PROJECT-DIRECTORY 中受影响的说明。
-6. 跑 `npm test && npm run typecheck && npm run build && npm run smoke`。
+6. 跑 `npm run verify`。
 7. `git diff --check`。
 8. commit + push。
 9. 同步 live。

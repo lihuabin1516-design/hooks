@@ -2,6 +2,7 @@ node_modules/
 dist/
 live/
 .tmp-smoke/
+/.ccpanes/
 /.ccpanes-task/
 *.log
 .env

@@ -1,9 +1,9 @@
 {
-  "name": "ccpanes-task-probe-prototype",
+  "name": "ccpanes-hooks-tooling",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Isolated prototype for CC-Panes task ownership and resume probe.",
+  "description": "CC-Panes Hooks tooling layer for task context, project policy, and auditable hook enforcement.",
   "engines": {
     "node": ">=22"
   },
@@ -12,11 +12,12 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc -p tsconfig.json",
     "cli": "node dist/src/cli.js",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run smoke"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "typescript": "latest",
-    "vitest": "latest"
+    "@types/node": "26.1.2",
+    "typescript": "7.0.2",
+    "vitest": "4.1.10"
   }
 }
