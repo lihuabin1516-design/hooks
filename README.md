@@ -1,6 +1,33 @@
-# CC-Panes Hooks 工具层
+# CC-Panes Hooks Tooling
 
-这是 CC-Panes / Codex 项目上下文与 Hook 治理工具层。它的职责是：让每个项目在导入或启动时自动拥有任务上下文、项目级规则、AGENTS.md 接入块和可审计的 Hook 执行边界。
+> 面向 CC-Panes / Codex 的 TypeScript Hook 治理工具层：把 task binding、project policy、workflow advisory、session federation 和验收证据串成可审计的 AI 编程工作流。
+
+当一个项目同时被多个 AI 实例、多个终端、多个 worktree 操作时，最容易出问题的不是“能不能写代码”，而是：
+
+- 当前实例到底属于哪个 task；
+- 哪些路径和命令被本轮任务授权；
+- 用户在 plan 阶段追加的限制能否进入机械执行边界；
+- hook 阻断、放行、验收和 live 安装状态能否留下证据；
+- Codex / CC-Panes 会话之间的上下文能否被归因和交接。
+
+这个仓库提供一套本地优先、fail-closed、可测试的工具层，把这些边界落成 CLI、策略文件、审计 artifact 和验证命令。
+
+## 核心能力
+
+- **Task Binding**：为每个项目 / worktree 写入并校验 `.ccpanes-task/current-task.json`，阻止 task scope mismatch。
+- **Project Policy Gate**：把用户规则沉淀为 `policy.md` 与 `policy.json`，由 hook-enforce / permission-enforce 读取执行。
+- **Hook Enforcement**：适配 Codex hook event，在 PreToolUse、PermissionRequest、PostToolUse、Stop 等阶段执行拦截、审计和验收提醒。
+- **Workflow Advisory**：对 prompt 做风险分级和工作流建议，辅助选择 plan 强度、检查项和边界提示。
+- **Session Bridge**：只读索引 Codex 会话，支持项目归因、留存检查、轻量交接和 sidebar artifact 流程。
+- **Production Verification**：内置 `verify-installed-hooks`、`verify-live-consistency`、`record-acceptance`、`verify-acceptance` 等发布前检查。
+
+## 适合场景
+
+- 在 CC-Panes / Codex 中长期维护多个项目、多个 AI 会话和多个 worktree。
+- 希望把“用户授权、项目规则、任务归属、hook 阻断、验收证据”从口头约定变成可检查 artifact。
+- 需要给团队或多实例协作提供统一的 AI 编程治理层，而不是只依赖单次 prompt 记忆。
+
+当前定位：**Beta+ / 内部生产可用**。仓库已经具备完整 TypeScript 类型检查、Vitest 覆盖、构建、smoke、live 一致性和 hook 安装验证流程；外部分发前仍建议按自己的宿主环境复核路径、hook 配置和安全策略。
 
 ## 仓库与固定路径
 
