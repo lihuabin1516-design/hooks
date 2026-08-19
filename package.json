@@ -2,6 +2,7 @@
   "name": "ccpanes-hooks-tooling",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "type": "module",
   "description": "Agent hooks governance layer for task scope, policy gates, and auditable enforcement.",
   "engines": {

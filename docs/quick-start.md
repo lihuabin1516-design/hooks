@@ -29,6 +29,45 @@ npm ci
 npm run verify
 ```
 
+## 5-minute end-to-end example
+
+This example starts with a clean scratch project, writes task binding and
+policy, then proves that hook enforcement blocks the policy-matched command.
+
+```powershell
+$demoRoot = Join-Path $env:TEMP 'hooks-demo'
+New-Item -ItemType Directory -Force $demoRoot | Out-Null
+
+node .\dist\src\cli.js bootstrap-project `
+  --root $demoRoot `
+  --task-id demo-task `
+  --phase shape
+
+node .\dist\src\cli.js policy-capture-plan `
+  --root $demoRoot `
+  --utterance "计划阶段规则：禁止运行 publish-artifact，除非我明确解除。"
+
+$event = [ordered]@{
+  hook_event_name = 'PreToolUse'
+  cwd = $demoRoot
+  tool_name = 'Bash'
+  tool_input = @{
+    command = 'node scripts/publish-artifact.mjs'
+  }
+} | ConvertTo-Json -Depth 6
+
+$decision = $event | node .\dist\src\cli.js hook-enforce `
+  --resolve-task-from-cwd `
+  --audit-root (Join-Path $demoRoot 'audits') | ConvertFrom-Json
+
+$decision.hookSpecificOutput.permissionDecision
+$decision.hookSpecificOutput.permissionDecisionReason
+Get-ChildItem -Recurse (Join-Path $demoRoot 'audits')
+```
+
+You should see `deny`, and the reason should contain
+`ccpanes-task-probe: project_policy_block:plan_block_command`.
+
 ## Bootstrap a project
 
 ```powershell
@@ -77,6 +116,14 @@ Other common entry points:
 - `stop-check`
 - `verify-installed-hooks`
 - `verify-live-consistency`
+
+## Policy conflict semantics
+
+- Rules are evaluated in file order.
+- The last matching enabled rule wins.
+- A later `allow` can override an earlier `block`, and a later `block` can re-lock a broader `allow`.
+- If you need an override, put the more specific rule later in the file.
+- If the policy JSON is malformed, enforcement fails closed instead of guessing.
 
 ## Debug checklist
 

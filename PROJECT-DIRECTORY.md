@@ -5,6 +5,9 @@
 ```text
 D:\cc-pane\tool\repos\hooks
 ├── README.md                         对外首页，agent hooks 治理层
+├── LICENSE                           MIT license
+├── SECURITY.md                       安全报告与响应入口
+├── CONTRIBUTING.md                   贡献流程与验证要求
 ├── HANDOFF.md                        接手交接文件
 ├── MAINTENANCE.md                    维护、验证、repo/live 同步和本地运行细节
 ├── PROJECT-DIRECTORY.md              长期目录说明和维护约定
@@ -15,6 +18,8 @@ D:\cc-pane\tool\repos\hooks
 ├── tsconfig.json                     TypeScript 编译配置
 ├── vitest.config.ts                  Vitest 配置
 ├── .github/workflows/verify.yml      GitHub Actions 验证工作流
+├── .github/ISSUE_TEMPLATE/           GitHub issue 模板
+├── .github/pull_request_template.md  GitHub pull request 模板
 ├── src/                              TypeScript 源码
 ├── tests/                            Vitest 测试
 ├── scripts/                          smoke 与维护脚本
@@ -106,13 +111,16 @@ host-adapter-registry.test.ts     宿主适配 registry 契约
 docs/plans/       分阶段实施计划；每个 Phase 一个文件
 docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md  宿主 hook 能力和适配边界
 docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md   Codex plugin 分发后续设计记录
-docs/quick-start.md   对外快速上手、最小接入和排障入口
+docs/quick-start.md   对外快速上手、5 分钟端到端示例和排障入口
 docs/artifacts.md     核心 JSON artifact 与 schema version 索引
 docs/architecture.md   当前源码分层、命令流和 owner 边界总览
 docs/runtime-state.md   repo/live/runtime state 边界与验收约定
 docs/compatibility.md  支持矩阵、宿主边界和验证说明
 docs/faq.md            常见问题和简短答疑
 docs/releases/         对外发布说明与升级摘要
+CONTRIBUTING.md        贡献流程与公开协作要求
+SECURITY.md            安全报告与响应入口
+LICENSE                项目许可证
 README.md         对外仓库首页，不放本地硬路径和维护流水账
 MAINTENANCE.md    维护、验证、repo/live 同步和本地运行细节
 HANDOFF.md        接手和运行交接
