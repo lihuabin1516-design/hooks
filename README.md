@@ -12,6 +12,13 @@
 
 这个仓库提供一套本地优先、fail-closed、可测试的工具层，把这些边界落成 CLI、策略文件、审计 artifact 和验证命令。
 
+## 快速入口
+
+- 3-5 分钟上手：[`docs/quick-start.md`](./docs/quick-start.md)
+- 核心 schema / artifact 索引：[`docs/artifacts.md`](./docs/artifacts.md)
+- 架构总览：[`docs/architecture.md`](./docs/architecture.md)
+- repo / live / runtime state 边界：[`docs/runtime-state.md`](./docs/runtime-state.md)
+
 ## 核心能力
 
 - **Task Binding**：为每个项目 / worktree 写入并校验 `.ccpanes-task/current-task.json`，阻止 task scope mismatch。
@@ -63,8 +70,10 @@ D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js
 
 ## 架构与运行状态
 
+- 快速上手见 [`docs/quick-start.md`](./docs/quick-start.md)
 - 架构总览见 [`docs/architecture.md`](./docs/architecture.md)
 - 运行状态与边界见 [`docs/runtime-state.md`](./docs/runtime-state.md)
+- schema / artifact 索引见 [`docs/artifacts.md`](./docs/artifacts.md)
 
 ## 日常使用
 
@@ -235,6 +244,8 @@ verify-task-binding 校验 task 文件、active worktree 与 canonical project t
 verify-live-consistency  repo/live 源码与 dist 一致性只读自检
 ```
 
+主要 JSON artifact 与 schema version 见 [`docs/artifacts.md`](./docs/artifacts.md)。
+
 ## 目录说明
 
 长期维护目录和职责见 [`PROJECT-DIRECTORY.md`](./PROJECT-DIRECTORY.md)。关键约定：
@@ -267,6 +278,7 @@ npm run verify
 ```
 
 单项排查时可分别运行 `npm test`、`npm run typecheck`、`npm run build`、`npm run smoke`。
+GitHub Actions 会在 `main` push、pull request 和手动触发时执行同一组验证，并额外运行 `npm audit --audit-level=high`。
 
 生产路径同步后，在 live 路径重复执行：
 

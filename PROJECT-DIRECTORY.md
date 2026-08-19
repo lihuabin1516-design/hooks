@@ -13,6 +13,7 @@ D:\cc-pane\tool\repos\hooks
 ├── package.json                      npm 脚本和 Node 运行约束
 ├── tsconfig.json                     TypeScript 编译配置
 ├── vitest.config.ts                  Vitest 配置
+├── .github/workflows/verify.yml      GitHub Actions 验证工作流
 ├── src/                              TypeScript 源码
 ├── tests/                            Vitest 测试
 ├── scripts/                          smoke 与维护脚本
@@ -100,6 +101,8 @@ host-adapter-registry.test.ts     宿主适配 registry 契约
 docs/plans/       分阶段实施计划；每个 Phase 一个文件
 docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md  宿主 hook 能力和适配边界
 docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md   Codex plugin 分发后续设计记录
+docs/quick-start.md   对外快速上手、最小接入和排障入口
+docs/artifacts.md     核心 JSON artifact 与 schema version 索引
 docs/architecture.md   当前源码分层、命令流和 owner 边界总览
 docs/runtime-state.md   repo/live/runtime state 边界与验收约定
 README.md         当前远端仓库默认中文说明
