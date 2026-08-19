@@ -4,6 +4,7 @@ live/
 .tmp-smoke/
 /.ccpanes/
 /.ccpanes-task/
+/CLAUDE.md
 *.log
 .env
 .env.*
