@@ -6,13 +6,14 @@
 
 ## 先决必读
 
-1. `README.md`：中文主说明和日常命令。
-2. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
-3. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
-4. `docs/plans/`：Phase 24 到 Phase 51 的分阶段设计与实施计划。
-5. `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
-6. `docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md`：Codex plugin 分发后续设计。
-7. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
+1. `README.md`：对外定位、能力说明和推广入口。
+2. `MAINTENANCE.md`：维护、验证、repo/live 同步和本地运行细节。
+3. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
+4. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
+5. `docs/plans/`：Phase 24 到 Phase 51 的分阶段设计与实施计划。
+6. `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
+7. `docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md`：Codex plugin 分发后续设计。
+8. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
 
 ## 当前基线
 

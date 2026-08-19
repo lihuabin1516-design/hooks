@@ -2327,6 +2327,23 @@ describe('runCli', () => {
     ]));
     expect(parsed.summary.completionAllowed).toBe(true);
   });
+
+  test('rejects invalid current task JSON when recording acceptance evidence', async () => {
+    const taskRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskPath = path.join(taskRoot, '.ccpanes-task', 'current-task.json');
+    await fs.mkdir(path.dirname(currentTaskPath), { recursive: true });
+    await fs.writeFile(currentTaskPath, `${JSON.stringify({
+      schema: 'ccpanes.task-selection.v1',
+      taskId: 'task-alpha'
+    })}\n`, 'utf8');
+
+    await expect(runCli([
+      'record-acceptance',
+      '--task', currentTaskPath,
+      '--check', 'unit tests=pass=34 tests passed'
+    ])).rejects.toThrow('invalid current task');
+  });
+
   test('prints acceptance verify JSON from an input file', async () => {
     const taskRoot = path.join(tempRoot, 'project-alpha');
     const currentTaskPath = path.join(taskRoot, '.ccpanes-task', 'current-task.json');

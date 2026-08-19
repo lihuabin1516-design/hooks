@@ -6,6 +6,7 @@
 D:\cc-pane\tool\repos\hooks
 ├── README.md                         中文主说明，远端仓库首页
 ├── HANDOFF.md                        接手交接文件
+├── MAINTENANCE.md                    维护、验证、repo/live 同步和本地运行细节
 ├── PROJECT-DIRECTORY.md              长期目录说明和维护约定
 ├── REMOTE.md                         远端仓库与本地路径明文记录
 ├── ACCEPTANCE.md                     历史验收记录和证据汇总
@@ -28,7 +29,11 @@ D:\cc-pane\tool\repos\hooks
 `src/` 按能力边界拆分，每个文件只拥有一个明确概念：
 
 ```text
-cli.ts                       CLI 路由和参数解析薄层
+cli.ts                       CLI 入口和 handler registry
+cli-router.ts                命令族 handler 顺序分发
+cli-shared.ts                CLI 参数解析、审计路径和格式化 helper
+cli-types.ts                 CLI handler 与运行选项类型
+cli/                         按命令族拆分的 CLI handler
 current-task.ts              task binding schema、持久化、topology 校验与解析 authority
 git-state.ts                 Git worktree/common-dir/main-worktree 只读事实 provider
 workspace-scan.ts            在 workspace 中扫描 current-task
@@ -61,7 +66,7 @@ paths.ts                     路径归一化和边界判断
 
 新增能力放置规则：
 
-1. CLI 参数解析放在 `cli.ts`，业务语义放在独立 `src/<capability>.ts`。
+1. CLI 参数解析放在对应 `src/cli/*.ts` 命令族 handler，`cli.ts` 只维护 handler registry，业务语义放在独立 `src/<capability>.ts`。
 2. 新的持久文件格式要有独立 owner，例如 `project-policy.ts` / `project-policy-ledger.ts`。
 3. Hook 事件适配只放 `hook-event-adapter.ts`，决策只放 `hook-dry-run.ts`。
 4. 涉及生产发布、审批、写入、恢复的 artifact 生成保持在 `hook-*` 独立模块。
@@ -105,7 +110,8 @@ docs/quick-start.md   对外快速上手、最小接入和排障入口
 docs/artifacts.md     核心 JSON artifact 与 schema version 索引
 docs/architecture.md   当前源码分层、命令流和 owner 边界总览
 docs/runtime-state.md   repo/live/runtime state 边界与验收约定
-README.md         当前远端仓库默认中文说明
+README.md         对外仓库首页，不放本地硬路径和维护流水账
+MAINTENANCE.md    维护、验证、repo/live 同步和本地运行细节
 HANDOFF.md        接手和运行交接
 PROJECT-DIRECTORY.md  目录职责和长期维护约定
 REMOTE.md         远端与本地路径明文记录
