@@ -4,6 +4,8 @@
   <a href="https://github.com/lihuabin1516-design/hooks/actions/workflows/verify.yml"><img src="https://github.com/lihuabin1516-design/hooks/actions/workflows/verify.yml/badge.svg" alt="verify" /></a>
   <img src="https://img.shields.io/badge/TypeScript-strict-3178c6" alt="TypeScript strict" />
   <img src="https://img.shields.io/badge/Node.js-%3E%3D22-339933" alt="Node.js >= 22" />
+  <a href="https://github.com/lihuabin1516-design/hooks/blob/main/docs/quick-start.md"><img src="https://img.shields.io/badge/docs-quick%20start-0ea5e9" alt="docs quick start" /></a>
+  <a href="https://github.com/lihuabin1516-design/hooks/blob/main/docs/compatibility.md"><img src="https://img.shields.io/badge/compatibility-matrix-8b5cf6" alt="compatibility matrix" /></a>
   <img src="https://img.shields.io/badge/hooks-fail--closed-111827" alt="fail closed hooks" />
 </p>
 
