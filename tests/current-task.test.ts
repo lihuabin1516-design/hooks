@@ -61,6 +61,10 @@ async function initSeparateGitDirRepo(root: string, gitDir: string): Promise<voi
   git(['commit', '-m', 'separate fixture'], root);
 }
 
+async function realPath(candidate: string): Promise<string> {
+  return fs.realpath(candidate);
+}
+
 async function writeTaskFileUnchecked(root: string, task: CurrentTask): Promise<void> {
   await fs.mkdir(path.join(root, '.ccpanes-task'), { recursive: true });
   await fs.writeFile(currentTaskPath(root), `${JSON.stringify(task, null, 2)}\n`, 'utf8');
@@ -508,10 +512,12 @@ describe('current-task persistence', () => {
       phase: 'shape',
       now: '2026-08-10T00:00:00.000Z'
     });
+    const expectedMainRoot = await realPath(mainRoot);
+    const expectedLinkedRoot = await realPath(linkedRoot);
 
-    expect(task.projectPath).toBe(mainRoot);
-    expect(task.mainRepoRoot).toBe(mainRoot);
-    expect(task.worktreeRoot).toBe(linkedRoot);
+    expect(task.projectPath).toBe(expectedMainRoot);
+    expect(task.mainRepoRoot).toBe(expectedMainRoot);
+    expect(task.worktreeRoot).toBe(expectedLinkedRoot);
     expect(task.branch).toBe('phase51-linked');
     expect(task.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
   });
@@ -542,11 +548,13 @@ describe('current-task persistence', () => {
     });
 
     const check = await inspectCurrentTaskBindingFromCwd(linkedRoot);
+    const expectedGitRoot = await realPath(linkedRoot);
+    const expectedMainRoot = await realPath(mainRoot);
 
     expect(check).toMatchObject({
       status: 'matched',
-      gitRoot: linkedRoot,
-      canonicalProjectRoot: mainRoot,
+      gitRoot: expectedGitRoot,
+      canonicalProjectRoot: expectedMainRoot,
       taskFileRoot: linkedRoot,
       declaredProjectPath: mainRoot,
       declaredWorktreeRoot: linkedRoot,
@@ -565,11 +573,12 @@ describe('current-task persistence', () => {
     });
 
     const check = await inspectCurrentTaskBindingFromCwd(mainRoot);
+    const expectedMainRoot = await realPath(mainRoot);
 
     expect(check).toMatchObject({
       status: 'matched',
-      gitRoot: mainRoot,
-      canonicalProjectRoot: mainRoot,
+      gitRoot: expectedMainRoot,
+      canonicalProjectRoot: expectedMainRoot,
       taskFileRoot: mainRoot,
       declaredProjectPath: mainRoot,
       declaredWorktreeRoot: mainRoot,
@@ -656,9 +665,10 @@ describe('current-task persistence', () => {
     });
 
     const check = await inspectCurrentTaskBindingFromCwd(linkedRoot);
+    const expectedMainRoot = await realPath(mainRoot);
 
     expect(check.status).toBe('project-root-mismatch');
-    expect(check.canonicalProjectRoot).toBe(mainRoot);
+    expect(check.canonicalProjectRoot).toBe(expectedMainRoot);
   });
 
   test('does not resolve a parent task through an unsupported Git topology', async () => {
@@ -668,10 +678,12 @@ describe('current-task persistence', () => {
     await initSeparateGitDirRepo(projectRoot, gitDir);
 
     const check = await inspectCurrentTaskBindingFromCwd(projectRoot);
+    const expectedProjectRoot = await realPath(projectRoot);
+    const expectedGitDir = await realPath(gitDir);
 
     expect(check.status).toBe('stale-parent-binding');
-    expect(check.gitRoot).toBe(projectRoot);
-    expect(check.gitCommonDir).toBe(gitDir);
+    expect(check.gitRoot).toBe(expectedProjectRoot);
+    expect(check.gitCommonDir).toBe(expectedGitDir);
     expect(check.canonicalProjectRoot).toBeNull();
     await expect(resolveCurrentTaskFromCwd(projectRoot)).resolves.toBeNull();
   });

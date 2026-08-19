@@ -49,6 +49,10 @@ async function initSeparateGitDirRepo(root: string, gitDir: string): Promise<voi
   git(['commit', '-m', 'separate fixture'], root);
 }
 
+async function realPath(candidate: string): Promise<string> {
+  return fs.realpath(candidate);
+}
+
 beforeEach(async () => {
   tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-git-state-'));
 });
@@ -63,22 +67,25 @@ describe('readGitTopology', () => {
     const linkedRoot = path.join(tempRoot, 'hooks-linked');
     await initGitRepo(mainRoot);
     git(['worktree', 'add', '-b', 'phase51-linked', linkedRoot], mainRoot);
+    const expectedMainRoot = await realPath(mainRoot);
+    const expectedLinkedRoot = await realPath(linkedRoot);
 
     expect(readGitTopology(linkedRoot)).toEqual({
-      worktreeRoot: linkedRoot,
-      commonDir: path.join(mainRoot, '.git'),
-      mainRepoRoot: mainRoot
+      worktreeRoot: expectedLinkedRoot,
+      commonDir: path.join(expectedMainRoot, '.git'),
+      mainRepoRoot: expectedMainRoot
     });
   });
 
   test('uses the main worktree as the canonical project', async () => {
     const mainRoot = path.join(tempRoot, 'hooks-main');
     await initGitRepo(mainRoot);
+    const expectedMainRoot = await realPath(mainRoot);
 
     expect(readGitTopology(mainRoot)).toEqual({
-      worktreeRoot: mainRoot,
-      commonDir: path.join(mainRoot, '.git'),
-      mainRepoRoot: mainRoot
+      worktreeRoot: expectedMainRoot,
+      commonDir: path.join(expectedMainRoot, '.git'),
+      mainRepoRoot: expectedMainRoot
     });
   });
 
@@ -90,10 +97,12 @@ describe('readGitTopology', () => {
     const worktreeRoot = path.join(tempRoot, 'separate-worktree');
     const gitDir = path.join(tempRoot, 'separate-git-dir');
     await initSeparateGitDirRepo(worktreeRoot, gitDir);
+    const expectedWorktreeRoot = await realPath(worktreeRoot);
+    const expectedGitDir = await realPath(gitDir);
 
     expect(readGitTopology(worktreeRoot)).toEqual({
-      worktreeRoot,
-      commonDir: gitDir,
+      worktreeRoot: expectedWorktreeRoot,
+      commonDir: expectedGitDir,
       mainRepoRoot: null
     });
   });
@@ -104,10 +113,12 @@ describe('readGitTopology', () => {
     const gitDir = path.join(gitStorageRoot, '.git');
     await fs.mkdir(gitStorageRoot, { recursive: true });
     await initSeparateGitDirRepo(worktreeRoot, gitDir);
+    const expectedWorktreeRoot = await realPath(worktreeRoot);
+    const expectedGitDir = await realPath(gitDir);
 
     expect(readGitTopology(worktreeRoot)).toEqual({
-      worktreeRoot,
-      commonDir: gitDir,
+      worktreeRoot: expectedWorktreeRoot,
+      commonDir: expectedGitDir,
       mainRepoRoot: null
     });
   });

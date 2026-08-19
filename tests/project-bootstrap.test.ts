@@ -25,6 +25,10 @@ async function initGitRepo(root: string): Promise<void> {
   git(['commit', '-m', 'fixture'], root);
 }
 
+async function realPath(candidate: string): Promise<string> {
+  return fs.realpath(candidate);
+}
+
 beforeEach(async () => {
   tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-project-bootstrap-'));
 });
@@ -91,10 +95,12 @@ describe('bootstrapProject', () => {
     const written = JSON.parse(
       await fs.readFile(path.join(linkedRoot, '.ccpanes-task', 'current-task.json'), 'utf8')
     );
+    const expectedMainRoot = await realPath(mainRoot);
+    const expectedLinkedRoot = await realPath(linkedRoot);
 
-    expect(written.projectPath).toBe(mainRoot);
-    expect(written.mainRepoRoot).toBe(mainRoot);
-    expect(written.worktreeRoot).toBe(linkedRoot);
+    expect(written.projectPath).toBe(expectedMainRoot);
+    expect(written.mainRepoRoot).toBe(expectedMainRoot);
+    expect(written.worktreeRoot).toBe(expectedLinkedRoot);
     expect(written.branch).toBe('phase51-linked');
     expect(written.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
     expect(written.notes).toBe('project bootstrapped by CC-Panes hooks');

@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeForComparison } from './paths.js';
 import type { GitState, GitTopology } from './types.js';
 
 export class GitTopologyError extends Error {
@@ -15,21 +16,17 @@ function git(args: string[], cwd: string): string | null {
   }
 }
 
-function normalizedPath(input: string): string {
-  return path.resolve(input).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
-}
-
 function hasGitMarkerAtOrAbove(cwd: string): boolean {
   const ceilings = new Set(
     (process.env.GIT_CEILING_DIRECTORIES ?? '')
       .split(path.delimiter)
       .filter((entry) => entry.length > 0)
-      .map(normalizedPath)
+      .map(normalizeForComparison)
   );
   let current = path.resolve(cwd);
   for (;;) {
     if (fs.existsSync(path.join(current, '.git'))) return true;
-    if (ceilings.has(normalizedPath(current))) return false;
+    if (ceilings.has(normalizeForComparison(current))) return false;
     const parent = path.dirname(current);
     if (parent === current) return false;
     current = parent;
@@ -113,17 +110,17 @@ export function readGitTopology(cwd: string): GitTopology | null {
     : null;
   const inventoryMainWorktree = readMainWorktreeFromInventory(cwd);
   const currentCheckoutUsesCommonDir =
-    normalizedPath(resolvedGitDir) === normalizedPath(resolvedCommonDir);
+    normalizeForComparison(resolvedGitDir) === normalizeForComparison(resolvedCommonDir);
   const inventoryMatchesCurrentMainCheckout =
     !currentCheckoutUsesCommonDir ||
     (
       inventoryMainWorktree !== null &&
-      normalizedPath(inventoryMainWorktree) === normalizedPath(resolvedWorktreeRoot)
+      normalizeForComparison(inventoryMainWorktree) === normalizeForComparison(resolvedWorktreeRoot)
     );
   const mainRepoRoot = inferredMainRepoRoot &&
     inventoryMainWorktree &&
     inventoryMatchesCurrentMainCheckout &&
-    normalizedPath(inferredMainRepoRoot) === normalizedPath(inventoryMainWorktree)
+    normalizeForComparison(inferredMainRepoRoot) === normalizeForComparison(inventoryMainWorktree)
     ? inventoryMainWorktree
     : null;
 

@@ -1,4 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { decideHookDryRun } from '../src/hook-dry-run.js';
 import { isPathInside, normalizeForComparison } from '../src/paths.js';
 import type { CurrentTask, HookCall, TaskPhase } from '../src/types.js';
@@ -32,6 +35,27 @@ describe('path helpers', () => {
     expect(isPathInside('D:/cc-pane/project', 'D:/cc-pane/project/src/a.ts')).toBe(true);
     expect(isPathInside('D:/cc-pane/project', 'D:/cc-pane/project-other/src/a.ts')).toBe(false);
     expect(isPathInside('D:/cc-pane/project', 'D:/cc-pane/project')).toBe(true);
+  });
+
+  test('normalizes physically equivalent existing-prefix paths before comparison', async () => {
+    const physicalRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-paths-physical-'));
+    const aliasRoot = path.join(
+      os.tmpdir(),
+      `ccpanes-paths-alias-${process.pid}-${Date.now()}`
+    );
+    try {
+      await fs.symlink(physicalRoot, aliasRoot, process.platform === 'win32' ? 'junction' : 'dir');
+
+      const physicalMissingChild = path.join(physicalRoot, 'nested', 'pending.txt');
+      const aliasMissingChild = path.join(aliasRoot, 'nested', 'pending.txt');
+
+      expect(normalizeForComparison(aliasMissingChild))
+        .toBe(normalizeForComparison(physicalMissingChild));
+      expect(isPathInside(physicalRoot, aliasMissingChild)).toBe(true);
+    } finally {
+      await fs.rm(aliasRoot, { recursive: true, force: true });
+      await fs.rm(physicalRoot, { recursive: true, force: true });
+    }
   });
 });
 

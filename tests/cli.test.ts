@@ -44,6 +44,10 @@ async function sha256File(filePath: string): Promise<string> {
   return createHash('sha256').update(await fs.readFile(filePath)).digest('hex').toUpperCase();
 }
 
+async function realPath(candidate: string): Promise<string> {
+  return fs.realpath(candidate);
+}
+
 function sha256Text(text: string): string {
   return createHash('sha256').update(text, 'utf8').digest('hex').toUpperCase();
 }
@@ -339,10 +343,12 @@ describe('runCli', () => {
     const written = JSON.parse(
       await fs.readFile(path.join(linkedRoot, '.ccpanes-task', 'current-task.json'), 'utf8')
     );
+    const expectedMainRoot = await realPath(mainRoot);
+    const expectedLinkedRoot = await realPath(linkedRoot);
 
-    expect(written.projectPath).toBe(mainRoot);
-    expect(written.mainRepoRoot).toBe(mainRoot);
-    expect(written.worktreeRoot).toBe(linkedRoot);
+    expect(written.projectPath).toBe(expectedMainRoot);
+    expect(written.mainRepoRoot).toBe(expectedMainRoot);
+    expect(written.worktreeRoot).toBe(expectedLinkedRoot);
     expect(written.branch).toBe('phase51-linked');
     expect(written.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
     expect(written.notes).toBe('task binding written by CC-Panes hooks');
@@ -368,16 +374,18 @@ describe('runCli', () => {
       '--cwd',
       linkedRoot
     ]));
+    const expectedMainRoot = await realPath(mainRoot);
+    const expectedLinkedRoot = await realPath(linkedRoot);
 
     expect(parsed).toMatchObject({
       schema: 'ccpanes.task-binding-check.v1',
       status: 'matched',
-      gitRoot: linkedRoot,
-      canonicalProjectRoot: mainRoot,
+      gitRoot: expectedLinkedRoot,
+      canonicalProjectRoot: expectedMainRoot,
       taskFileRoot: linkedRoot,
-      declaredProjectPath: mainRoot,
-      declaredWorktreeRoot: linkedRoot,
-      declaredMainRepoRoot: mainRoot,
+      declaredProjectPath: expectedMainRoot,
+      declaredWorktreeRoot: expectedLinkedRoot,
+      declaredMainRepoRoot: expectedMainRoot,
       taskId: 'task-linked'
     });
   });

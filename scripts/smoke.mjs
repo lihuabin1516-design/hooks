@@ -48,7 +48,15 @@ const bindingWorkspace = join(fixture, 'binding-workspace');
 const bindingNestedRepo = join(bindingWorkspace, 'nested-repo');
 const bindingMainRepo = join(fixture, 'binding-main');
 const bindingLinkedWorktree = join(fixture, 'binding-linked');
-const upstreamHook = 'C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe';
+const upstreamHookDir = join(fixture, 'upstream-hooks');
+const upstreamHook = join(upstreamHookDir, 'skills-hub-hook.exe');
+const releaseGateConfigRoot = join(fixture, 'release-gate-configs');
+const releaseGateCodexConfigDir = join(releaseGateConfigRoot, 'codex');
+const releaseGateCcpanesConfigDir = join(releaseGateConfigRoot, 'ccpanes');
+const releaseGateCodexConfig = join(releaseGateCodexConfigDir, 'config.toml');
+const releaseGateCcpanesConfig = join(releaseGateCcpanesConfigDir, 'config.toml');
+const releaseGateRepoOne = join(fixture, 'release-gate-repo-one');
+const releaseGateRepoTwo = join(fixture, 'release-gate-repo-two');
 
 function run(args, input) {
   return execFileSync(process.execPath, [cli, ...args], {
@@ -85,6 +93,9 @@ function sha256Text(text) {
   return createHash('sha256').update(text, 'utf8').digest('hex').toUpperCase();
 }
 
+const upstreamHookFixture = 'ccpanes smoke upstream hook fixture\n';
+const upstreamHookSha256 = sha256Text(upstreamHookFixture);
+
 function cleanFixture() {
   rmSync(fixture, { recursive: true, force: true });
 }
@@ -94,6 +105,12 @@ try {
   cleanFixture();
   mkdirSync(project, { recursive: true });
   mkdirSync(planPreviewProject, { recursive: true });
+  mkdirSync(upstreamHookDir, { recursive: true });
+  writeFileSync(upstreamHook, upstreamHookFixture, 'utf8');
+  mkdirSync(releaseGateCodexConfigDir, { recursive: true });
+  mkdirSync(releaseGateCcpanesConfigDir, { recursive: true });
+  writeFileSync(releaseGateCodexConfig, 'profile = "smoke-codex"\n', 'utf8');
+  writeFileSync(releaseGateCcpanesConfig, 'profile = "smoke-ccpanes"\n', 'utf8');
 
   const bootstrapProject = parseJson(run(['bootstrap-project', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
   assert(bootstrapProject.schema === 'ccpanes.project-bootstrap-result.v1', 'bootstrap-project schema mismatch');
@@ -206,7 +223,7 @@ try {
   const probe = parseJson(run(['probe', '--utterance', '继续', '--session', 'leader-1', '--workspace-root', fixture]));
   assert(probe.schema === 'ccpanes.resume-probe.v1', 'probe schema mismatch');
   assert(probe.action === 'auto_resume', `probe expected auto_resume, got ${probe.action}`);
-  assert(probe.scanErrors.length === 0, 'probe expected zero scanErrors');
+  assert(probe.scanErrors.length === 0, `probe expected zero scanErrors: ${JSON.stringify(probe.scanErrors)}`);
 
   const taskRisk = parseJson(run(['classify-task-risk', '--prompt', '修改 src/foo.ts 并更新 tests/foo.test.ts', '--cwd', project]));
   assert(taskRisk.schema === 'ccpanes.task-risk.v1', 'task risk schema mismatch');
@@ -525,7 +542,7 @@ try {
     '--expected-upstream-hook',
     upstreamHook,
     '--expected-upstream-sha256',
-    'F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4'
+    upstreamHookSha256
   ]));
   assert(productionToolkitManifest.schema === 'ccpanes.production-toolkit-manifest.v1', 'production toolkit schema mismatch');
   assert(existsSync(join(productionToolkit, 'INSTALL-HOOKS.ps1')), 'production toolkit missing INSTALL-HOOKS.ps1');
@@ -550,7 +567,7 @@ try {
   })));
   assert(hookShadow.schema === 'ccpanes.hook-shadow-audit.v1', 'hook-shadow schema mismatch');
   assert(hookShadow.mode === 'shadow', 'hook-shadow mode mismatch');
-  assert(hookShadow.upstreamHook.sha256 === 'F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4', 'hook-shadow upstream hash mismatch');
+  assert(hookShadow.upstreamHook.sha256 === upstreamHookSha256, 'hook-shadow upstream hash mismatch');
   assert(hookShadow.runner.allowed === true, 'hook-shadow runner expected allowed=true');
   assert(existsSync(shadowAudit), 'hook-shadow did not write audit file');
 
@@ -570,7 +587,7 @@ try {
   assert(hookInstallPlan.schema === 'ccpanes.hook-install-plan.v1', 'hook install plan schema mismatch');
   assert(hookInstallPlan.mode === 'review-only', 'hook install plan mode mismatch');
   assert(hookInstallPlan.target === 'both', 'hook install plan target mismatch');
-  assert(hookInstallPlan.upstreamHook.sha256 === 'F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4', 'hook install plan upstream hash mismatch');
+  assert(hookInstallPlan.upstreamHook.sha256 === upstreamHookSha256, 'hook install plan upstream hash mismatch');
   assert(hookInstallPlan.proposedConfigChanges.length === 2, 'hook install plan expected two proposed config changes');
   assert(hookInstallPlan.proposedConfigChanges[0].patchCandidate.includes('hook-shadow'), 'hook install plan patch candidate missing hook-shadow');
   assert(existsSync(installPlan), 'hook install plan did not write output file');
@@ -590,7 +607,7 @@ try {
   ]));
   assert(hookPackageManifest.schema === 'ccpanes.hook-package-manifest.v1', 'hook package manifest schema mismatch');
   assert(hookPackageManifest.mode === 'review-only', 'hook package mode mismatch');
-  assert(hookPackageManifest.upstreamHookSha256 === 'F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4', 'hook package upstream hash mismatch');
+  assert(hookPackageManifest.upstreamHookSha256 === upstreamHookSha256, 'hook package upstream hash mismatch');
   assert(hookPackageManifest.files.some((file) => file.path.endsWith('rollback-plan.json')), 'hook package missing rollback plan');
   assert(existsSync(join(hookPackage, 'manifest.json')), 'hook package missing manifest file');
   assert(existsSync(join(hookPackage, 'patches', 'codex.patch')), 'hook package missing codex patch');
@@ -601,7 +618,7 @@ try {
     '--package-dir',
     hookPackage,
     '--expected-upstream-sha256',
-    'F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4',
+    upstreamHookSha256,
     '--out',
     hookPackageRehearsal
   ]));
@@ -613,20 +630,30 @@ try {
   assert(packageRehearsal.checks.some((check) => check.name === 'upstream hash' && check.result === 'pass'), 'hook package rehearsal upstream hash did not pass');
   assert(existsSync(hookPackageRehearsal), 'hook package rehearsal did not write report');
 
+  for (const [repoPath, name] of [[releaseGateRepoOne, 'one'], [releaseGateRepoTwo, 'two']]) {
+    mkdirSync(repoPath, { recursive: true });
+    git(['init'], repoPath);
+    git(['config', 'user.name', 'Phase51 Smoke'], repoPath);
+    git(['config', 'user.email', 'phase51-smoke@example.invalid'], repoPath);
+    writeFileSync(join(repoPath, 'README.md'), `# release gate fixture ${name}\n`, 'utf8');
+    git(['add', 'README.md'], repoPath);
+    git(['commit', '-m', `release gate fixture ${name}`], repoPath);
+  }
+
   const releaseGateReport = parseJson(run([
     'release-gate',
     '--package-dir',
     hookPackage,
     '--expected-upstream-sha256',
-    'F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4',
+    upstreamHookSha256,
     '--config',
-    'C:/Users/AI001/.codex/config.toml',
+    releaseGateCodexConfig,
     '--config',
-    'C:/Users/AI001/.cc-panes/config.toml',
+    releaseGateCcpanesConfig,
     '--repo',
-    'D:/cc-pane/tool/repos/comet',
+    releaseGateRepoOne,
     '--repo',
-    'D:/cc-pane/tool/repos/fastctx',
+    releaseGateRepoTwo,
     '--check',
     'smoke=pass=SMOKE_PASS',
     '--out',
