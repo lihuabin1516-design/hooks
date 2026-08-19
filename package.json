@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "CC-Panes Hooks tooling layer for task context, project policy, and auditable hook enforcement.",
+  "description": "Agent hooks governance layer for task scope, policy gates, and auditable enforcement.",
   "engines": {
     "node": ">=22"
   },

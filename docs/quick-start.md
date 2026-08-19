@@ -1,7 +1,9 @@
 # Quick Start
 
 This guide gives a first-time reader a short path into the repo.
-For public positioning, start with the README. For operational details, see
+For public positioning, start with the README. For compatibility details, see
+[`compatibility.md`](./compatibility.md). For common questions, see
+[`faq.md`](./faq.md). For operational details, see
 [`MAINTENANCE.md`](../MAINTENANCE.md).
 
 ## Mental model
@@ -10,7 +12,7 @@ For public positioning, start with the README. For operational details, see
 project/worktree
   -> current task binding
   -> project policy
-  -> Codex / CC-Panes hook event
+  -> agent hook event
   -> hook-enforce / permission-enforce / post-enforce
   -> audit artifact / acceptance evidence
 ```
@@ -59,7 +61,7 @@ node dist/src/cli.js policy-add `
 ## Hook flow
 
 ```text
-Codex hook event
+Agent hook event
   -> node dist/src/cli.js hook-enforce --resolve-task-from-cwd --audit-root <audit-root>
   -> resolve current task from cwd
   -> load policy

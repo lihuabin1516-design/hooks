@@ -4,7 +4,7 @@
 
 ```text
 D:\cc-pane\tool\repos\hooks
-├── README.md                         中文主说明，远端仓库首页
+├── README.md                         对外首页，agent hooks 治理层
 ├── HANDOFF.md                        接手交接文件
 ├── MAINTENANCE.md                    维护、验证、repo/live 同步和本地运行细节
 ├── PROJECT-DIRECTORY.md              长期目录说明和维护约定
@@ -110,6 +110,9 @@ docs/quick-start.md   对外快速上手、最小接入和排障入口
 docs/artifacts.md     核心 JSON artifact 与 schema version 索引
 docs/architecture.md   当前源码分层、命令流和 owner 边界总览
 docs/runtime-state.md   repo/live/runtime state 边界与验收约定
+docs/compatibility.md  支持矩阵、宿主边界和验证说明
+docs/faq.md            常见问题和简短答疑
+docs/releases/         对外发布说明与升级摘要
 README.md         对外仓库首页，不放本地硬路径和维护流水账
 MAINTENANCE.md    维护、验证、repo/live 同步和本地运行细节
 HANDOFF.md        接手和运行交接

@@ -1,4 +1,4 @@
-# CC-Panes Hooks Tooling
+# Agent Hooks Governance Layer
 
 <p align="center">
   <a href="https://github.com/lihuabin1516-design/hooks/actions/workflows/verify.yml"><img src="https://github.com/lihuabin1516-design/hooks/actions/workflows/verify.yml/badge.svg" alt="verify" /></a>
@@ -7,61 +7,80 @@
   <img src="https://img.shields.io/badge/hooks-fail--closed-111827" alt="fail closed hooks" />
 </p>
 
-> Codex App 与 CC-Panes 的外部 hooks 治理层：把 task binding、project policy、workflow advisory、session bridge 和 acceptance evidence 串成可审计、可测试、可推广的 AI 编程边界系统。
+> 面向所有 hook-capable agent runtime 的外部治理层。它把 task binding、policy gates、workflow advice、session bridge 和 acceptance evidence 变成可审计、可验证、可推广的工程边界。
 
-当一个项目同时被多个 AI 实例、多个终端、多个 worktree 操作时，真正危险的通常不是“模型能不能写代码”，而是：
+在多 agent、多 worktree、多终端并行协作时，最容易失控的不是“模型能不能写代码”，而是：
 
-- 当前会话到底属于哪个 task；
-- 哪些路径、命令和副作用被本轮授权；
-- plan 阶段追加的限制能否进入机械执行边界；
-- hook 阻断、放行、审计和验收能否留下证据；
-- Codex App 与 CC-Panes 的上下文能否被归因、索引和交接。
+- 谁在负责这个 task；
+- 哪些操作真的被授权；
+- hook 结果有没有证据；
+- 不同宿主之间的行为是否一致；
+- 发布前能不能重新验证。
 
-本仓库把这些口头约定落成 TypeScript CLI、项目策略文件、hook gate、审计 artifact 和验证命令。
+这个仓库把这些问题收成一组 TypeScript CLI、策略文件、审计 artifact 和验证命令。
 
-## 定位
+## Why this repo
 
-CC-Panes 是宿主工具；本仓库是外部 hooks 工具层。两者互补，不重复。
-
-| 归属 | 负责内容 |
+| Problem | This repo gives you |
 | --- | --- |
-| CC-Panes | 桌面工作台、终端分屏、workspace / project / task、MCP、skills、Git、本地历史、编排执行 |
-| 本仓库 | task binding、project policy、hook enforcement、workflow advisory、session bridge、acceptance evidence、live consistency |
-| 接入边界 | hook event、prompt lifecycle、session attribution、安装和验证流程 |
+| Task drift | Current task binding with canonical worktree ownership checks |
+| Soft rules | Policy capture that turns intent into executable gates |
+| Invisible side effects | Block / allow / audit outputs with durable evidence |
+| Host differences | One core contract, host-specific adapters |
+| Release uncertainty | Verification, compatibility, and live consistency checks |
 
-推荐理解方式：**CC-Panes 管“工作台和会话”，本仓库管“边界、规则和证据”。**
+## Why teams choose it
 
-本仓库不替代 CC-Panes 的桌面 UI、Pane / PTY、CLI adapter、MCP 编排、项目管理或本地历史能力；它运行在 Codex / CC-Panes 可触发的 hook 生命周期旁边，提供独立的 task scope、policy gate、audit 和验收证据层。
+- **Fail-closed by default** — ambiguity blocks instead of guessing.
+- **Typed contracts end-to-end** — task, policy, hook, session, and acceptance artifacts stay schema-driven.
+- **Audit before trust** — every block, approval, and release step leaves evidence.
+- **Host-agnostic core** — one contract across supported runtimes.
+- **Fast verification loop** — typecheck, test, build, smoke, install checks, and live consistency are all built in.
 
-## 核心能力
+## Use cases
 
-| 能力 | 说明 |
+- Multiple agent sessions touching the same repo or worktree.
+- Projects that need prompt-time guidance without losing hard gates.
+- Teams that want policy, audit, and acceptance evidence instead of ad hoc conventions.
+- Tooling that must stay compatible across hosts over time.
+
+## Compatibility
+
+| Target | Status | Notes |
+| --- | --- | --- |
+| Node.js 22+ | required | Repository scripts and CI target this baseline. |
+| Windows | primary validated | GitHub Actions runs on `windows-latest`. |
+| Codex App | supported | First-class hook path. |
+| CC-Panes | compatible | Same core contract, with a host-specific integration path. |
+| Other hook-capable runtimes | candidate | Track them through the generic CLI / adapter model. |
+
+If a runtime can emit comparable hook events or invoke the CLI, the core contracts still apply.
+
+## Core capabilities
+
+| Capability | What it does |
 | --- | --- |
-| Task Binding | 为 project / worktree 写入并校验当前 task，阻止 task scope mismatch。 |
-| Project Policy Gate | 把用户规则沉淀为人类可读 ledger 和机器可执行 policy。 |
-| Hook Enforcement | 适配 Codex hook event，在关键阶段执行 allow / deny / audit。 |
-| Workflow Advisory | 对 prompt 做风险分级、工作流建议和检查项提示。 |
-| Session Bridge | 只读索引 Codex 会话，支持项目归因、留存、交接和 sidebar artifact。 |
-| Acceptance Evidence | 记录检查、artifact hash、truth layer 和完成门禁。 |
-| Live Consistency | 校验仓库源码、构建产物和 live runtime 的一致性。 |
+| Task Binding | Writes and verifies the current task for a project / worktree. |
+| Project Policy Gate | Captures human rules into machine-readable policy. |
+| Hook Enforcement | Applies allow / deny / audit logic to hook events. |
+| Workflow Advisory | Suggests risk level, workflow shape, and checks before work starts. |
+| Session Bridge | Builds read-only session indexes and handoff artifacts. |
+| Acceptance Evidence | Records checks, artifact hashes, truth layers, and completion gates. |
+| Live Consistency | Compares repo source, build output, and live runtime state. |
 
-## 运行链路
+## How it works
 
 ```text
-Codex / CC-Panes event
+agent runtime event
   -> node dist/src/cli.js <command>
-  -> resolve current task from cwd
-  -> load task binding and project policy
-  -> evaluate hook / workflow / session command
-  -> write audit or acceptance artifact
-  -> allow, deny, or report
+  -> current task binding + project policy
+  -> hook / workflow / session logic
+  -> audit artifact / acceptance evidence
 ```
 
-默认策略是 fail closed：task、路径、policy、Git topology 或命令读写性质不确定时，不靠猜测放行。
+Default mode is fail closed: if task scope, policy, path scope, Git topology, or command semantics are unclear, the hook does not guess.
 
-## Quick Start
-
-要求 Node.js `>=22`。
+## Quick start
 
 ```powershell
 git clone https://github.com/lihuabin1516-design/hooks.git
@@ -70,7 +89,7 @@ npm ci
 npm run verify
 ```
 
-初始化一个项目：
+Bootstrap a project:
 
 ```powershell
 node dist/src/cli.js bootstrap-project `
@@ -79,7 +98,7 @@ node dist/src/cli.js bootstrap-project `
   --phase shape
 ```
 
-捕获一条 plan 阶段规则：
+Capture a plan-stage rule:
 
 ```powershell
 node dist/src/cli.js policy-capture-plan `
@@ -87,7 +106,7 @@ node dist/src/cli.js policy-capture-plan `
   --utterance "计划阶段规则：禁止运行 publish-artifact，除非我明确解除。"
 ```
 
-执行 hook gate：
+Run a hook gate:
 
 ```powershell
 node dist/src/cli.js hook-enforce `
@@ -95,55 +114,30 @@ node dist/src/cli.js hook-enforce `
   --audit-root <audit-root>
 ```
 
-## 常用命令
+## FAQ
 
-| 命令族 | 入口 |
-| --- | --- |
-| project bootstrap | `bootstrap-project`, `agents-install`, `agents-validate` |
-| task binding | `write-current`, `verify-task-binding` |
-| policy | `policy-capture`, `policy-capture-plan`, `policy-add`, `policy-list`, `policy-validate`, `policy-disable`, `policy-clear` |
-| plan / workflow | `plan-intake`, `plan-lifecycle-intake`, `classify-task-risk`, `classify-workflow`, `workflow-advisory` |
-| hook pipeline | `dry-run-hook`, `adapt-hook-event`, `hook-runner`, `hook-enforce`, `permission-enforce`, `post-enforce`, `session-start`, `stop-check`, `hook-shadow` |
-| session bridge | `codex-sessions`, `handoff generate`, `probe` |
-| release / evidence | `verify-installed-hooks`, `verify-live-consistency`, `record-acceptance`, `verify-acceptance` |
+### Is this tied to one host?
+No. CC-Panes is a compatible host, not the whole story. The core contract is agent-agnostic.
 
-## 安全模型
+### Does this replace my agent runtime or IDE?
+No. It sits beside the runtime and adds task scope, policy gates, audits, and verification.
 
-- **Task scope first**：写操作必须匹配当前 task / worktree。
-- **Policy as code**：用户规则进入 policy 后由 hook 机械执行。
-- **Path canonicalization**：路径比较使用规范化结果，避免别名和 junction 误判。
-- **Read-only proof**：shell 命令只有被明确证明为只读时才按只读处理。
-- **Audit before trust**：阻断、放行和验收都输出可检查 artifact。
-- **Repo / live separated**：仓库代码通过验证，不等于 live runtime 已同步。
+### What if my host is not listed yet?
+If it can expose hook-like events or call the CLI, it can usually join the same model. Otherwise it belongs in the candidate lane until you have fixtures and verification.
 
-## 文档地图
+### Where do maintenance details live?
+[`MAINTENANCE.md`](./MAINTENANCE.md) keeps internal paths, sync flow, and operational notes.
 
-- [`docs/quick-start.md`](./docs/quick-start.md)：更短的上手入口。
-- [`docs/architecture.md`](./docs/architecture.md)：源码分层、owner 和命令流。
-- [`docs/artifacts.md`](./docs/artifacts.md)：核心 JSON artifact 与 schema 索引。
-- [`docs/codex-session-bridge.md`](./docs/codex-session-bridge.md)：Codex 会话索引、归因和交接。
-- [`MAINTENANCE.md`](./MAINTENANCE.md)：维护、验证、repo/live 同步和本地运行细节。
+## Docs
 
-## 开发
-
-```powershell
-npm run typecheck
-npm test
-npm run build
-npm run smoke
-```
-
-完整门禁：
-
-```powershell
-npm run verify
-```
-
-## 适合谁
-
-- 长期在 Codex App / CC-Panes 中维护多个项目的人；
-- 需要多 AI 实例协作但又想保留清晰边界的团队；
-- 想把“授权、规则、阻断、验收”从 prompt 约定变成可验证机制的工程用户。
+- [`docs/quick-start.md`](./docs/quick-start.md) — first steps and short commands.
+- [`docs/compatibility.md`](./docs/compatibility.md) — supported hosts, surfaces, and verification notes.
+- [`docs/faq.md`](./docs/faq.md) — expanded questions and answers.
+- [`docs/releases/2026-08-19-agent-hooks-homepage-refresh.md`](./docs/releases/2026-08-19-agent-hooks-homepage-refresh.md) — this publicization release note.
+- [`docs/architecture.md`](./docs/architecture.md) — source-level module boundaries.
+- [`docs/artifacts.md`](./docs/artifacts.md) — artifact and schema index.
+- [`docs/codex-session-bridge.md`](./docs/codex-session-bridge.md) — session bridge details.
+- [`MAINTENANCE.md`](./MAINTENANCE.md) — verification and live sync for maintainers.
 
 ## Support
 
