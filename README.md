@@ -101,6 +101,9 @@ node dist/src/cli.js bootstrap-project `
   --phase shape
 ```
 
+For an existing project, rerun `agents-install` or `bootstrap-project` after a
+template update so the managed `AGENTS.md` block is refreshed in place.
+
 Capture a plan-stage rule:
 
 ```powershell

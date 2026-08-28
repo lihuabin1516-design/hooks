@@ -78,6 +78,8 @@ node dist/src/cli.js bootstrap-project `
 ```
 
 This writes the task binding and policy scaffolding for a project.
+For an existing project, rerun `agents-install` or `bootstrap-project` after a
+template update so the managed `AGENTS.md` block is refreshed in place.
 
 ## Add or capture policy
 

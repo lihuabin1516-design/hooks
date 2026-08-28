@@ -19,6 +19,20 @@ When Codex starts in this project or begins planning a concrete task:
 4. Ensure this managed CC-Panes hook entry exists in `AGENTS.md`.
 5. Keep all hook/task state inside `.ccpanes-task/`.
 
+## Local Git checkpoint cadence
+
+Use a local Git checkpoint to reduce lost-work risk:
+
+- Take one before a large edit burst, after the burst, and after a major update.
+- Take one when a session crosses a day boundary with uncommitted work.
+- Take one when the current branch has stayed dirty for roughly 4 hours.
+- Treat cross-file refactors, batch replacements, dependency upgrades, interface or schema
+  changes, migrations, and multi-bug repair batches as large edits.
+- Minimum evidence: `git status --short --branch` and `git diff --stat`.
+- If the current task is authorized for commits, make a local checkpoint commit; otherwise
+  keep the status/diff snapshot and continue.
+- `SessionStart`, `PreToolUse`, and `PostToolUse` are reminder points for this cadence.
+
 Preferred command when the CC-Panes hooks CLI is available:
 
 ```powershell
