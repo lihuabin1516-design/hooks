@@ -688,6 +688,27 @@ describe('current-task persistence', () => {
     await expect(resolveCurrentTaskFromCwd(projectRoot)).resolves.toBeNull();
   });
 
+  test('honors an explicit task search boundary when resolving parent candidates', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    await writeCurrentTaskAtomic(tempRoot, validTask(tempRoot));
+    await initGitRepo(projectRoot);
+
+    const previous = process.env.CCPANES_TASK_SEARCH_ROOT;
+    process.env.CCPANES_TASK_SEARCH_ROOT = projectRoot;
+    try {
+      const check = await inspectCurrentTaskBindingFromCwd(projectRoot);
+      expect(check.status).toBe('missing');
+      expect(check.reason).toBe('no_current_task_found');
+      expect(check.taskId).toBeNull();
+    } finally {
+      if (previous === undefined) {
+        delete process.env.CCPANES_TASK_SEARCH_ROOT;
+      } else {
+        process.env.CCPANES_TASK_SEARCH_ROOT = previous;
+      }
+    }
+  });
+
   test('reports project-root-mismatch for a local task with unsupported Git topology', async () => {
     const projectRoot = path.join(tempRoot, 'separate-worktree');
     const gitDir = path.join(tempRoot, 'separate-git-dir');

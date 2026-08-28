@@ -6,7 +6,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     env: {
-      GIT_CEILING_DIRECTORIES: os.tmpdir()
+      GIT_CEILING_DIRECTORIES: os.tmpdir(),
+      CCPANES_TASK_SEARCH_ROOT: os.tmpdir()
     },
     include: ['tests/**/*.test.ts'],
     fileParallelism: false,

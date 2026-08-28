@@ -460,6 +460,7 @@ async function findNearestTaskCandidate(
   let current = path.resolve(cwd);
   const stop = inclusiveStop ? normalizeForComparison(inclusiveStop) : null;
   for (;;) {
+    if (stop && !isPathInside(inclusiveStop!, current)) return null;
     const task = await readCurrentTask(current);
     if (task) {
       return {
@@ -610,12 +611,16 @@ export async function resolveCurrentTaskBindingFromCwd(
   cwd: string
 ): Promise<CurrentTaskBindingResolution> {
   const resolvedCwd = path.resolve(cwd);
+  const configuredSearchRoot = process.env.CCPANES_TASK_SEARCH_ROOT;
+  const searchRoot = configuredSearchRoot
+    ? path.resolve(configuredSearchRoot)
+    : null;
   let topology: GitTopology | null;
   try {
     topology = readGitTopology(resolvedCwd);
   } catch (error) {
     if (!(error instanceof GitTopologyError)) throw error;
-    const candidate = await findNearestTaskCandidate(resolvedCwd);
+    const candidate = await findNearestTaskCandidate(resolvedCwd, searchRoot);
     return {
       check: taskBindingCheck(
         'git-topology-unavailable',
@@ -628,7 +633,7 @@ export async function resolveCurrentTaskBindingFromCwd(
     };
   }
   if (!topology) {
-    const candidate = await findNearestTaskCandidate(resolvedCwd);
+    const candidate = await findNearestTaskCandidate(resolvedCwd, searchRoot);
     if (!candidate) {
       return {
         check: taskBindingCheck('missing', 'no_current_task_found', resolvedCwd, null, null),
@@ -644,7 +649,7 @@ export async function resolveCurrentTaskBindingFromCwd(
   const parentStart = path.dirname(topology.worktreeRoot);
   const staleCandidate = parentStart === topology.worktreeRoot
     ? null
-    : await findNearestTaskCandidate(parentStart);
+    : await findNearestTaskCandidate(parentStart, searchRoot);
   if (staleCandidate) {
     return {
       check: taskBindingCheck(
