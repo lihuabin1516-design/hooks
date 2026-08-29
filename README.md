@@ -101,6 +101,24 @@ node dist/src/cli.js bootstrap-project `
   --phase shape
 ```
 
+Register task-scoped external publication roots explicitly when the task
+includes a reviewed GitHub publication step:
+
+```powershell
+node dist/src/cli.js write-current `
+  --root <project-root> `
+  --task-id <task-id> `
+  --phase verify `
+  --authorized-external-write-root <runtime-worktree> `
+  --authorized-external-write-root <acceptance-repository>
+```
+
+The roots must be canonical absolute paths. They are consumed only by the
+`external_publication_git_push` policy gate; ordinary file writes, arbitrary
+shell commands, and Git operations outside the registered roots remain
+blocked. A registered root records scope, not approval: the task owner still
+has to explicitly authorize the publication step.
+
 Capture a plan-stage rule:
 
 ```powershell

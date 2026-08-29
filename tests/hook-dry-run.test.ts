@@ -111,6 +111,44 @@ describe('decideHookDryRun', () => {
     });
   });
 
+  test('allows an explicitly authorized git push root', () => {
+    const call: HookCall = {
+      tool: 'shell',
+      targetPath: 'D:/cc-pane/project-alpha',
+      writes: true,
+      policyReason: 'external_publication_git_push'
+    };
+    const authorizedTask = {
+      ...task('verify'),
+      authorizedExternalWriteRoots: ['D:/cc-pane/project-alpha']
+    } as CurrentTask;
+
+    expect(decideHookDryRun(authorizedTask, call)).toMatchObject({
+      action: 'allow',
+      reason: 'authorized_external_publication',
+      targetInsideWorktree: true
+    });
+  });
+
+  test('blocks a git push outside explicitly authorized roots', () => {
+    const call: HookCall = {
+      tool: 'shell',
+      targetPath: 'D:/cc-pane/project-beta',
+      writes: true,
+      policyReason: 'external_publication_git_push'
+    };
+    const authorizedTask = {
+      ...task('verify'),
+      authorizedExternalWriteRoots: ['D:/cc-pane/project-alpha']
+    } as CurrentTask;
+
+    expect(decideHookDryRun(authorizedTask, call)).toMatchObject({
+      action: 'block',
+      reason: 'external_publication_git_push',
+      targetInsideWorktree: false
+    });
+  });
+
   test('allows shell verification commands during shape because they are non-write calls', () => {
     const call: HookCall = { tool: 'shell', targetPath: 'D:/cc-pane/project-alpha', writes: false };
     const decision = decideHookDryRun(task('shape'), call);

@@ -306,6 +306,44 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
   });
 
+  test('writes explicitly authorized external publication roots', async () => {
+    const runtimeRoot = path.join(tempRoot, 'runtime');
+    const acceptanceRoot = path.join(tempRoot, 'acceptance');
+
+    await runCli([
+      'write-current',
+      '--root',
+      tempRoot,
+      '--task-id',
+      'task-authorized-push',
+      '--phase',
+      'verify',
+      '--authorized-external-write-root',
+      runtimeRoot,
+      '--authorized-external-write-root',
+      acceptanceRoot
+    ]);
+
+    const written = JSON.parse(
+      await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'current-task.json'), 'utf8')
+    );
+    expect(written.authorizedExternalWriteRoots).toEqual([runtimeRoot, acceptanceRoot]);
+  });
+
+  test('rejects a non-canonical authorized external publication root', async () => {
+    await expect(runCli([
+      'write-current',
+      '--root',
+      tempRoot,
+      '--task-id',
+      'task-invalid-authorized-push',
+      '--phase',
+      'verify',
+      '--authorized-external-write-root',
+      `${tempRoot}${path.sep}runtime${path.sep}..${path.sep}runtime`
+    ])).rejects.toThrow('authorizedExternalWriteRoots[0]');
+  });
+
   test('creates a missing non-Git root before writing current-task metadata', async () => {
     const projectRoot = path.join(tempRoot, 'new-project');
 

@@ -16,6 +16,21 @@ function isForbiddenPath(targetPath: string): boolean {
 export function decideHookDryRun(task: CurrentTask, call: HookCall): HookDryRunDecision {
   const phase = task.phase;
 
+  if (
+    call.policyReason === 'external_publication_git_push' &&
+    call.targetPath &&
+    (task.authorizedExternalWriteRoots ?? []).some((root) =>
+      isPathInside(root, normalizeForComparison(call.targetPath!))
+    )
+  ) {
+    return {
+      action: 'allow',
+      reason: 'authorized_external_publication',
+      targetInsideWorktree: isPathInside(task.worktreeRoot, call.targetPath),
+      phase
+    };
+  }
+
   if (call.policyReason && !call.policyEffect) {
     return {
       action: 'block',

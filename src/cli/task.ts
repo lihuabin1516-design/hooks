@@ -10,7 +10,7 @@ import {
   writeCurrentTaskAtomic
 } from '../current-task.js';
 import type { RunCliOptions } from '../cli-types.js';
-import { parsePhase, valueAfter } from '../cli-shared.js';
+import { parsePhase, valueAfter, valuesAfter } from '../cli-shared.js';
 
 export async function handleTaskCommands(
   args: string[],
@@ -35,7 +35,8 @@ export async function handleTaskCommands(
       workspace: valueAfter(args, '--workspace'),
       owner: { leaderSessionId, paneId: null, layoutId: null },
       source: leaderSessionId ? 'leader' : 'manual-import',
-      notes: valueAfter(args, '--notes')
+      notes: valueAfter(args, '--notes'),
+      authorizedExternalWriteRoots: valuesAfter(args, '--authorized-external-write-root')
     });
     await writeCurrentTaskAtomic(task.worktreeRoot, task);
     return `${JSON.stringify({ path: currentTaskPath(task.worktreeRoot), taskId, phase }, null, 2)}\n`;

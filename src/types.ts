@@ -22,6 +22,7 @@ export interface CurrentTask {
   updatedAt: string;
   source: 'leader' | 'worker' | 'manual-import';
   notes: string;
+  authorizedExternalWriteRoots?: string[];
 }
 
 export interface GitState {

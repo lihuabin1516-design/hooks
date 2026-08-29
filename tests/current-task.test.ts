@@ -219,6 +219,29 @@ describe('current-task persistence', () => {
     })).toThrow('invalid current task: taskId');
   });
 
+  test('accepts canonical external publication roots', () => {
+    const task = validateCurrentTask({
+      ...validTask(tempRoot),
+      authorizedExternalWriteRoots: [
+        `${tempRoot}${path.sep}runtime`,
+        `${tempRoot}${path.sep}acceptance`
+      ]
+    });
+
+    expect(task.authorizedExternalWriteRoots).toHaveLength(2);
+  });
+
+  test.each([
+    ['relative root', ['relative/path']],
+    ['duplicate roots', [`${tempRoot}${path.sep}runtime`, `${tempRoot}${path.sep}runtime`]],
+    ['too many roots', Array.from({ length: 9 }, (_, index) => `${tempRoot}${path.sep}root-${index}`)]
+  ])('rejects invalid authorized external roots: %s', (_name, roots) => {
+    expect(() => validateCurrentTask({
+      ...validTask(tempRoot),
+      authorizedExternalWriteRoots: roots
+    })).toThrow('invalid current task: authorizedExternalWriteRoots');
+  });
+
   test('uses the canonical bounded reader for an explicit current-task file', async () => {
     const file = path.join(tempRoot, 'explicit-current-task.json');
     await fs.writeFile(file, 'x'.repeat(16 * 1024 + 1), 'utf8');

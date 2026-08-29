@@ -51,6 +51,35 @@ verify-live-consistency repo/live 源码与 dist 哈希一致性只读自检
 record/verify acceptance 分层验收证据与 completionAllowed 汇总
 ```
 
+## External publication authorization
+
+`current-task.json` may contain:
+
+```json
+"authorizedExternalWriteRoots": [
+  "D:\\path\\to\\reviewed-runtime-worktree",
+  "D:\\path\\to\\reviewed-acceptance-repository"
+]
+```
+
+The field is optional for compatibility with older task files. New task files
+write an empty list by default. Use the CLI flag below to register one or more
+canonical absolute roots:
+
+```powershell
+node dist/src/cli.js write-current `
+  --root <project-root> `
+  --task-id <task-id> `
+  --phase verify `
+  --authorized-external-write-root <absolute-root>
+```
+
+The Hook gate consumes this field only for
+`external_publication_git_push`. It does not authorize ordinary writes,
+arbitrary shell commands, or pushes outside the listed roots. Registration is
+scope metadata and must be paired with an explicit task-level publication
+approval; the Hooks layer does not create that approval.
+
 ## 维护目标
 
 本仓库长期只做“工具层”能力：项目上下文、AGENTS 注入、策略捕获、Hook 事件适配、执行边界、审计、生产打包和验收。业务项目代码、用户全局配置、参考仓库内容不混入本仓库。

@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import type { BigIntStats, Stats } from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { GitTopologyError, readGitState, readGitTopology } from './git-state.js';
 import { isPathInside, normalizeForComparison } from './paths.js';
@@ -26,7 +27,8 @@ const CURRENT_TASK_ROOT_FIELDS = new Set([
   'createdAt',
   'updatedAt',
   'source',
-  'notes'
+  'notes',
+  'authorizedExternalWriteRoots'
 ]);
 const CURRENT_TASK_OWNER_FIELDS = new Set([
   'leaderSessionId',
@@ -42,6 +44,7 @@ const CURRENT_TASK_STRING_LIMITS = Object.freeze({
   timestamp: 64,
   notes: 4096
 });
+const MAX_AUTHORIZED_EXTERNAL_WRITE_ROOTS = 8;
 const phases: TaskPhase[] = ['shape', 'build', 'verify', 'archive'];
 const sources: CurrentTask['source'][] = ['leader', 'worker', 'manual-import'];
 
@@ -195,6 +198,22 @@ function assertNullableCanonicalAbsolutePath(
   assertCanonicalAbsolutePath(value, field);
 }
 
+function assertAuthorizedExternalWriteRoots(value: unknown): asserts value is string[] | undefined {
+  if (value === undefined) return;
+  if (!Array.isArray(value) || value.length > MAX_AUTHORIZED_EXTERNAL_WRITE_ROOTS) {
+    throw new Error('invalid current task: authorizedExternalWriteRoots');
+  }
+  const normalized = new Set<string>();
+  for (const [index, root] of value.entries()) {
+    assertCanonicalAbsolutePath(root, `authorizedExternalWriteRoots[${index}]`);
+    const comparison = normalizeForComparison(root);
+    if (normalized.has(comparison)) {
+      throw new Error('invalid current task: authorizedExternalWriteRoots contains duplicates');
+    }
+    normalized.add(comparison);
+  }
+}
+
 export function validateCurrentTask(value: unknown): CurrentTask {
   if (!value || typeof value !== 'object') {
     throw new Error('invalid current task: object');
@@ -252,6 +271,7 @@ export function validateCurrentTask(value: unknown): CurrentTask {
   );
   if (!sources.includes(record.source as CurrentTask['source'])) throw new Error('invalid current task: source');
   assertString(record.notes, 'notes', CURRENT_TASK_STRING_LIMITS.notes);
+  assertAuthorizedExternalWriteRoots(record.authorizedExternalWriteRoots);
   return record as unknown as CurrentTask;
 }
 
@@ -397,6 +417,7 @@ export interface CreateCurrentTaskInput {
   owner?: TaskOwner | null;
   source?: CurrentTask['source'] | null;
   notes?: string | null;
+  authorizedExternalWriteRoots?: string[] | null;
   now?: string | null;
 }
 
@@ -429,7 +450,8 @@ export function createCurrentTask(input: CreateCurrentTaskInput): CurrentTask {
     createdAt: now,
     updatedAt: now,
     source: input.source ?? 'manual-import',
-    notes: input.notes ?? 'task binding written by CC-Panes hooks'
+    notes: input.notes ?? 'task binding written by CC-Panes hooks',
+    authorizedExternalWriteRoots: input.authorizedExternalWriteRoots ?? []
   });
 }
 
@@ -473,6 +495,11 @@ async function findNearestTaskCandidate(
     if (parent === current) return null;
     current = parent;
   }
+}
+
+function taskSearchBoundary(cwd: string): string | null {
+  const tempRoot = path.resolve(os.tmpdir());
+  return isPathInside(tempRoot, path.resolve(cwd)) ? tempRoot : null;
 }
 
 function taskBindingCheck(
@@ -615,7 +642,10 @@ export async function resolveCurrentTaskBindingFromCwd(
     topology = readGitTopology(resolvedCwd);
   } catch (error) {
     if (!(error instanceof GitTopologyError)) throw error;
-    const candidate = await findNearestTaskCandidate(resolvedCwd);
+    const candidate = await findNearestTaskCandidate(
+      resolvedCwd,
+      taskSearchBoundary(resolvedCwd)
+    );
     return {
       check: taskBindingCheck(
         'git-topology-unavailable',
@@ -628,7 +658,10 @@ export async function resolveCurrentTaskBindingFromCwd(
     };
   }
   if (!topology) {
-    const candidate = await findNearestTaskCandidate(resolvedCwd);
+    const candidate = await findNearestTaskCandidate(
+      resolvedCwd,
+      taskSearchBoundary(resolvedCwd)
+    );
     if (!candidate) {
       return {
         check: taskBindingCheck('missing', 'no_current_task_found', resolvedCwd, null, null),
@@ -644,7 +677,7 @@ export async function resolveCurrentTaskBindingFromCwd(
   const parentStart = path.dirname(topology.worktreeRoot);
   const staleCandidate = parentStart === topology.worktreeRoot
     ? null
-    : await findNearestTaskCandidate(parentStart);
+    : await findNearestTaskCandidate(parentStart, parentStart);
   if (staleCandidate) {
     return {
       check: taskBindingCheck(
