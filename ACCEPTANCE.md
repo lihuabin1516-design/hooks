@@ -1823,6 +1823,97 @@ C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp exists: false
 C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists: false
 ```
 
+## 2026-08-30 UserPromptSubmit context advisory and snapshot rotation
+
+目标：
+
+```text
+Codex rollout token_count
+  -> hooks.codex-context-pressure/v1
+  -> existing workflow-advisory UserPromptSubmit command
+  -> bounded pressure advisory
+  -> task-scoped privacy audit
+  -> Coordinator/Leader three-generation snapshot transaction
+```
+
+新增 schema：
+
+```text
+hooks.codex-context-pressure-advisory/v1
+ccpanes.codex-context-advisory-audit.v1
+ccpanes.context-snapshot-transaction.v1
+ccpanes.context-snapshot-rotation.v1
+ccpanes.context-snapshot-recovery.v1
+```
+
+UserPromptSubmit 行为：
+
+```text
+normal                 -> no pressure injection
+unavailable            -> no pressure injection; typed audit
+stale                  -> no pressure injection; typed audit
+soft                   -> update-context advisory
+hard                   -> rotate-context-and-checkpoint advisory
+heuristic-token-drop   -> reconcile-after-compaction advisory
+```
+
+集成边界：
+
+```text
+复用现有 workflow-advisory UserPromptSubmit command
+不新增用户级 hook group
+不修改真实 C:\Users\AI001\.codex\hooks.json
+不阻断 prompt submission
+不输出 prompt、明文 thread ID、rollout path、Session ID 或 PTY
+combined additionalContext <= 1800 characters
+```
+
+三代轮换门禁：
+
+```text
+exclusive single-writer lock
+uppercase optimistic-lock SHA-256
+fixed context.md/context.prev.md/context.prev2.md destinations
+required sections 0..9
+sequential snapshotGeneration
+current/previous/previous2 continuity
+durable staged files
+atomic transaction journal publication
+context.md written last
+readback validation
+stale-lock handling
+interrupted transaction recovery
+```
+
+Focused TDD evidence：
+
+```text
+tests/codex-context-advisory.test.ts
+  RED: module missing
+  GREEN: 7 passed
+
+tests/context-snapshot-rotation.test.ts
+  RED: module/CLI missing
+  GREEN: 6 passed
+
+tests/cli.test.ts
+  actionable pressure composition covered
+  combined focused run: 91 passed
+
+typecheck:
+  pass
+```
+
+剩余边界：
+
+```text
+不自动生成 next context.md 的语义内容
+不自动创建 Git commit 或 push
+不自动修改 Goal/Workflow/Worker/Binding/Result/Session
+不把 advisory 当作硬 Hook
+不把 synthetic threshold/rotation 测试外推为长时间无人值守已通过
+```
+
 ## 2026-08-30 Codex context pressure probe
 
 本轮吸收公开项目的有效部分：

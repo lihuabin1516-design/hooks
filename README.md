@@ -112,6 +112,30 @@ The JSON result distinguishes `normal`, `soft`, `hard` and typed unavailable
 states. See
 [`docs/codex-context-pressure.md`](./docs/codex-context-pressure.md).
 
+The existing `workflow-advisory` UserPromptSubmit command now consumes that
+typed result without adding another user-level hook. It remains silent for
+normal, unavailable, or stale observations and injects bounded advice only for
+soft pressure, hard pressure, or a heuristic post-compaction token drop.
+
+Rotate a validated three-generation context checkpoint from a Coordinator or
+Leader:
+
+```powershell
+node dist/src/cli.js codex-context-snapshot rotate `
+  --root <checkpoint-root> `
+  --next <checkpoint-root>\next-context.md `
+  --expected-current-sha256 <CURRENT_CONTEXT_SHA256>
+```
+
+The rotator uses an exclusive single-writer lock, an optimistic SHA-256 guard,
+staged durable files, a recoverable transaction journal, and commits
+`context.md` last. Recover an interrupted prepared transaction with:
+
+```powershell
+node dist/src/cli.js codex-context-snapshot recover `
+  --root <checkpoint-root>
+```
+
 Register task-scoped external publication roots explicitly when the task
 includes a reviewed GitHub publication step:
 

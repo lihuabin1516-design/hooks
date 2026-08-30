@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { runCli, isCliEntrypoint } from '../src/cli.js';
@@ -185,7 +186,9 @@ describe('runCli', () => {
       'workflow-advisory',
       '--resolve-task-from-cwd',
       '--audit-root',
-      auditRoot
+      auditRoot,
+      '--codex-root',
+      path.join(tempRoot, 'unavailable-codex-root')
     ], JSON.stringify({
       hook_event_name: 'UserPromptSubmit',
       cwd: nestedCwd,
@@ -220,7 +223,9 @@ describe('runCli', () => {
       'workflow-advisory',
       '--resolve-task-from-cwd',
       '--audit-root',
-      auditRoot
+      auditRoot,
+      '--codex-root',
+      path.join(tempRoot, 'unavailable-codex-root')
     ], JSON.stringify({
       hook_event_name: 'UserPromptSubmit',
       cwd: projectRoot,
@@ -238,6 +243,85 @@ describe('runCli', () => {
       injected: false,
       routeId: 'documentation',
       reason: 'implementation_standard_not_applicable'
+    });
+  });
+
+  test('workflow advisory composes actionable Codex context pressure into UserPromptSubmit output', async () => {
+    const projectRoot = path.join(tempRoot, 'project-context');
+    const auditRoot = path.join(tempRoot, 'advisory-audits');
+    const codexRoot = path.join(tempRoot, '.codex');
+    const sessionsDir = path.join(codexRoot, 'sessions', '2026', '08', '30');
+    const rollout = path.join(sessionsDir, 'thread-context.jsonl');
+    const stateDb = path.join(codexRoot, 'state_5.sqlite');
+    await writeCurrentTaskAtomic(
+      projectRoot,
+      task(projectRoot, 'task-context')
+    );
+    await fs.mkdir(sessionsDir, { recursive: true });
+    await fs.writeFile(rollout, `${JSON.stringify({
+      timestamp: '2026-08-30T12:00:00.000Z',
+      type: 'event_msg',
+      payload: {
+        type: 'token_count',
+        info: {
+          last_token_usage: {
+            input_tokens: 225_000
+          },
+          model_context_window: 258_400
+        }
+      }
+    })}\n`, 'utf8');
+    const db = new DatabaseSync(stateDb);
+    try {
+      db.exec(
+        'create table threads (' +
+        'id text primary key, rollout_path text, updated_at integer' +
+        ')'
+      );
+      db.prepare(
+        'insert into threads (id, rollout_path, updated_at) values (?, ?, ?)'
+      ).run('thread-context', rollout, 1);
+    } finally {
+      db.close();
+    }
+
+    const output = await runCli([
+      'workflow-advisory',
+      '--resolve-task-from-cwd',
+      '--audit-root',
+      auditRoot,
+      '--codex-root',
+      codexRoot,
+      '--state-db',
+      stateDb,
+      '--thread-id',
+      'thread-context',
+      '--stale-after-ms',
+      '999999999999'
+    ], JSON.stringify({
+      hook_event_name: 'UserPromptSubmit',
+      cwd: projectRoot,
+      prompt: '实现生产级上下文 checkpoint 并补充测试'
+    }));
+    const parsed = JSON.parse(output);
+    const context = parsed.hookSpecificOutput.additionalContext as string;
+
+    expect(context).toContain('ccpanes.workflow-advisory.v1');
+    expect(context).toContain('hooks.codex-context-pressure-advisory/v1');
+    expect(context).toContain('action: update-context');
+    expect(context.length).toBeLessThanOrEqual(1800);
+    const pressureAuditPath = path.join(
+      auditRoot,
+      Buffer.from('task-context', 'utf8').toString('base64url'),
+      'codex-context-advisory-audit.jsonl'
+    );
+    const pressureAudit = JSON.parse(
+      (await fs.readFile(pressureAuditPath, 'utf8')).trim()
+    );
+    expect(pressureAudit).toMatchObject({
+      taskId: 'task-context',
+      injected: true,
+      action: 'update-context'
     });
   });
 

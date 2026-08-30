@@ -6,6 +6,10 @@ import {
   parseCodexContextPressureCliOptions,
   probeCodexContextPressure
 } from '../codex-context-pressure.js';
+import {
+  recoverContextSnapshotRotation,
+  rotateContextSnapshotsAtomic
+} from '../context-snapshot-rotation.js';
 import { validateCcPanesSessionSnapshot } from '../ccpanes-session-snapshot.js';
 import { buildCodexSessionIndex, writeCodexSessionJson } from '../codex-session-index.js';
 import { validateCodexSessionIndexArtifact } from '../codex-session-index-artifact.js';
@@ -16,6 +20,7 @@ import { resolveCodexSessions, renderCodexSessionResolution, validateCodexSessio
 import { createRetentionManifest, validateCodexSessionRetentionManifest } from '../codex-session-handoff.js';
 import { scanWorkspaceTasks } from '../workspace-scan.js';
 import { runCodexSidebarCli, isCodexSidebarCliAction } from '../codex-sidebar-cli.js';
+import { isPathInside } from '../paths.js';
 import type { RunCliOptions } from '../cli-types.js';
 import {
   gitStateForTask,
@@ -37,6 +42,46 @@ export async function handleSessionCommands(
     const parsed = parseCodexContextPressureCliOptions(args.slice(1));
     const result = await probeCodexContextPressure(parsed);
     return `${JSON.stringify(result, null, 2)}\n`;
+  }
+
+  if (command === 'codex-context-snapshot') {
+    const action = args[1];
+    if (action !== 'rotate' && action !== 'recover') {
+      throw new Error(`unknown codex-context-snapshot command: ${action}`);
+    }
+    const rootValue = valueAfter(args, '--root');
+    if (!rootValue) throw new Error('missing --root');
+    const root = await fs.promises.realpath(path.resolve(rootValue));
+    if (action === 'recover') {
+      const report = await recoverContextSnapshotRotation(root);
+      return `${JSON.stringify(report ?? {
+        schema: 'ccpanes.context-snapshot-recovery.v1',
+        status: 'no-pending-transaction'
+      }, null, 2)}\n`;
+    }
+    const nextValue = valueAfter(args, '--next');
+    const expectedCurrentSha256 = valueAfter(
+      args,
+      '--expected-current-sha256'
+    );
+    if (!nextValue) throw new Error('missing --next');
+    if (!expectedCurrentSha256) {
+      throw new Error('missing --expected-current-sha256');
+    }
+    const nextPath = await fs.promises.realpath(path.resolve(nextValue));
+    if (!isPathInside(root, nextPath)) {
+      throw new Error('--next must resolve inside --root');
+    }
+    const nextStat = await fs.promises.lstat(nextPath);
+    if (!nextStat.isFile() || nextStat.isSymbolicLink()) {
+      throw new Error('--next must be a regular file');
+    }
+    const report = await rotateContextSnapshotsAtomic({
+      root,
+      nextContent: await readFile(nextPath, 'utf8'),
+      expectedCurrentSha256
+    });
+    return `${JSON.stringify(report, null, 2)}\n`;
   }
 
   if (command === 'codex-sessions') {

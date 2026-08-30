@@ -1,4 +1,13 @@
 import { readFile } from 'node:fs/promises';
+import {
+  appendCodexContextAdvisoryAudit,
+  combineUserPromptSubmitAdvisories,
+  createCodexContextAdvisory
+} from '../codex-context-advisory.js';
+import {
+  parseCodexContextPressureCliOptions,
+  probeCodexContextPressure
+} from '../codex-context-pressure.js';
 import { createHostAdapterRegistry, getHostAdapter } from '../host-adapter-registry.js';
 import { createWorkflowAdvisory, parseWorkflowAdvisoryHookEvent, appendWorkflowAdvisoryAudit } from '../workflow-advisory-hook.js';
 import { classifyTaskRisk } from '../task-risk.js';
@@ -8,6 +17,7 @@ import { probeResume } from '../resume-probe.js';
 import type { CurrentTask, GitState } from '../types.js';
 import type { RunCliOptions } from '../cli-types.js';
 import {
+  codexContextAdvisoryAuditPathFromRoot,
   extractHookCwd,
   gitStateForTask,
   readStdin,
@@ -23,6 +33,25 @@ function gitStateMapForTasks(tasks: CurrentTask[]): Map<string, GitState> {
     gitStates.set(task.worktreeRoot, gitStateForTask(task));
   }
   return gitStates;
+}
+
+const CONTEXT_PRESSURE_OPTIONS = [
+  '--codex-root',
+  '--state-db',
+  '--thread-id',
+  '--soft-tokens',
+  '--hard-tokens',
+  '--max-tail-bytes',
+  '--stale-after-ms'
+] as const;
+
+function contextPressureArgs(args: string[]): string[] {
+  const pressureArgs: string[] = [];
+  for (const option of CONTEXT_PRESSURE_OPTIONS) {
+    const value = valueAfter(args, option);
+    if (value !== null) pressureArgs.push(option, value);
+  }
+  return pressureArgs;
 }
 
 export async function handleWorkflowCommands(
@@ -89,7 +118,36 @@ export async function handleWorkflowCommands(
           // Advisory audit failure must not block prompt submission.
         }
       }
-      return result.output ? `${JSON.stringify(result.output, null, 2)}\n` : '';
+      let pressureOutput = null;
+      try {
+        const pressureOptions = parseCodexContextPressureCliOptions(
+          contextPressureArgs(args)
+        );
+        const pressure = await probeCodexContextPressure(pressureOptions);
+        const pressureAdvisory = createCodexContextAdvisory({
+          task: binding.candidate.task,
+          pressure
+        });
+        pressureOutput = pressureAdvisory.output;
+        try {
+          await appendCodexContextAdvisoryAudit(
+            codexContextAdvisoryAuditPathFromRoot(
+              auditRoot,
+              binding.candidate.task
+            ),
+            pressureAdvisory.audit
+          );
+        } catch {
+          // Advisory audit failure must not block prompt submission.
+        }
+      } catch {
+        // Context pressure is advisory and must not block prompt submission.
+      }
+      const output = combineUserPromptSubmitAdvisories(
+        result.output,
+        pressureOutput
+      );
+      return output ? `${JSON.stringify(output, null, 2)}\n` : '';
     } catch {
       return '';
     }

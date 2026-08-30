@@ -96,7 +96,8 @@ const registry: HostAdapterRegistry = {
         'hook-enforce-audit.json',
         'permission-enforce-audit.json',
         'post-tool-use-audit.jsonl',
-        'workflow-advisory-audit.jsonl'
+        'workflow-advisory-audit.jsonl',
+        'codex-context-advisory-audit.jsonl'
       ],
       verification: [
         ...localVerification,

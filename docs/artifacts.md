@@ -32,6 +32,10 @@
 | `ccpanes.workflow-advisory.v1` | UserPromptSubmit additional context | `src/workflow-advisory-hook.ts` | 给当前 prompt 注入工作流、检查项和实现标准建议。 |
 | `ccpanes.workflow-advisory-audit.v1` | workflow advisory audit JSON | `src/workflow-advisory-hook.ts` | workflow advisory 的任务级审计记录。 |
 | `hooks.codex-context-pressure/v1` | Read-only CLI JSON | `src/codex-context-pressure.ts` | 从当前 Codex rollout 的 `token_count` 事件计算上下文压力，并输出脱敏 checkpoint 动作。 |
+| `hooks.codex-context-pressure-advisory/v1` | UserPromptSubmit additional context | `src/codex-context-advisory.ts` | 仅在 soft、hard 或压缩后对账动作时注入有界上下文治理建议。 |
+| `ccpanes.codex-context-advisory-audit.v1` | `codex-context-advisory-audit.jsonl` | `src/codex-context-advisory.ts` | 记录脱敏 pressure/action、注入决策和 token 指标，不记录 prompt 或 rollout 明文路径。 |
+| `ccpanes.context-snapshot-transaction.v1` | `.context-rotation.json` | `src/context-snapshot-rotation.ts` | 三代 context 轮换的持久化事务清单，用于崩溃后幂等恢复。 |
+| `ccpanes.context-snapshot-rotation.v1` | `codex-context-snapshot` stdout | `src/context-snapshot-rotation.ts` | 记录乐观锁、轮换 generation、前后 SHA-256 和恢复状态。 |
 | `ccpanes.hook-shadow-audit.v1` | hook shadow audit | `src/hook-shadow.ts` | hook 接入前 shadow 模式检查。 |
 
 ## Classification and Advisory Artifacts

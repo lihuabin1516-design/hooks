@@ -196,24 +196,115 @@ at least the active soft threshold.
 This is an advisory recovery signal, not proof that a particular internal
 compaction implementation ran.
 
-## Integration boundary
+## UserPromptSubmit advisory
 
-This first slice is a read-only probe and CLI contract.
+The existing `workflow-advisory` command consumes the pressure result in the
+same UserPromptSubmit process. This does not add another user-level hook group
+and does not modify the real user `hooks.json`.
 
-It does not:
+Injection policy:
 
-- edit `context.md`;
-- rotate context snapshots;
-- modify user `hooks.json`;
+```text
+normal
+  -> no pressure context
+
+unavailable / stale
+  -> no pressure context; emit a typed audit decision
+
+soft
+  -> advise updating context.md after the current atomic step
+
+hard
+  -> advise stopping scope expansion, rotating snapshots and checkpointing
+
+heuristic-token-drop
+  -> advise reconciliation against system summary, context.md, Git, Goal,
+     Workflow and Session authorities
+```
+
+The pressure advisory schema is:
+
+```text
+hooks.codex-context-pressure-advisory/v1
+```
+
+The task-scoped privacy-bounded audit schema is:
+
+```text
+ccpanes.codex-context-advisory-audit.v1
+```
+
+The workflow and pressure contexts are composed under the installed
+`additionalContextLimit=1800`. If the full workflow advice would exceed that
+combined bound, the workflow section is reduced to its schema, route, rigor,
+implementation-standard identity, level, optimization target and authority;
+the pressure instruction is retained.
+
+## Three-generation snapshot rotation
+
+Coordinator/Leader code can apply a prepared next snapshot with:
+
+```powershell
+node dist/src/cli.js codex-context-snapshot rotate `
+  --root <checkpoint-root> `
+  --next <checkpoint-root>\next-context.md `
+  --expected-current-sha256 <CURRENT_CONTEXT_SHA256>
+```
+
+The command validates:
+
+- the fixed first heading;
+- `schema: ccpanes.context.v1`;
+- `retentionPolicy: current-plus-two-previous`;
+- sections `0` through `9`;
+- sequential `snapshotGeneration`;
+- current/previous/previous2 generation continuity;
+- an uppercase optimistic-lock SHA-256;
+- a real root and a regular next-snapshot file contained under that root.
+
+The transaction order is:
+
+```text
+exclusive single-writer lock
+  -> validate current chain and expected SHA-256
+  -> stage all desired generations durably
+  -> atomically publish .context-rotation.json
+  -> context.prev2.md
+  -> context.prev.md
+  -> context.md last as the commit point
+  -> read back and validate
+  -> remove owned stage files and journal
+```
+
+If the process stops after the journal is published, the staged source files
+remain. The next invocation can finish the same desired state idempotently:
+
+```powershell
+node dist/src/cli.js codex-context-snapshot recover `
+  --root <checkpoint-root>
+```
+
+The rotator changes only context snapshot files. It does not create a Git
+commit, push a branch, modify a Goal, or claim that Workflow/Session state has
+been reconciled. Those remain Coordinator/Leader gates.
+
+## Remaining integration boundary
+
+The current implementation still does not:
+
+- modify the real user `hooks.json`;
 - start a background polling process;
 - block a prompt;
+- generate the semantic contents of the next `context.md`;
+- create a Git/Workflow checkpoint automatically;
+- query or mutate Goal, Workflow, Worker, Binding, Result or Session state;
 - claim that context token usage can be known before Codex writes the next
   `token_count` event.
 
-The next integration slice can call the probe from the existing
-`UserPromptSubmit` chain and inject a bounded advisory only for `soft`, `hard`
-or post-compaction actions. User-level hook configuration remains a separately
-authorized deployment step.
+Coordinator/Leader action consumption is now possible through the typed
+pressure result, bounded advisory, and transaction-safe snapshot CLI. Automatic
+checkpoint content generation and cross-authority reconciliation remain the
+next integration slice.
 
 ## Verification
 
@@ -221,6 +312,8 @@ Focused:
 
 ```powershell
 npm test -- --run tests/codex-context-pressure.test.ts
+npm test -- --run tests/codex-context-advisory.test.ts
+npm test -- --run tests/context-snapshot-rotation.test.ts
 npm run typecheck
 npm run build
 node dist/src/cli.js codex-context-pressure

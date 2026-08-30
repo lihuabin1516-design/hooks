@@ -363,6 +363,17 @@ export function workflowAdvisoryAuditPathFromRoot(auditRoot: string, task: Curre
   return path.join(auditRoot, safeName(task.taskId), 'workflow-advisory-audit.jsonl');
 }
 
+export function codexContextAdvisoryAuditPathFromRoot(
+  auditRoot: string,
+  task: CurrentTask
+): string {
+  return path.join(
+    auditRoot,
+    safeName(task.taskId),
+    'codex-context-advisory-audit.jsonl'
+  );
+}
+
 export async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) {
