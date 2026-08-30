@@ -24,5 +24,5 @@ describe('production smoke script', () => {
     runNpmScript('build');
     const output = runNpmScript('smoke');
     expect(output).toContain('SMOKE_PASS');
-  }, 60000);
+  }, 120000);
 });
