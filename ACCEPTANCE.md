@@ -1823,6 +1823,116 @@ C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp exists: false
 C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists: false
 ```
 
+## 2026-08-30 Codex context pressure probe
+
+本轮吸收公开项目的有效部分：
+
+```text
+graykode/abtop
+    采用 Codex rollout token_count 作为当前上下文压力数据源；
+    不引入其 TUI、进程扫描或完整依赖。
+
+JChristensen/codex-request-meter
+    参考 Codex hook/turn 级观测接入方式；
+    本轮不修改真实用户 hooks.json。
+
+KevinKE93/Codex-Monitor
+    记录为 Desktop 监测参考；
+    因 macOS/CDP/debug-port 运行边界，不作为 Windows 核心依赖。
+```
+
+新增：
+
+```text
+src/codex-context-pressure.ts
+tests/codex-context-pressure.test.ts
+docs/codex-context-pressure.md
+CLI: codex-context-pressure
+schema: hooks.codex-context-pressure/v1
+```
+
+数据合同：
+
+```text
+current context:
+payload.info.last_token_usage.input_tokens
+
+model window compatibility:
+payload.model_context_window
+payload.info.model_context_window
+
+soft threshold:
+220000
+
+hard threshold:
+240000
+```
+
+隐私与安全：
+
+```text
+state database opened read-only
+bounded rollout tail only
+token_count records only
+realpath + CODEX_HOME sessions containment
+thread and rollout emitted as truncated SHA-256 references
+no prompt/message/tool output parsing
+typed unavailable instead of guessed values
+```
+
+Focused verification：
+
+```text
+npm test -- --run tests/codex-context-pressure.test.ts
+Test Files  1 passed (1)
+Tests       12 passed (12)
+
+npm run typecheck
+exit code 0
+
+npm run build
+exit code 0
+```
+
+本机当前 Codex 对话只读 probe：
+
+```text
+availability=available
+modelContextWindow=258400
+thresholdMode=absolute
+softThresholdTokens=220000
+hardThresholdTokens=240000
+pressure=normal
+checkpointRequired=false
+action=continue
+diagnostics=[]
+```
+
+本机证据只记录上下文指标和脱敏引用，没有记录明文 thread ID、rollout
+路径、prompt、Session ID 或 PTY。
+
+Full verification：
+
+```text
+npm run verify
+Test Files  54 passed (54)
+Tests       1265 passed (1265)
+typecheck   pass
+build       pass
+smoke       SMOKE_PASS
+```
+
+当前边界：
+
+```text
+read-only probe and CLI contract only
+does not edit context.md
+does not rotate snapshots
+does not modify user hooks.json
+does not start a background poller
+does not block prompt submission
+```
+
 ## 21. Phase 22: SessionStart / Stop lifecycle acceptance
 
 第二十二阶段目标：补齐 Codex lifecycle 起止上下文。`SessionStart` 在新会话、恢复、清空和压缩后注入当前任务与审计路径；`Stop` 在一轮结束前给出非阻塞验收提醒，不创建 continuation prompt。

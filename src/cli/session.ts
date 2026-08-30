@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import {
+  parseCodexContextPressureCliOptions,
+  probeCodexContextPressure
+} from '../codex-context-pressure.js';
 import { validateCcPanesSessionSnapshot } from '../ccpanes-session-snapshot.js';
 import { buildCodexSessionIndex, writeCodexSessionJson } from '../codex-session-index.js';
 import { validateCodexSessionIndexArtifact } from '../codex-session-index-artifact.js';
@@ -28,6 +32,12 @@ export async function handleSessionCommands(
   options: RunCliOptions
 ): Promise<string | null> {
   const command = args[0];
+
+  if (command === 'codex-context-pressure') {
+    const parsed = parseCodexContextPressureCliOptions(args.slice(1));
+    const result = await probeCodexContextPressure(parsed);
+    return `${JSON.stringify(result, null, 2)}\n`;
+  }
 
   if (command === 'codex-sessions') {
     const action = args[1];

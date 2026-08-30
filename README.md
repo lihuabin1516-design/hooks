@@ -68,6 +68,7 @@ If a runtime can emit comparable hook events or invoke the CLI, the core contrac
 | Hook Enforcement | Applies allow / deny / audit logic to hook events. |
 | Workflow Advisory | Suggests risk level, workflow shape, and checks before work starts. |
 | Session Bridge | Builds read-only session indexes and handoff artifacts. |
+| Context Pressure | Reads the current Codex rollout `token_count` signal and emits soft/hard checkpoint actions without exposing prompts or session identities. |
 | Acceptance Evidence | Records checks, artifact hashes, truth layers, and completion gates. |
 | Live Consistency | Compares repo source, build output, and live runtime state. |
 
@@ -100,6 +101,16 @@ node dist/src/cli.js bootstrap-project `
   --task-id <task-id> `
   --phase shape
 ```
+
+Inspect the current Codex App / CLI context pressure:
+
+```powershell
+node dist/src/cli.js codex-context-pressure
+```
+
+The JSON result distinguishes `normal`, `soft`, `hard` and typed unavailable
+states. See
+[`docs/codex-context-pressure.md`](./docs/codex-context-pressure.md).
 
 Register task-scoped external publication roots explicitly when the task
 includes a reviewed GitHub publication step:
@@ -158,6 +169,7 @@ If it can expose hook-like events or call the CLI, it can usually join the same 
 - [`docs/architecture.md`](./docs/architecture.md) — source-level module boundaries.
 - [`docs/artifacts.md`](./docs/artifacts.md) — artifact and schema index.
 - [`docs/codex-session-bridge.md`](./docs/codex-session-bridge.md) — session bridge details.
+- [`docs/codex-context-pressure.md`](./docs/codex-context-pressure.md) — current context usage, checkpoint thresholds, privacy and compaction recovery.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contribution workflow and verification.
 - [`SECURITY.md`](./SECURITY.md) — vulnerability reporting path.
 - [`LICENSE`](./LICENSE) — project license.

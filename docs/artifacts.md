@@ -31,6 +31,7 @@
 | `ccpanes.post-tool-use-audit.v1` | `post-tool-use-audit.jsonl` | `src/post-tool-audit.ts` | PostToolUse 追加审计记录。 |
 | `ccpanes.workflow-advisory.v1` | UserPromptSubmit additional context | `src/workflow-advisory-hook.ts` | 给当前 prompt 注入工作流、检查项和实现标准建议。 |
 | `ccpanes.workflow-advisory-audit.v1` | workflow advisory audit JSON | `src/workflow-advisory-hook.ts` | workflow advisory 的任务级审计记录。 |
+| `hooks.codex-context-pressure/v1` | Read-only CLI JSON | `src/codex-context-pressure.ts` | 从当前 Codex rollout 的 `token_count` 事件计算上下文压力，并输出脱敏 checkpoint 动作。 |
 | `ccpanes.hook-shadow-audit.v1` | hook shadow audit | `src/hook-shadow.ts` | hook 接入前 shadow 模式检查。 |
 
 ## Classification and Advisory Artifacts
