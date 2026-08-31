@@ -232,7 +232,12 @@ export async function handleHookCommands(
       resolvedTaskPath = taskPath;
     }
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    return `${JSON.stringify(createSessionStartHookOutput({ task, taskPath: resolvedTaskPath, auditRoot }), null, 2)}\n`;
+    return `${JSON.stringify(createSessionStartHookOutput({
+      task,
+      taskPath: resolvedTaskPath,
+      auditRoot,
+      contextCheckpointPath: path.join(task.worktreeRoot, 'context.md')
+    }), null, 2)}\n`;
   }
 
   if (command === 'stop-check') {

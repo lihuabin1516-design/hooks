@@ -36,6 +36,7 @@
 | `ccpanes.codex-context-advisory-audit.v1` | `codex-context-advisory-audit.jsonl` | `src/codex-context-advisory.ts` | 记录脱敏 pressure/action、注入决策和 token 指标，不记录 prompt 或 rollout 明文路径。 |
 | `ccpanes.context-snapshot-transaction.v1` | `.context-rotation.json` | `src/context-snapshot-rotation.ts` | 三代 context 轮换的持久化事务清单，用于崩溃后幂等恢复。 |
 | `ccpanes.context-snapshot-rotation.v1` | `codex-context-snapshot` stdout | `src/context-snapshot-rotation.ts` | 记录乐观锁、轮换 generation、前后 SHA-256 和恢复状态。 |
+| `ccpanes.context-checkpoint.v1` | `context.md` + CLI metadata | `src/codex-context-checkpoint.ts` | 从 task/Git/显式协调摘要生成有界 Generation 3 恢复投影，不承载运行时权威状态。 |
 | `ccpanes.hook-shadow-audit.v1` | hook shadow audit | `src/hook-shadow.ts` | hook 接入前 shadow 模式检查。 |
 
 ## Classification and Advisory Artifacts

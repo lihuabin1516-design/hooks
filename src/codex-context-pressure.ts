@@ -21,7 +21,8 @@ export type CodexContextAction =
   | 'inspect';
 export type CodexContextCompactionSignal =
   | 'none'
-  | 'heuristic-token-drop';
+  | 'heuristic-token-drop'
+  | 'native-compaction-event';
 export type CodexContextThresholdMode = 'absolute' | 'scaled';
 export type CodexContextFreshness = 'fresh' | 'stale' | 'unknown';
 export type CodexContextDiagnostic =
@@ -336,6 +337,33 @@ function compactionSignal(
     : 'none';
 }
 
+function hasNativeCompactionEvent(lines: string[]): boolean {
+  for (const line of lines) {
+    let root: Record<string, unknown>;
+    try {
+      root = JSON.parse(line) as Record<string, unknown>;
+    } catch {
+      continue;
+    }
+    const payload = root.payload && typeof root.payload === 'object'
+      ? root.payload as Record<string, unknown>
+      : null;
+    const candidates = [
+      root.type,
+      payload?.type,
+      payload?.event,
+      payload?.event_type
+    ];
+    if (candidates.some((value) =>
+      typeof value === 'string' &&
+      /^(context[_-]?compaction(?:[_-]?(?:completed|finished))?|compaction[_-]?completed|context[_-]?compacted)$/iu.test(value)
+    )) {
+      return true;
+    }
+  }
+  return false;
+}
+
 function pressureFor(
   contextTokens: number,
   softThresholdTokens: number,
@@ -495,7 +523,9 @@ export async function probeCodexContextPressure(
     thresholds.soft,
     thresholds.hard
   );
-  const compacted = compactionSignal(
+  const compacted = hasNativeCompactionEvent(lines)
+    ? 'native-compaction-event'
+    : compactionSignal(
     parsed.observations,
     thresholds.soft
   );

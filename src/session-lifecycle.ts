@@ -6,6 +6,7 @@ export interface LifecycleOutputInput {
   task: CurrentTask;
   taskPath: string;
   auditRoot?: string | null;
+  contextCheckpointPath?: string | null;
   stopAnalysis?: StopCheckAnalysis | null;
 }
 
@@ -218,6 +219,7 @@ export function analyzeStopCheckEvent(event: unknown): StopCheckAnalysis {
 
 function lifecycleLines(input: LifecycleOutputInput): string[] {
   const auditDirectory = auditDir(input.auditRoot, input.task);
+  const contextPath = input.contextCheckpointPath ?? path.join(input.task.worktreeRoot, 'context.md');
   return [
     'ccpanes-task-probe lifecycle context',
     `taskId: ${input.task.taskId}`,
@@ -232,6 +234,8 @@ function lifecycleLines(input: LifecycleOutputInput): string[] {
     auditDirectory ? `preToolUseAudit: ${path.join(auditDirectory, 'hook-enforce-audit.json')}` : 'preToolUseAudit: null',
     auditDirectory ? `permissionAudit: ${path.join(auditDirectory, 'permission-enforce-audit.json')}` : 'permissionAudit: null',
     auditDirectory ? `postToolUseAudit: ${path.join(auditDirectory, 'post-tool-use-audit.jsonl')}` : 'postToolUseAudit: null',
+    `contextCheckpoint: ${fs.existsSync(contextPath) ? contextPath : 'absent'}`,
+    'contextRecovery: after compact/resume, read context.md and reconcile it with Coordinator, official CC-Panes Session, and Git authorities.',
     'productionGates: preserve task scope; before completion run targeted checks, inspect diff/status, keep reference repos clean, then record and verify acceptance evidence.'
   ];
 }

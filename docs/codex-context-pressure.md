@@ -301,10 +301,41 @@ The current implementation still does not:
 - claim that context token usage can be known before Codex writes the next
   `token_count` event.
 
+## Generation 3 context checkpoint projection
+
+The checkpoint generator creates a bounded `context.md` projection from a
+validated `current-task.json`, Git state, and explicitly supplied
+Coordinator/acceptance summaries:
+
+```powershell
+node dist/src/cli.js codex-context-checkpoint `
+  --task-context <project>\.ccpanes-task\current-task.json `
+  --out <project>\context.md `
+  --generation 1 `
+  --goal RUNNING `
+  --workflow RUNNING `
+  --worker WAITING_RESULT `
+  --completed "baseline verified" `
+  --blocker "human gate pending" `
+  --next-action "read Coordinator state" `
+  --evidence "npm test=pass"
+```
+
+The output uses schema `ccpanes.context.v1`, fixed sections `0` through `10`,
+and a maximum size of 24,000 characters. It contains only bounded projections:
+full prompts, tokens, raw rollout paths, and raw Session identifiers are not
+copied into the checkpoint. The command returns SHA-256 metadata while the
+document is written atomically.
+
+Use `codex-context-snapshot rotate` immediately after generating the next
+checkpoint to retain `context.md`, `context.prev.md`, and `context.prev2.md`.
+The pressure probe treats an explicit native compaction event as stronger than
+the token-drop heuristic and emits `reconcile-after-compaction`.
+
 Coordinator/Leader action consumption is now possible through the typed
 pressure result, bounded advisory, and transaction-safe snapshot CLI. Automatic
-checkpoint content generation and cross-authority reconciliation remain the
-next integration slice.
+cross-authority reconciliation remains a Coordinator/Leader integration
+responsibility.
 
 ## Verification
 

@@ -10,6 +10,7 @@ import {
   recoverContextSnapshotRotation,
   rotateContextSnapshotsAtomic
 } from '../context-snapshot-rotation.js';
+import { generateContextCheckpointFromFile } from '../codex-context-checkpoint.js';
 import { validateCcPanesSessionSnapshot } from '../ccpanes-session-snapshot.js';
 import { buildCodexSessionIndex, writeCodexSessionJson } from '../codex-session-index.js';
 import { validateCodexSessionIndexArtifact } from '../codex-session-index-artifact.js';
@@ -28,7 +29,8 @@ import {
   isCodexSessionsAction,
   parseCodexSessionsOptions,
   parseHandoffGenerateOptions,
-  valueAfter
+  valueAfter,
+  valuesAfter
 } from '../cli-shared.js';
 
 export async function handleSessionCommands(
@@ -82,6 +84,36 @@ export async function handleSessionCommands(
       expectedCurrentSha256
     });
     return `${JSON.stringify(report, null, 2)}\n`;
+  }
+
+  if (command === 'codex-context-checkpoint') {
+    const taskContextPath = valueAfter(args, '--task-context');
+    if (!taskContextPath) throw new Error('missing --task-context');
+    const outputPath = valueAfter(args, '--out');
+    const generationValue = valueAfter(args, '--generation');
+    const generation = generationValue === null
+      ? undefined
+      : Number(generationValue);
+    if (generationValue !== null && (generation === undefined || !Number.isSafeInteger(generation) || generation < 1)) {
+      throw new Error('invalid --generation');
+    }
+    const result = await generateContextCheckpointFromFile({
+      taskContextPath,
+      outputPath: outputPath ?? undefined,
+      snapshotGeneration: generation,
+      goalState: valueAfter(args, '--goal'),
+      workflowState: valueAfter(args, '--workflow'),
+      workerState: valueAfter(args, '--worker'),
+      blockers: valuesAfter(args, '--blocker'),
+      nextActions: valuesAfter(args, '--next-action'),
+      completedMilestones: valuesAfter(args, '--completed'),
+      decisions: valuesAfter(args, '--decision'),
+      verificationEvidence: valuesAfter(args, '--evidence')
+    });
+    return `${JSON.stringify({
+      ...result,
+      content: undefined
+    }, null, 2)}\n`;
   }
 
   if (command === 'codex-sessions') {

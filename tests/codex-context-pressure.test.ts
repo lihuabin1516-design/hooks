@@ -231,6 +231,30 @@ describe('Codex context pressure probe', () => {
     });
   });
 
+  test('gives a native compaction event precedence over the token-drop heuristic', async () => {
+    const rollout = await writeRollout('thread-native-compact', [245_000, 70_000]);
+    await fs.appendFile(rollout, `${JSON.stringify({
+      type: 'event_msg',
+      payload: { type: 'context_compaction_completed' }
+    })}\n`, 'utf8');
+    writeStateDb([{
+      id: 'thread-native-compact',
+      rolloutPath: rollout,
+      updatedAt: 1
+    }]);
+
+    const result = await probeCodexContextPressure({
+      codexRoot,
+      stateDb,
+      threadId: 'thread-native-compact',
+      now: new Date('2026-08-31T00:00:00.000Z')
+    });
+
+    expect(result.compactionSignal).toBe('native-compaction-event');
+    expect(result.action).toBe('reconcile-after-compaction');
+    expect(result.checkpointRequired).toBe(true);
+  });
+
   test('scales thresholds when the model window is smaller than the absolute policy', async () => {
     const rollout = await writeRollout('thread-small', [100_000], 128_000);
     writeStateDb([{ id: 'thread-small', rolloutPath: rollout, updatedAt: 1 }]);
