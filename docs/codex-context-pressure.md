@@ -337,6 +337,21 @@ pressure result, bounded advisory, and transaction-safe snapshot CLI. Automatic
 cross-authority reconciliation remains a Coordinator/Leader integration
 responsibility.
 
+For cross-layer integration, Coordinator may emit a validated
+`ccpanes.context-projection-input.v1` JSON document. Hooks consumes it with:
+
+```powershell
+node dist/src/cli.js codex-context-checkpoint `
+  --projection <projection.json> `
+  --task-context <project>\.ccpanes-task\current-task.json `
+  --out <project>\context.md
+```
+
+The projection must match the current task binding. Hooks does not open the
+Coordinator database and does not treat the projection as runtime authority;
+the returned `projectionSha256` provides evidence of exactly which bounded
+projection was consumed.
+
 ## Verification
 
 Focused:

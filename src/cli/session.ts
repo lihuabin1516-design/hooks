@@ -11,6 +11,12 @@ import {
   rotateContextSnapshotsAtomic
 } from '../context-snapshot-rotation.js';
 import { generateContextCheckpointFromFile } from '../codex-context-checkpoint.js';
+import {
+  checkpointFromProjection,
+  projectionDigest,
+  readContextProjection
+} from '../context-projection.js';
+import { validateCurrentTask } from '../current-task.js';
 import { validateCcPanesSessionSnapshot } from '../ccpanes-session-snapshot.js';
 import { buildCodexSessionIndex, writeCodexSessionJson } from '../codex-session-index.js';
 import { validateCodexSessionIndexArtifact } from '../codex-session-index-artifact.js';
@@ -87,6 +93,28 @@ export async function handleSessionCommands(
   }
 
   if (command === 'codex-context-checkpoint') {
+    const projectionPath = valueAfter(args, '--projection');
+    if (projectionPath) {
+      const taskContextPath = valueAfter(args, '--task-context');
+      if (!taskContextPath) throw new Error('missing --task-context');
+      const task = validateCurrentTask(JSON.parse(await readFile(path.resolve(taskContextPath), 'utf8')));
+      const projection = await readContextProjection(projectionPath);
+      const result = checkpointFromProjection(projection, task);
+      const outputPath = valueAfter(args, '--out');
+      if (outputPath) {
+        const output = path.resolve(outputPath);
+        const temporary = `${output}.tmp-${process.pid}-${Date.now()}`;
+        await fs.promises.mkdir(path.dirname(output), { recursive: true });
+        await fs.promises.writeFile(temporary, result.content, 'utf8');
+        await fs.promises.rename(temporary, output);
+        result.outputPath = output;
+      }
+      return `${JSON.stringify({
+        ...result,
+        content: undefined,
+        projectionSha256: projectionDigest(projection)
+      }, null, 2)}\n`;
+    }
     const taskContextPath = valueAfter(args, '--task-context');
     if (!taskContextPath) throw new Error('missing --task-context');
     const outputPath = valueAfter(args, '--out');
