@@ -84,6 +84,20 @@ describe('analyzeShellCommand', () => {
     ]);
   });
 
+  test('uses git -C repository as the external publication target', () => {
+    const repository = 'D:/cc-pane/.worktrees/codex-production-worker-runtime-20260828';
+    const command = `git -C ${repository} push origin feature/runtime`;
+    expect(analyzeShellCommand({ command, cwd })).toEqual([
+      {
+        tool: 'shell',
+        targetPath: repository,
+        writes: true,
+        command,
+        policyReason: 'external_publication_git_push'
+      }
+    ]);
+  });
+
   test('classifies Node inline filesystem mutations', () => {
     expect(analyzeShellCommand({ command: `node -e "require('fs').unlinkSync('C:/Users/AI001/.codex/x.tmp')"`, cwd })).toEqual([
       { tool: 'shell', targetPath: cwd, writes: true, command: `node -e "require('fs').unlinkSync('C:/Users/AI001/.codex/x.tmp')"`, policyReason: 'interpreter_filesystem_mutation' }

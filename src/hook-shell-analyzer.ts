@@ -49,7 +49,7 @@ function call(
 function classifyPolicy(command: string): string | null {
   if (/\bgit\s+reset\b[\s\S]*\s--hard(\s|$)/i.test(command)) return 'destructive_git_reset_hard';
   if (/\bgit\s+clean\b/i.test(command)) return 'destructive_git_clean';
-  if (/\bgit\s+push(\s|$)/i.test(command)) return 'external_publication_git_push';
+  if (/\bgit\b[\s\S]*\bpush(\s|$)/i.test(command)) return 'external_publication_git_push';
   if (/\bnpm\s+(install|i|add)\b[\s\S]*(\s|^)-g(\s|$)/i.test(command)) return 'global_dependency_install';
   if (/\bpnpm\s+(add|install)\b[\s\S]*(\s|^)-g(\s|$)/i.test(command)) return 'global_dependency_install';
   if (/\byarn\s+global\s+add\b/i.test(command)) return 'global_dependency_install';
@@ -115,6 +115,18 @@ function extractPackageManagerWriteTarget(command: string, cwd: string): string 
   return null;
 }
 
+function extractGitRepositoryTarget(command: string, cwd: string): string | null {
+  const tokens = tokenize(command);
+  if (tokens[0]?.toLowerCase() !== 'git') return null;
+
+  for (let index = 1; index < tokens.length - 1; index += 1) {
+    if (tokens[index]?.toLowerCase() === '-c') {
+      return normalizeShellPath(tokens[index + 1], cwd);
+    }
+  }
+  return null;
+}
+
 function hasCompoundShellSyntax(command: string): boolean {
   return /[\r\n;&|`]|\$\(/.test(command);
 }
@@ -133,7 +145,13 @@ export function analyzeShellCommand(input: ShellCommandInput): HookCall[] {
   const rawCommandForAudit = rawCommand === command ? undefined : rawCommand;
   const cwd = normalizeShellPath(input.cwd, process.cwd());
   const policyReason = classifyPolicy(command);
-  if (policyReason) return [call(command, cwd, true, policyReason, rawCommandForAudit)];
+  if (policyReason) {
+    const targetPath =
+      policyReason === 'external_publication_git_push'
+        ? (extractGitRepositoryTarget(command, cwd) ?? cwd)
+        : cwd;
+    return [call(command, targetPath, true, policyReason, rawCommandForAudit)];
+  }
 
   const targets = [
     ...extractRedirectionTargets(command, cwd),
