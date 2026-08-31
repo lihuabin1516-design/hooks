@@ -352,6 +352,21 @@ Coordinator database and does not treat the projection as runtime authority;
 the returned `projectionSha256` provides evidence of exactly which bounded
 projection was consumed.
 
+For the normal refresh path, use the combined command:
+
+```powershell
+node dist/src/cli.js codex-context-refresh `
+  --projection <projection.json> `
+  --task-context <project>\.ccpanes-task\current-task.json `
+  --root <project>
+```
+
+It initializes `context.md` when no current snapshot exists. On later runs it
+uses the current file SHA-256 as an optimistic lock and performs the existing
+transaction-safe rotation to `context.prev.md` and `context.prev2.md`. A stale
+current file or an interrupted transaction remains an explicit failure/recovery
+condition; the command never silently overwrites a concurrent update.
+
 ## Verification
 
 Focused:

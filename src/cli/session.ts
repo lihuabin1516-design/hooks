@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
@@ -142,6 +143,60 @@ export async function handleSessionCommands(
       ...result,
       content: undefined
     }, null, 2)}\n`;
+  }
+
+  if (command === 'codex-context-refresh') {
+    const projectionPath = valueAfter(args, '--projection');
+    const taskContextPath = valueAfter(args, '--task-context');
+    const rootValue = valueAfter(args, '--root');
+    if (!projectionPath) throw new Error('missing --projection');
+    if (!taskContextPath) throw new Error('missing --task-context');
+    if (!rootValue) throw new Error('missing --root');
+    const root = await fs.promises.realpath(path.resolve(rootValue));
+    const task = validateCurrentTask(JSON.parse(await readFile(path.resolve(taskContextPath), 'utf8')));
+    const projection = await readContextProjection(projectionPath);
+    const result = checkpointFromProjection(projection, task);
+    const currentPath = path.join(root, 'context.md');
+    const currentExists = fs.existsSync(currentPath);
+    if (!currentExists) {
+      const temporary = path.join(root, `.context-initial-${process.pid}-${Date.now()}.tmp`);
+      try {
+        await fs.promises.writeFile(temporary, result.content, 'utf8');
+        await fs.promises.rename(temporary, currentPath);
+      } finally {
+        await fs.promises.rm(temporary, { force: true });
+      }
+      result.outputPath = currentPath;
+      return `${JSON.stringify({
+        ...result,
+        content: undefined,
+        projectionSha256: projectionDigest(projection),
+        rotation: { status: 'initialized', retainedGenerations: 1 }
+      }, null, 2)}\n`;
+    }
+    const currentContent = await readFile(currentPath, 'utf8');
+    const expectedCurrentSha256 = createHash('sha256')
+      .update(currentContent, 'utf8')
+      .digest('hex')
+      .toUpperCase();
+    const nextPath = path.join(root, `.context-next-${process.pid}-${Date.now()}.tmp`);
+    try {
+      await fs.promises.writeFile(nextPath, result.content, 'utf8');
+      const rotation = await rotateContextSnapshotsAtomic({
+        root,
+        nextContent: result.content,
+        expectedCurrentSha256
+      });
+      result.outputPath = currentPath;
+      return `${JSON.stringify({
+        ...result,
+        content: undefined,
+        projectionSha256: projectionDigest(projection),
+        rotation
+      }, null, 2)}\n`;
+    } finally {
+      await fs.promises.rm(nextPath, { force: true });
+    }
   }
 
   if (command === 'codex-sessions') {
