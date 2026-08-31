@@ -14,6 +14,7 @@ import {
 import { generateContextCheckpointFromFile } from '../codex-context-checkpoint.js';
 import {
   checkpointFromProjection,
+  parseContextProjectionText,
   projectionDigest,
   readContextProjection
 } from '../context-projection.js';
@@ -154,7 +155,9 @@ export async function handleSessionCommands(
     if (!rootValue) throw new Error('missing --root');
     const root = await fs.promises.realpath(path.resolve(rootValue));
     const task = validateCurrentTask(JSON.parse(await readFile(path.resolve(taskContextPath), 'utf8')));
-    const projection = await readContextProjection(projectionPath);
+    const projection = projectionPath === '-'
+      ? parseContextProjectionText(stdinText ?? '')
+      : await readContextProjection(projectionPath);
     const result = checkpointFromProjection(projection, task);
     const currentPath = path.join(root, 'context.md');
     const currentExists = fs.existsSync(currentPath);

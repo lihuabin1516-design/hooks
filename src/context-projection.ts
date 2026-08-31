@@ -153,7 +153,14 @@ export async function readContextProjection(filePath: string): Promise<ContextPr
   if (!stat.isFile() || stat.size > MAX_PROJECTION_BYTES) {
     throw new Error('context projection must be a regular file under 64 KiB');
   }
-  return validateContextProjection(JSON.parse(await fs.readFile(absolute, 'utf8')));
+  return parseContextProjectionText(await fs.readFile(absolute, 'utf8'));
+}
+
+export function parseContextProjectionText(text: string): ContextProjectionInput {
+  if (Buffer.byteLength(text, 'utf8') > MAX_PROJECTION_BYTES) {
+    throw new Error('context projection must be under 64 KiB');
+  }
+  return validateContextProjection(JSON.parse(text));
 }
 
 export function projectionDigest(projection: ContextProjectionInput): string {

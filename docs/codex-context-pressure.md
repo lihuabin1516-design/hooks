@@ -66,6 +66,22 @@ Probe the current Codex thread:
 node dist/src/cli.js codex-context-pressure
 ```
 
+When a Coordinator or another producer already has a validated projection in
+memory, the refresh command also accepts the projection JSON on stdin:
+
+```powershell
+Get-Content .\projection.json -Raw |
+  node dist/src/cli.js codex-context-refresh `
+    --projection - `
+    --task-context .\.ccpanes-task\current-task.json `
+    --root .
+```
+
+`--projection -` uses the same schema, 64 KiB bound, path binding, and
+three-generation atomic rotation as the file input form. It does not create a
+projection file and is intended for a Coordinator → Hooks pipe. Invalid JSON,
+oversized input, task mismatch, and generation conflicts remain fail-closed.
+
 The command uses:
 
 ```text

@@ -86,4 +86,28 @@ describe('codex-context-refresh', () => {
       await fs.rm(root, { recursive: true, force: true });
     }
   });
+
+  test('accepts a projection from stdin for coordinator-to-hooks piping', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-context-refresh-stdin-'));
+    try {
+      const taskPath = path.join(root, 'current-task.json');
+      await fs.writeFile(taskPath, JSON.stringify(task(root)), 'utf8');
+
+      const result = JSON.parse(await runCli([
+        'codex-context-refresh',
+        '--projection', '-',
+        '--task-context', taskPath,
+        '--root', root
+      ], JSON.stringify(projection(root, 1))));
+
+      expect(result.rotation).toMatchObject({
+        status: 'initialized',
+        retainedGenerations: 1
+      });
+      expect(await fs.readFile(path.join(root, 'context.md'), 'utf8'))
+        .toContain('snapshotGeneration: 1');
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
 });
