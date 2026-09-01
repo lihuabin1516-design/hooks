@@ -26,6 +26,11 @@ function assertString(value: unknown, field: string, max = MAX_STRING): asserts 
   }
 }
 
+function assertKnownFields(record: Record<string, unknown>, allowed: ReadonlySet<string>, scope: string): void {
+  const unknown = Object.keys(record).find((key) => !allowed.has(key));
+  if (unknown) throw new Error(`invalid task binding registry: unknown field ${scope}.${unknown}`);
+}
+
 function assertAbsolutePath(value: unknown, field: string): asserts value is string {
   assertString(value, field);
   if (!path.isAbsolute(value) || path.normalize(value) !== value || path.resolve(value) !== value) {
@@ -36,6 +41,11 @@ function assertAbsolutePath(value: unknown, field: string): asserts value is str
 function validateRegistration(value: unknown): TaskBindingRegistration {
   if (!value || typeof value !== 'object') throw new Error('invalid task binding registry: binding');
   const record = value as Record<string, unknown>;
+  assertKnownFields(
+    record,
+    new Set(['taskId', 'worktreeRoot', 'projectPath', 'handoffPath', 'contextPath', 'coordinatorNamespace']),
+    'binding'
+  );
   assertString(record.taskId, 'taskId', 256);
   assertAbsolutePath(record.worktreeRoot, 'worktreeRoot');
   assertAbsolutePath(record.projectPath, 'projectPath');
@@ -61,6 +71,7 @@ function validateRegistration(value: unknown): TaskBindingRegistration {
 export function validateTaskBindingRegistry(value: unknown): TaskBindingRegistry {
   if (!value || typeof value !== 'object') throw new Error('invalid task binding registry: object');
   const record = value as Record<string, unknown>;
+  assertKnownFields(record, new Set(['schema', 'bindings']), 'root');
   if (record.schema !== 'ccpanes.task-binding-registry.v1') {
     throw new Error('invalid task binding registry: schema');
   }
@@ -80,14 +91,21 @@ export function validateTaskBindingRegistry(value: unknown): TaskBindingRegistry
 export async function readTaskBindingRegistry(file: string): Promise<TaskBindingRegistry> {
   const handle = await fs.open(file, 'r');
   try {
-    const buffer = Buffer.alloc(MAX_REGISTRY_BYTES + 1);
-    const result = await handle.read(buffer, 0, buffer.length, 0);
-    if (result.bytesRead > MAX_REGISTRY_BYTES) {
-      throw new Error('task binding registry exceeds 65536 bytes');
+    const chunks: Buffer[] = [];
+    let bytesRead = 0;
+    for (;;) {
+      const chunk = Buffer.alloc(Math.min(8192, MAX_REGISTRY_BYTES + 1 - bytesRead));
+      const result = await handle.read(chunk, 0, chunk.length, bytesRead);
+      if (result.bytesRead === 0) break;
+      chunks.push(chunk.subarray(0, result.bytesRead));
+      bytesRead += result.bytesRead;
+      if (bytesRead > MAX_REGISTRY_BYTES) {
+        throw new Error('task binding registry exceeds 65536 bytes');
+      }
     }
     let value: unknown;
     try {
-      value = JSON.parse(buffer.subarray(0, result.bytesRead).toString('utf8'));
+      value = JSON.parse(Buffer.concat(chunks).toString('utf8'));
     } catch {
       throw new Error('invalid task binding registry: malformed JSON');
     }
