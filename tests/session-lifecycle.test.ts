@@ -10,6 +10,7 @@ import {
   createTaskBindingMismatchStopOutput
 } from '../src/session-lifecycle.js';
 import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
+import type { BootstrapResult } from '../src/global-bootstrap.js';
 
 function task(root: string): CurrentTask {
   return {
@@ -56,6 +57,31 @@ function writeTranscript(lines: unknown[]): string {
 }
 
 describe('SessionStart lifecycle output', () => {
+  test('includes a bounded bootstrap status when supplied', () => {
+    const root = 'D:/workspace/project-alpha';
+    const bootstrap: BootstrapResult = {
+      schema: 'ccpanes.bootstrap.v1',
+      status: 'READY',
+      cwd: root,
+      taskId: 'task-alpha',
+      projectPath: root,
+      worktreeRoot: root,
+      handoff: { path: path.join(root, 'HANDOFF.md'), exists: true },
+      context: { path: path.join(root, 'context.md'), exists: true },
+      coordinatorNamespace: 'alpha',
+      reason: 'exact_worktree_binding_and_context_resolved'
+    };
+    const output = createSessionStartHookOutput({
+      task: task(root),
+      taskPath: path.join(root, '.ccpanes-task', 'current-task.json'),
+      bootstrap
+    });
+
+    expect(output.hookSpecificOutput.additionalContext).toContain('bootstrapStatus: READY');
+    expect(output.hookSpecificOutput.additionalContext).toContain('bootstrapTaskBinding: RESOLVED');
+    expect(output.hookSpecificOutput.additionalContext).toContain('bootstrapMcp: DISCOVER_REQUIRED');
+  });
+
   test('creates compact Codex additionalContext for the current task', () => {
     const root = 'D:/workspace/project-alpha';
     const output = createSessionStartHookOutput({

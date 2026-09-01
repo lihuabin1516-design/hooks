@@ -19,6 +19,7 @@ import {
   createTaskBindingMismatchStopOutput
 } from '../session-lifecycle.js';
 import { createCurrentTask, validateCurrentTask, resolveCurrentTaskBindingFromCwd } from '../current-task.js';
+import { resolveBootstrap } from '../global-bootstrap.js';
 import { isPathInside } from '../paths.js';
 import type { CurrentTask, HookCall, TaskBindingCheck } from '../types.js';
 import type { RunCliOptions } from '../cli-types.js';
@@ -232,11 +233,13 @@ export async function handleHookCommands(
       resolvedTaskPath = taskPath;
     }
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
+    const bootstrap = await resolveBootstrap({ cwd: cwd ?? task.worktreeRoot });
     return `${JSON.stringify(createSessionStartHookOutput({
       task,
       taskPath: resolvedTaskPath,
       auditRoot,
-      contextCheckpointPath: path.join(task.worktreeRoot, 'context.md')
+      contextCheckpointPath: path.join(task.worktreeRoot, 'context.md'),
+      bootstrap
     }), null, 2)}\n`;
   }
 

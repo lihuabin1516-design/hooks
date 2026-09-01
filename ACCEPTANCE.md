@@ -50,6 +50,23 @@ typecheck: pass
 该命令解决“新会话找到正确项目交接文件”的机器判定问题；
 它不宣称 Companion MCP 已加载，也不代替 fresh preflight 或实时状态查询。
 用户级注册表的安装和实际 MCP bootstrap 仍需在目标宿主上单独验收。
+
+SessionStart 接入：
+
+```text
+session-start --resolve-task-from-cwd
+```
+
+现在会在已有 lifecycle context 中附加 bounded bootstrap 摘要：
+
+```text
+bootstrapStatus
+bootstrapTaskBinding
+bootstrapMcp: DISCOVER_REQUIRED
+```
+
+该摘要只报告当前 worktree/task handoff 的机器判定结果；Hook 不在
+SessionStart 内调用 MCP、Coordinator 或 Workflow。
 ```
 
 ## 2. 本地 Hook 参考元数据

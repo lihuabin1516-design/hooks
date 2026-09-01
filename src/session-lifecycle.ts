@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import type { BootstrapResult } from './global-bootstrap.js';
 import type { CurrentTask, TaskBindingCheck } from './types.js';
 
 export interface LifecycleOutputInput {
@@ -7,6 +8,7 @@ export interface LifecycleOutputInput {
   taskPath: string;
   auditRoot?: string | null;
   contextCheckpointPath?: string | null;
+  bootstrap?: BootstrapResult | null;
   stopAnalysis?: StopCheckAnalysis | null;
 }
 
@@ -235,6 +237,11 @@ function lifecycleLines(input: LifecycleOutputInput): string[] {
     auditDirectory ? `permissionAudit: ${path.join(auditDirectory, 'permission-enforce-audit.json')}` : 'permissionAudit: null',
     auditDirectory ? `postToolUseAudit: ${path.join(auditDirectory, 'post-tool-use-audit.jsonl')}` : 'postToolUseAudit: null',
     `contextCheckpoint: ${fs.existsSync(contextPath) ? contextPath : 'absent'}`,
+    ...(input.bootstrap ? [
+      `bootstrapStatus: ${input.bootstrap.status}`,
+      `bootstrapTaskBinding: ${input.bootstrap.taskId ? 'RESOLVED' : 'MISSING'}`,
+      'bootstrapMcp: DISCOVER_REQUIRED'
+    ] : []),
     'contextRecovery: after compact/resume, read context.md and reconcile it with Coordinator, official CC-Panes Session, and Git authorities.',
     'productionGates: preserve task scope; before completion run targeted checks, inspect diff/status, keep reference repos clean, then record and verify acceptance evidence.'
   ];

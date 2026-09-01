@@ -236,3 +236,18 @@ inventory/preflight 和实时权威源确认。注册表缺失时只回退到当
 本轮没有修改用户级 Codex/CC-Panes 配置，也没有替换
 `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。下一步是把该命令接入
 用户级 SessionStart runner，并在明确的用户级安装边界内登记各 linked worktree。
+
+### 后续补充：SessionStart 已接入 Bootstrap 摘要
+
+`session-start --resolve-task-from-cwd` 现在会调用只读 Bootstrap resolver，
+并在 lifecycle additional context 中附加：
+
+```text
+bootstrapStatus
+bootstrapTaskBinding
+bootstrapMcp: DISCOVER_REQUIRED
+```
+
+这让已安装的 SessionStart Hook 能在新会话首轮自动报告 worktree/task
+路径判定；它仍然不执行 MCP inventory/preflight，不修改 Coordinator 或
+Workflow。用户级 registry、live 同步和新会话实机验收仍是独立门禁。

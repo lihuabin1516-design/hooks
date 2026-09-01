@@ -119,6 +119,18 @@ omitted, the resolver checks `%USERPROFILE%\.cc-panes\task-bindings.json`; if
 that registry is absent, it falls back to a valid local
 `.ccpanes-task\current-task.json`.
 
+The installed `SessionStart` command also evaluates the same bootstrap resolver
+and adds three bounded fields to its existing lifecycle context:
+
+```text
+bootstrapStatus: READY|...
+bootstrapTaskBinding: RESOLVED|MISSING
+bootstrapMcp: DISCOVER_REQUIRED
+```
+
+This is an advisory takeover signal. It deliberately does not execute MCP
+inventory or preflight from inside the Hook.
+
 Inspect the current Codex App / CLI context pressure:
 
 ```powershell
