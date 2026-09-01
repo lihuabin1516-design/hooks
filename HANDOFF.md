@@ -251,3 +251,9 @@ bootstrapMcp: DISCOVER_REQUIRED
 这让已安装的 SessionStart Hook 能在新会话首轮自动报告 worktree/task
 路径判定；它仍然不执行 MCP inventory/preflight，不修改 Coordinator 或
 Workflow。用户级 registry、live 同步和新会话实机验收仍是独立门禁。
+
+Bootstrap registry discovery now also checks a committed
+`.ccpanes-task/task-bindings.json` in the current worktree before the local
+`current-task.json` fallback. The Integration Candidate contains a portable
+registry candidate, but the user-level file is still pending because the
+current task-probe scope does not include `C:\Users\AI001\.cc-panes`.

@@ -119,6 +119,11 @@ omitted, the resolver checks `%USERPROFILE%\.cc-panes\task-bindings.json`; if
 that registry is absent, it falls back to a valid local
 `.ccpanes-task\current-task.json`.
 
+For a self-contained linked worktree, a committed
+`.ccpanes-task\task-bindings.json` is also discovered before the
+`current-task.json` fallback. This keeps the binding artifact portable with the
+worktree while leaving the user-level registry optional.
+
 The installed `SessionStart` command also evaluates the same bootstrap resolver
 and adds three bounded fields to its existing lifecycle context:
 

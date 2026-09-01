@@ -62,37 +62,48 @@ function result(
 }
 
 export async function resolveBootstrap(input: BootstrapInput): Promise<BootstrapResult> {
-  const registryPath = path.resolve(
-    input.registryPath ?? path.join(os.homedir(), '.cc-panes', 'task-bindings.json')
-  );
+  const requestedRegistry = input.registryPath
+    ? path.resolve(input.registryPath)
+    : path.join(os.homedir(), '.cc-panes', 'task-bindings.json');
+  const registryCandidates = input.registryPath
+    ? [requestedRegistry]
+    : [requestedRegistry, path.join(path.resolve(input.cwd), '.ccpanes-task', 'task-bindings.json')];
+
   let registry;
-  try {
-    registry = await readTaskBindingRegistry(registryPath);
-  } catch (error) {
-    const code = (error as NodeJS.ErrnoException).code;
-    if (code === 'ENOENT') {
-      const local = await resolveCurrentTaskBindingFromCwd(input.cwd);
-      if (local.check.status === 'matched' && local.candidate) {
-        const binding: TaskBindingRegistration = {
-          taskId: local.candidate.task.taskId,
-          worktreeRoot: local.candidate.task.worktreeRoot,
-          projectPath: local.candidate.task.projectPath,
-          handoffPath: path.join(local.candidate.task.worktreeRoot, 'HANDOFF.md'),
-          contextPath: path.join(local.candidate.task.worktreeRoot, 'context.md'),
-          coordinatorNamespace: null
-        };
-        const [handoffExists, contextExists] = await Promise.all([
-          exists(binding.handoffPath),
-          exists(binding.contextPath)
-        ]);
-        if (handoffExists && contextExists) {
-          return result(input, 'READY', binding, true, true, 'local_current_task_binding_resolved');
-        }
-        return result(input, 'CONTEXT_MISSING', binding, handoffExists, contextExists, 'handoff_or_context_missing');
+  let registryFound = false;
+  for (const registryPath of registryCandidates) {
+    try {
+      registry = await readTaskBindingRegistry(registryPath);
+      registryFound = true;
+      break;
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        return result(input, 'REGISTRY_INVALID', null, false, false, 'task_binding_registry_invalid');
       }
-      return result(input, 'REGISTRY_MISSING', null, false, false, 'task_binding_registry_missing');
     }
-    return result(input, 'REGISTRY_INVALID', null, false, false, 'task_binding_registry_invalid');
+  }
+
+  if (!registryFound || !registry) {
+    const local = await resolveCurrentTaskBindingFromCwd(input.cwd);
+    if (local.check.status === 'matched' && local.candidate) {
+      const binding: TaskBindingRegistration = {
+        taskId: local.candidate.task.taskId,
+        worktreeRoot: local.candidate.task.worktreeRoot,
+        projectPath: local.candidate.task.projectPath,
+        handoffPath: path.join(local.candidate.task.worktreeRoot, 'HANDOFF.md'),
+        contextPath: path.join(local.candidate.task.worktreeRoot, 'context.md'),
+        coordinatorNamespace: null
+      };
+      const [handoffExists, contextExists] = await Promise.all([
+        exists(binding.handoffPath),
+        exists(binding.contextPath)
+      ]);
+      if (handoffExists && contextExists) {
+        return result(input, 'READY', binding, true, true, 'local_current_task_binding_resolved');
+      }
+      return result(input, 'CONTEXT_MISSING', binding, handoffExists, contextExists, 'handoff_or_context_missing');
+    }
+    return result(input, 'REGISTRY_MISSING', null, false, false, 'task_binding_registry_missing');
   }
 
   const binding = findTaskBinding(registry, input.cwd);

@@ -130,4 +130,23 @@ describe('resolveBootstrap', () => {
     expect(result.taskId).toBe('local-task');
     expect(result.reason).toBe('local_current_task_binding_resolved');
   });
+
+  test('discovers a registry committed at the current worktree boundary', async () => {
+    const project = await createProject('project-discovered');
+    const registry = path.join(project, '.ccpanes-task', 'task-bindings.json');
+    await writeTaskBindingRegistry(registry, [{
+      taskId: 'discovered-task',
+      worktreeRoot: project,
+      projectPath: project,
+      handoffPath: path.join(project, 'HANDOFF.md'),
+      contextPath: path.join(project, 'context.md'),
+      coordinatorNamespace: 'discovered'
+    }]);
+
+    const result = await resolveBootstrap({ cwd: project });
+
+    expect(result.status).toBe('READY');
+    expect(result.taskId).toBe('discovered-task');
+    expect(result.coordinatorNamespace).toBe('discovered');
+  });
 });
