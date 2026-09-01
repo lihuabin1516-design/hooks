@@ -64,6 +64,7 @@ If a runtime can emit comparable hook events or invoke the CLI, the core contrac
 | Capability | What it does |
 | --- | --- |
 | Task Binding | Writes and verifies the current task for a project / worktree. |
+| Global Bootstrap | Resolves an exact worktree registration to handoff/context paths for a fresh session. |
 | Project Policy Gate | Captures human rules into machine-readable policy. |
 | Hook Enforcement | Applies allow / deny / audit logic to hook events. |
 | Workflow Advisory | Suggests risk level, workflow shape, and checks before work starts. |
@@ -101,6 +102,22 @@ node dist/src/cli.js bootstrap-project `
   --task-id <task-id> `
   --phase shape
 ```
+
+Resolve a fresh session's task bootstrap without mutating Workflow state:
+
+```powershell
+node dist/src/cli.js bootstrap `
+  --cwd <current-worktree> `
+  --registry <user-task-bindings.json>
+```
+
+The command emits `ccpanes.bootstrap.v1`. `status=READY` means only that the
+exact worktree binding and both `HANDOFF.md` / `context.md` files were resolved.
+It does not mean Companion MCP, Coordinator, Worker, or Official CC-Panes
+Session readiness. Those still require fresh runtime checks. If `--registry` is
+omitted, the resolver checks `%USERPROFILE%\.cc-panes\task-bindings.json`; if
+that registry is absent, it falls back to a valid local
+`.ccpanes-task\current-task.json`.
 
 Inspect the current Codex App / CLI context pressure:
 

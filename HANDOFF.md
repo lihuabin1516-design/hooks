@@ -208,3 +208,31 @@ live 验证结果
 ## 下一步建议
 
 后续可继续做 Phase 36：把 `plan-lifecycle-intake` 纳入发布收口链路；提交、push、同步 live 后在 live 路径重跑完整门禁和 `verify-installed-hooks`，再记录 repo/live 一致性与用户配置哈希。
+
+## 2026-09-01：Global Bootstrap exact worktree binding
+
+本轮新增了 fresh-session 接管的机器判定层：
+
+```text
+src/task-binding-registry.ts
+src/global-bootstrap.ts
+src/cli/task.ts: bootstrap
+```
+
+核心语义：
+
+```text
+bootstrap --cwd <dir> [--registry <file>]
+→ ccpanes.bootstrap.v1
+→ 精确 worktree binding
+→ HANDOFF.md / context.md 路径与存在性
+```
+
+`READY` 仅表示交接路径和当前 worktree 已解析，不表示 Companion MCP、
+Coordinator、Worker 或 Official CC-Panes Session 已就绪；这些仍需 fresh
+inventory/preflight 和实时权威源确认。注册表缺失时只回退到当前 worktree
+内有效的 `.ccpanes-task/current-task.json`，注册表损坏时 fail-closed。
+
+本轮没有修改用户级 Codex/CC-Panes 配置，也没有替换
+`C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。下一步是把该命令接入
+用户级 SessionStart runner，并在明确的用户级安装边界内登记各 linked worktree。

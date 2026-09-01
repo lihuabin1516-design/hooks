@@ -11,6 +11,7 @@ import {
 } from '../current-task.js';
 import type { RunCliOptions } from '../cli-types.js';
 import { parsePhase, valueAfter, valuesAfter } from '../cli-shared.js';
+import { resolveBootstrap } from '../global-bootstrap.js';
 
 export async function handleTaskCommands(
   args: string[],
@@ -45,6 +46,12 @@ export async function handleTaskCommands(
   if (command === 'verify-task-binding') {
     const cwd = valueAfter(args, '--cwd') ?? process.cwd();
     return `${JSON.stringify(await inspectCurrentTaskBindingFromCwd(cwd), null, 2)}\n`;
+  }
+
+  if (command === 'bootstrap') {
+    const cwd = valueAfter(args, '--cwd') ?? process.cwd();
+    const registry = valueAfter(args, '--registry');
+    return `${JSON.stringify(await resolveBootstrap({ cwd, registryPath: registry }), null, 2)}\n`;
   }
 
   if (command === 'bootstrap-project') {

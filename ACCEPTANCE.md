@@ -16,6 +16,42 @@
 
 本轮未安装 Comet，未接入真实 Hook，未写入用户级 Codex / Claude / CC-Panes 配置。
 
+## 24. Global Bootstrap and exact worktree binding
+
+日期：2026-09-01
+
+新增：
+
+- `src/task-binding-registry.ts`
+  - bounded `ccpanes.task-binding-registry.v1` validation；
+  - canonical absolute path checks；
+  - duplicate worktree rejection；
+  - longest matching worktree selection；
+  - atomic registry writing。
+- `src/global-bootstrap.ts`
+  - 输出 `ccpanes.bootstrap.v1`；
+  - `READY` 只代表 worktree binding、`HANDOFF.md` 和 `context.md` 均已解析；
+  - registry 缺失时仅回退到当前 worktree 的有效 `current-task.json`；
+  - registry 无效、绑定缺失或交接文件缺失时 fail-closed。
+- `bootstrap --cwd <dir> [--registry <file>]`
+  - 供 SessionStart/bootstrap runner 调用；
+  - 不调用或修改 Coordinator、Workflow、Worker、Official CC-Panes。
+
+验证：
+
+```text
+tests/global-bootstrap.test.ts: 4 passed
+typecheck: pass
+```
+
+边界：
+
+```text
+该命令解决“新会话找到正确项目交接文件”的机器判定问题；
+它不宣称 Companion MCP 已加载，也不代替 fresh preflight 或实时状态查询。
+用户级注册表的安装和实际 MCP bootstrap 仍需在目标宿主上单独验收。
+```
+
 ## 2. 本地 Hook 参考元数据
 
 `skills-hub-hook.exe` 作为后续 Hook 接入研究对象记录，本轮未执行该二进制。
