@@ -1876,6 +1876,44 @@ C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp exists: false
 C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists: false
 ```
 
+## 25. Global Bootstrap round 3: three-generation context.md bootstrap
+
+日期：2026-09-02
+
+本轮把三代 `context.md` 机制接入 hooks 全局 bootstrap：
+
+- `src/global-bootstrap.ts`
+  - 固定读取 `context.md`、`context.prev.md`、`context.prev2.md`；
+  - 每一代独立记录 `path`、`exists`、`observedAt`、`sha256`、`parseStatus`；
+  - `context.md` 是当前候选，`prev` / `prev2` 仅历史参考；
+  - binding / worktree / auditDir 冲突时 fail closed；
+  - 输出分层 `verifiedFacts`、`unverifiedAssumptions`、`currentBlockers`、`taskScope`、`protectedPaths`、`recentAcceptanceEvidence`、`taskBinding`、`worktree`、`auditDir`、`nextGate`；
+  - `READY` 只代表 binding / context resolution，`nextGate=MCP_DISCOVERY`。
+- `tests/global-bootstrap.test.ts`
+  - 覆盖三代文件记录、`context.prev2.md` 缺失、历史/当前分层、冲突 fail closed、`nextGate=MCP_DISCOVERY`。
+- `README.md`
+  - 补充 bootstrap 的三代 context 语义与 `READY` / `nextGate` 解释。
+- `tests/session-lifecycle.test.ts`
+  - 按新的 `BootstrapResult` 结构补齐测试 fixture。
+
+验证结果：
+
+```text
+pnpm vitest run tests/global-bootstrap.test.ts
+  Test Files  1 passed (1)
+  Tests       5 passed (5)
+
+pnpm run typecheck
+  exit code 0
+
+pnpm test
+  Test Files  60 passed (60)
+  Tests       1295 passed (1295)
+
+git diff --check
+  exit code 0
+```
+
 ## 2026-08-30 UserPromptSubmit context advisory and snapshot rotation
 
 目标：

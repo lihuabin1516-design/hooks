@@ -112,12 +112,21 @@ node dist/src/cli.js bootstrap `
 ```
 
 The command emits `ccpanes.bootstrap.v1`. `status=READY` means only that the
-exact worktree binding and both `HANDOFF.md` / `context.md` files were resolved.
-It does not mean Companion MCP, Coordinator, Worker, or Official CC-Panes
-Session readiness. Those still require fresh runtime checks. If `--registry` is
-omitted, the resolver checks `%USERPROFILE%\.cc-panes\task-bindings.json`; if
-that registry is absent, it falls back to a valid local
-`.ccpanes-task\current-task.json`.
+exact worktree binding and the fixed three-generation context chain
+(`context.md`, `context.prev.md`, `context.prev2.md`) were resolved.
+`context.prev2.md` may be missing, and `context.prev.md` may also be missing
+only when `context.prev2.md` is absent. If `context.prev.md` is missing while
+`context.prev2.md` exists, bootstrap fails closed. A binding, worktree, or
+`auditDir` conflict also fails closed. A resolved binding with missing
+`HANDOFF.md` also fails closed with `reason=handoff_missing`. The payload also carries layered
+`verifiedFacts`, `unverifiedAssumptions`, `currentBlockers`, `taskScope`,
+`protectedPaths`, `recentAcceptanceEvidence`, `taskBinding`, `worktree`,
+`auditDir`, `contextGenerations`, and `nextGate`. It does not mean Companion
+MCP, Coordinator, Worker, or Official CC-Panes Session readiness. `nextGate`
+stays `MCP_DISCOVERY` until a fresh session inventory is proven. If
+`--registry` is omitted, the resolver checks
+`%USERPROFILE%\.cc-panes\task-bindings.json`; if that registry is absent, it
+falls back to a valid local `.ccpanes-task\current-task.json`.
 
 For a self-contained linked worktree, a committed
 `.ccpanes-task\task-bindings.json` is also discovered before the

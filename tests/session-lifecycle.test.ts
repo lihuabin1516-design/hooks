@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { describe, expect, test } from 'vitest';
+import { afterEach, describe, expect, test } from 'vitest';
 import {
   analyzeStopCheckEvent,
   createSessionStartHookOutput,
@@ -31,6 +31,8 @@ function task(root: string): CurrentTask {
   };
 }
 
+const transcriptDirs = new Set<string>();
+
 function bindingCheck(): TaskBindingCheck {
   return {
     schema: 'ccpanes.task-binding-check.v1',
@@ -51,10 +53,18 @@ function bindingCheck(): TaskBindingCheck {
 
 function writeTranscript(lines: unknown[]): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ccpanes-stop-transcript-'));
+  transcriptDirs.add(dir);
   const file = path.join(dir, 'transcript.jsonl');
   fs.writeFileSync(file, `${lines.map((line) => JSON.stringify(line)).join('\n')}\n`, 'utf8');
   return file;
 }
+
+afterEach(() => {
+  for (const dir of transcriptDirs) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+  transcriptDirs.clear();
+});
 
 describe('SessionStart lifecycle output', () => {
   test('includes a bounded bootstrap status when supplied', () => {
@@ -69,7 +79,39 @@ describe('SessionStart lifecycle output', () => {
       handoff: { path: path.join(root, 'HANDOFF.md'), exists: true },
       context: { path: path.join(root, 'context.md'), exists: true },
       coordinatorNamespace: 'alpha',
-      reason: 'exact_worktree_binding_and_context_resolved'
+      reason: 'exact_worktree_binding_and_context_resolved',
+      contextGenerations: [],
+      verifiedFacts: [],
+      unverifiedAssumptions: [],
+      currentBlockers: [],
+      taskScope: null,
+      protectedPaths: [],
+      recentAcceptanceEvidence: [],
+      taskBinding: {
+        status: 'resolved',
+        source: 'registry',
+        taskId: 'task-alpha',
+        projectPath: root,
+        worktreeRoot: root,
+        handoffPath: path.join(root, 'HANDOFF.md'),
+        contextPath: path.join(root, 'context.md'),
+        coordinatorNamespace: 'alpha'
+      },
+      worktree: {
+        cwd: root,
+        root,
+        gitRoot: root,
+        gitCommonDir: path.join(root, '.git'),
+        gitBranch: 'feature/task-alpha',
+        gitHead: 'abc123',
+        gitDirty: false,
+        gitStatusShort: '',
+        currentContextPath: path.join(root, 'context.md'),
+        previousContextPath: path.join(root, 'context.prev.md'),
+        previous2ContextPath: path.join(root, 'context.prev2.md')
+      },
+      auditDir: null,
+      nextGate: 'MCP_DISCOVERY'
     };
     const output = createSessionStartHookOutput({
       task: task(root),
