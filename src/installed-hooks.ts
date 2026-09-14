@@ -70,6 +70,7 @@ function commandFor(prototypeRoot: string, command: string, auditRoot: string): 
 
 const skillsHubHookPath = CCPANES_RUNTIME_PROFILE.skillsHubHookPath;
 const ccPanesCodexHookPath = CCPANES_RUNTIME_PROFILE.ccPanesCodexHookPath;
+export const HOOKED_TOOL_MATCHER = '^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|mcp__fastctx__(inspect_local_file|read|grep|glob|replace))$';
 
 function executableCommand(executablePath: string, args: string[] = []): string {
   const command = `"${executablePath}"`;
@@ -163,7 +164,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               type: 'command',
               command: commandFor(input.prototypeRoot, 'workflow-advisory', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'workflow-advisory', input.auditRoot),
-              timeout: 5,
+              timeout: 10,
               statusMessage: 'CC-Panes production workflow advisory',
               additionalContextLimit: 1800
             }
@@ -187,7 +188,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
       ],
       PreToolUse: [
         {
-          matcher: '^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|mcp__fastctx__(read|grep|glob|replace))$',
+          matcher: HOOKED_TOOL_MATCHER,
           hooks: [
             {
               type: 'command',
@@ -201,7 +202,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
       ],
       PermissionRequest: [
         {
-          matcher: '^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|mcp__fastctx__(read|grep|glob|replace))$',
+          matcher: HOOKED_TOOL_MATCHER,
           hooks: [
             {
               type: 'command',
@@ -215,7 +216,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
       ],
       PostToolUse: [
         {
-          matcher: '^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|mcp__fastctx__(read|grep|glob|replace))$',
+          matcher: HOOKED_TOOL_MATCHER,
           hooks: [
             {
               type: 'command',

@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
-import { runCli, isCliEntrypoint } from '../src/cli.js';
+import { appendCliRuntimeError, runCli, isCliEntrypoint } from '../src/cli.js';
 import { writeCurrentTaskAtomic } from '../src/current-task.js';
 import { buildExpectedHooksConfig } from '../src/installed-hooks.js';
 import type { CurrentTask } from '../src/types.js';
@@ -2381,5 +2381,32 @@ describe('isCliEntrypoint', () => {
     const cliPath = 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\dist\\src\\cli.js';
     const otherPath = 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\dist\\src\\other.js';
     expect(isCliEntrypoint(pathToFileURL(cliPath).href, otherPath)).toBe(false);
+  });
+});
+
+describe('appendCliRuntimeError', () => {
+  test('records a bounded diagnostic under the configured audit root', async () => {
+    const auditRoot = path.join(tempRoot, 'audits');
+
+    appendCliRuntimeError(
+      ['session-start', '--resolve-task-from-cwd', '--audit-root', auditRoot],
+      new Error('synthetic runtime failure')
+    );
+
+    const text = await fs.readFile(path.join(auditRoot, 'hook-runtime-errors.jsonl'), 'utf8');
+    const record = JSON.parse(text.trim());
+    expect(record).toMatchObject({
+      schema: 'ccpanes.hook-runtime-error.v1',
+      command: 'session-start',
+      error: {
+        name: 'Error',
+        message: 'synthetic runtime failure'
+      }
+    });
+    expect(record).not.toHaveProperty('stdin');
+  });
+
+  test('is a no-op without an audit root', () => {
+    expect(() => appendCliRuntimeError(['session-start'], new Error('ignored'))).not.toThrow();
   });
 });

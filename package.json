@@ -14,11 +14,16 @@
     "build": "tsc -p tsconfig.json",
     "cli": "node dist/src/cli.js",
     "smoke": "node scripts/smoke.mjs",
-    "verify": "npm run typecheck && npm test && npm run build && npm run smoke"
+    "smoke:mcp": "node scripts/mcp-smoke.mjs",
+    "verify": "npm run typecheck && npm test && npm run build && npm run smoke && npm run smoke:mcp"
   },
   "devDependencies": {
     "@types/node": "26.1.2",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "zod": "4.1.12"
   }
 }

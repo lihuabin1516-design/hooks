@@ -371,7 +371,7 @@ try {
   const hookEnforceMcpRead = run(['hook-enforce', '--resolve-task-from-cwd', '--audit-root', hookEnforceAuditRoot], JSON.stringify({
     hook_event_name: 'PreToolUse',
     cwd: project,
-    tool_name: 'mcp__fastctx__read',
+    tool_name: 'mcp__fastctx__inspect_local_file',
     tool_input: {
       files: [
         { path: join(project, 'src', 'a.ts') },

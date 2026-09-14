@@ -46,7 +46,7 @@ Codex / Claude / Cursor / Gemini / Kimi / OpenCode events
 
 | Host | Current integration | Hard gate surface | Advisory surface | State / audit | Verification |
 |---|---|---|---|---|---|
-| Codex | 全局 hook 指向 live `dist/src/cli.js`；`UserPromptSubmit` 依次保留 skills-hub、CC-Panes prompt-before 和 `workflow-advisory` | `PreToolUse`、`PermissionRequest` 经 `hook-enforce` / `permission-enforce` | `UserPromptSubmit` workflow advisory、`SessionStart`、`Stop` | `<project>/.ccpanes-task` + `live/dynamic-audits/<task>` | `verify-installed-hooks` + repo/live full gates + fresh Codex prompt canary |
+| Codex | 原生 `mcp_tool` hook 指向 `dist/src/mcp-server.js`，再复用现有 CLI owner；完整安装包含 SessionStart、UserPromptSubmit、Pre/Permission/PostToolUse、Stop | `PreToolUse`、`PermissionRequest` 经 `hook-enforce` / `permission-enforce` | `UserPromptSubmit` workflow advisory、`SessionStart`、`Stop` | `<project>/.ccpanes-task` + `live/dynamic-audits/<task>` | `npm run smoke:mcp` + `verify-installed-hooks` + repo/live full gates + fresh Codex prompt canary |
 | Claude / CC-Panes | CC-Panes 自有 `cc-panes-cli-hook.exe` 已覆盖多事件 | 未来优先作为子步骤接入 `tool-before` dry-run | CC-Panes lifecycle +本工具层 `session-start` / `stop-check` | CC-Panes profile + task audit dir | 先 dry-run artifact，再进入真实配置授权包 |
 | Cursor | 仅作为未来桌面宿主候选记录 | 依赖 Cursor 原生 hook 能力和配置策略 | 可复用 risk tier / stop reminder | Cursor plugin data 或项目 task dir | 需要单独的 Windows hook runner smoke |
 | Gemini | CLI 启动由 CC-Panes 管理，hook surface 待确认 | 由 CC-Panes 外层 hook 管线承接 | 可消费 `classify-task-risk` JSON | CC-Panes project/task state | 先做 launch-profile 层 dry-run |

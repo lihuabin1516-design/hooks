@@ -6,6 +6,7 @@
 
 ```text
 CLI router
+  <- command hook or Codex MCP hook adapter
   -> owner modules
   -> policy / binding / profile
   -> dry-run / enforce / audit
@@ -19,6 +20,7 @@ CLI router
 - `src/project-policy.ts`、`src/project-policy-capture.ts`、`src/project-policy-ledger.ts`、`src/plan-policy-capture.ts`：项目规则模型、台账和沉淀入口
 - `src/plan-intake.ts`、`src/task-risk.ts`、`src/workflow-profile.ts`、`src/runtime-profile.ts`：plan / risk / workflow / runtime 的分类和提示
 - `src/hook-event-adapter.ts`、`src/hook-shell-analyzer.ts`、`src/hook-dry-run.ts`、`src/hook-batch.ts`、`src/hook-runner.ts`：事件适配、命令判定和 dry-run 执行
+- `src/mcp-server.ts`、`src/mcp-hook-adapter.ts`：Codex `mcp_tool` 生命周期入口；只负责结构化转发和 fail-closed 错误输出，继续复用 CLI 与 hook owner
 - `src/cli/hook.ts`、`src/hook-runner.ts`、`src/post-tool-audit.ts`、`src/session-lifecycle.ts`：hook 拦截、授权、审计和生命周期输出
 - `src/agents-entry.ts`、`src/project-bootstrap.ts`：AGENTS.md 托管块和项目初始化
 - `src/codex-session-*.ts`、`src/codex-sidebar*.ts`、`src/ccpanes-session-snapshot.ts`、`src/session-federation*.ts`：会话桥接、索引和侧边栏归因
@@ -28,7 +30,8 @@ CLI router
 
 ```text
 external event
-  -> cli.ts
+  -> command hook -> cli.ts
+  or Codex mcp_tool -> mcp-server.ts -> mcp-hook-adapter.ts -> cli.ts
   -> adapter / binding / policy
   -> dry-run or enforce
   -> audit / artifact
@@ -47,3 +50,4 @@ external event
 2. 规则、状态和路径判断都回到 owner 模块。
 3. `dist/`、`live/`、`.tmp-smoke/`、`/.ccpanes-task/` 这类目录属于运行产物或状态边界，不手改成源码。
 4. 任何 repo/live 同步先在 repo 走 `npm run verify`，再走 live 的只读一致性校验。
+5. Codex MCP 安装必须同时覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`；工具 matcher 至少覆盖 `apply_patch`、`Bash` 与 FastCtx 的 `inspect_local_file`、`grep`、`glob`、`replace`。

@@ -76,10 +76,10 @@ describe('adaptHookEventToBatch', () => {
     ]);
   });
 
-  test('adapts FastCtx read files as multiple non-write calls', () => {
+  test('adapts the current FastCtx inspect_local_file tool as multiple non-write calls', () => {
     const batch = adaptHookEventToBatch(task(), {
       hook_event_name: 'PreToolUse',
-      tool_name: 'mcp__fastctx__read',
+      tool_name: 'mcp__fastctx__inspect_local_file',
       tool_input: {
         files: [
           { path: 'D:/cc-pane/project-alpha/src/a.ts' },

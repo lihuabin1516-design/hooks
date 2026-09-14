@@ -75,13 +75,21 @@ If a runtime can emit comparable hook events or invoke the CLI, the core contrac
 
 ```text
 agent runtime event
-  -> node dist/src/cli.js <command>
+  -> command hook -> node dist/src/cli.js <command>
+  or Codex mcp_tool -> dist/src/mcp-server.js -> existing CLI owner
   -> current task binding + project policy
   -> hook / workflow / session logic
   -> audit artifact / acceptance evidence
 ```
 
 Default mode is fail closed: if task scope, policy, path scope, Git topology, or command semantics are unclear, the hook does not guess.
+
+For Codex, the repository also exposes a stdio MCP adapter. It preserves the
+same CLI authority instead of implementing a second policy engine. A complete
+Codex lifecycle installation includes `SessionStart`, `UserPromptSubmit`,
+`PreToolUse`, `PermissionRequest`, `PostToolUse`, and `Stop`. Run
+`npm run smoke:mcp` to exercise that path through a real MCP client/server
+connection.
 
 ## Quick start
 

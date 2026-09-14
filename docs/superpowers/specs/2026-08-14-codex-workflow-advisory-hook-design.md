@@ -138,7 +138,7 @@ block the prompt.
 
 ## Resource Bounds
 
-- Hook timeout: 5 seconds.
+- Hook timeout: 10 seconds. The advisory command is bounded and local-only; the larger budget prevents false timeouts when multiple CC-Panes sessions start hooks concurrently.
 - `additionalContextLimit`: 1800 characters.
 - The formatter enforces a stricter internal maximum of 1600 characters.
 - Input prompt classification uses the existing bounded in-process classifier;

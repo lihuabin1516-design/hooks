@@ -16,6 +16,7 @@ function normalizeToolName(value: unknown): HookCall['tool'] | null {
   const normalized = value.trim().toLowerCase().replace(/-/g, '_').replace(/\./g, '_');
   if (normalized === 'bash' || normalized === 'shell_command' || normalized === 'functions_shell_command') return 'shell';
   if (normalized.startsWith('mcp__')) {
+    if (normalized.endsWith('__inspect_local_file')) return 'read';
     if (normalized.endsWith('__read')) return 'read';
     if (normalized.endsWith('__grep')) return 'grep';
     if (normalized.endsWith('__glob')) return 'glob';

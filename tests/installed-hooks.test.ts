@@ -16,6 +16,24 @@ afterEach(async () => {
 });
 
 describe('verifyInstalledHooks', () => {
+  test('matches every current FastCtx tool at the lifecycle boundary', () => {
+    const hooks = buildExpectedHooksConfig({ prototypeRoot: 'E:/hooks', auditRoot: 'E:/audits' });
+
+    for (const event of ['PreToolUse', 'PermissionRequest', 'PostToolUse'] as const) {
+      const groups = hooks.hooks[event];
+      if (!Array.isArray(groups)) throw new Error(`expected ${event} fixture`);
+      const matcher = new RegExp(String(groups[0]?.matcher));
+      for (const tool of [
+        'mcp__fastctx__inspect_local_file',
+        'mcp__fastctx__grep',
+        'mcp__fastctx__glob',
+        'mcp__fastctx__replace'
+      ]) {
+        expect(matcher.test(tool), `${event} should match ${tool}`).toBe(true);
+      }
+    }
+  });
+
   test('passes for a complete production hooks.json and trusted config.toml', async () => {
     const prototypeRoot = path.join(tempRoot, 'prototype');
     const auditRoot = path.join(tempRoot, 'audits');
