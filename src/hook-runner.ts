@@ -2,6 +2,10 @@ import { adaptHookEventToBatch } from './hook-event-adapter.js';
 import { runHookDryRunBatch, validateHookDryRunBatch, type HookDryRunBatchInput, type HookDryRunBatchResult } from './hook-batch.js';
 import { applyProjectPolicyToCalls, ProjectPolicyError, projectPolicyPath, readProjectPolicy } from './project-policy.js';
 import { authorizeTaskBindingBootstrapWrite } from './task-binding-bootstrap.js';
+import {
+  applyTrustedTaskLifecycleAuthorization,
+  type TaskLifecycleAuthorizationOptions
+} from './task-lifecycle-authorization.js';
 import type { CurrentTask, HookCall, TaskBindingCheck, TaskBindingStatus } from './types.js';
 
 export interface HookRunnerResult {
@@ -13,10 +17,7 @@ export interface HookRunnerResult {
   dryRun: HookDryRunBatchResult;
 }
 
-export interface TaskBindingMismatchOptions {
-  trustedCliPath?: string | null;
-  processExecPath?: string | null;
-}
+export interface TaskBindingMismatchOptions extends TaskLifecycleAuthorizationOptions {}
 
 export function createTaskBindingMismatchGateTask(check: TaskBindingCheck): CurrentTask {
   const worktreeRoot = check.gitRoot ?? check.cwd;
@@ -110,7 +111,11 @@ function resultFromBatch(task: CurrentTask, batch: HookDryRunBatchInput): HookRu
   };
 }
 
-export async function runHookEventDryRunWithProjectPolicy(task: CurrentTask, event: unknown): Promise<HookRunnerResult> {
+export async function runHookEventDryRunWithProjectPolicy(
+  task: CurrentTask,
+  event: unknown,
+  options: TaskLifecycleAuthorizationOptions = {}
+): Promise<HookRunnerResult> {
   let policy;
   try {
     policy = await readProjectPolicy(task.worktreeRoot);
@@ -135,6 +140,7 @@ export async function runHookEventDryRunWithProjectPolicy(task: CurrentTask, eve
   const policyBatch = validateHookDryRunBatch({
     ...batch,
     calls: applyProjectPolicyToCalls(task, batch.calls, policy)
+      .map((call) => applyTrustedTaskLifecycleAuthorization(task, call, options))
   });
   return resultFromBatch(task, policyBatch);
 }

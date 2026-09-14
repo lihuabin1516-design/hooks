@@ -122,7 +122,10 @@ export async function handleHookCommands(
         trustedCliPath: cliPathForBootstrapAuthorization(options),
         processExecPath: processExecPathForBootstrapAuthorization(options)
       })
-      : await runHookEventDryRunWithProjectPolicy(task, event);
+      : await runHookEventDryRunWithProjectPolicy(task, event, {
+        trustedCliPath: cliPathForBootstrapAuthorization(options),
+        processExecPath: processExecPathForBootstrapAuthorization(options)
+      });
     const resolvedAuditOut = mismatchCheck
       ? auditOut
       : auditOut ?? (auditRoot ? auditPathFromRoot(auditRoot, task) : null);
@@ -166,7 +169,10 @@ export async function handleHookCommands(
         trustedCliPath: cliPathForBootstrapAuthorization(options),
         processExecPath: processExecPathForBootstrapAuthorization(options)
       })
-      : await runHookEventDryRunWithProjectPolicy(task, event);
+      : await runHookEventDryRunWithProjectPolicy(task, event, {
+        trustedCliPath: cliPathForBootstrapAuthorization(options),
+        processExecPath: processExecPathForBootstrapAuthorization(options)
+      });
     const resolvedAuditOut = mismatchCheck
       ? auditOut
       : auditOut ?? (auditRoot ? permissionAuditPathFromRoot(auditRoot, task) : null);

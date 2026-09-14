@@ -19,7 +19,7 @@ CLI router
 - `src/current-task.ts`、`src/paths.ts`、`src/types.ts`：task binding、路径归一化和共享类型
 - `src/project-policy.ts`、`src/project-policy-capture.ts`、`src/project-policy-ledger.ts`、`src/plan-policy-capture.ts`：项目规则模型、台账和沉淀入口
 - `src/plan-intake.ts`、`src/task-risk.ts`、`src/workflow-profile.ts`、`src/runtime-profile.ts`：plan / risk / workflow / runtime 的分类和提示
-- `src/hook-event-adapter.ts`、`src/hook-shell-analyzer.ts`、`src/hook-dry-run.ts`、`src/hook-batch.ts`、`src/hook-runner.ts`：事件适配、命令判定和 dry-run 执行
+- `src/hook-event-adapter.ts`、`src/hook-shell-analyzer.ts`、`src/hook-dry-run.ts`、`src/hook-batch.ts`、`src/hook-runner.ts`、`src/task-lifecycle-authorization.ts`：事件适配、命令判定、可信任务生命周期授权和 dry-run 执行
 - `src/mcp-server.ts`、`src/mcp-hook-adapter.ts`：Codex `mcp_tool` 生命周期入口；只负责结构化转发和 fail-closed 错误输出，继续复用 CLI 与 hook owner
 - `src/cli/hook.ts`、`src/hook-runner.ts`、`src/post-tool-audit.ts`、`src/session-lifecycle.ts`：hook 拦截、授权、审计和生命周期输出
 - `src/agents-entry.ts`、`src/project-bootstrap.ts`：AGENTS.md 托管块和项目初始化
@@ -51,3 +51,4 @@ external event
 3. `dist/`、`live/`、`.tmp-smoke/`、`/.ccpanes-task/` 这类目录属于运行产物或状态边界，不手改成源码。
 4. 任何 repo/live 同步先在 repo 走 `npm run verify`，再走 live 的只读一致性校验。
 5. Codex MCP 安装必须同时覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`；工具 matcher 至少覆盖 `apply_patch`、`Bash` 与 FastCtx 的 `inspect_local_file`、`grep`、`glob`、`replace`。
+6. `archive` 默认继续阻断实现写入；只有当前可信 CLI、精确任务路径和单命令语法同时匹配时，才允许读取 `verify-acceptance`、定向写入 `.ccpanes-task/acceptance.json`，或将同一 task 从 `archive` 回退到 `verify`。该例外不得开启 `build`、切换 task 或覆盖 project policy block。

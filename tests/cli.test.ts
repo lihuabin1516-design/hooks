@@ -1096,6 +1096,126 @@ describe('runCli', () => {
     expect(audit.allowed).toBe(false);
   });
 
+  test('hook-enforce allows trusted acceptance verification during archive', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const acceptancePath = path.join(projectRoot, '.ccpanes-task', 'acceptance.json');
+    const auditOut = path.join(tempRoot, 'archive-verify-audit.json');
+    const trustedCliPath = path.join(projectRoot, 'dist', 'src', 'cli.js');
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
+
+    const output = await runCli([
+      'hook-enforce',
+      '--task',
+      currentTaskPath,
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" verify-acceptance --input "${acceptancePath}"`
+      }
+    }), { trustedCliPath, processExecPath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    expect(output).toBe('');
+    const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+    expect(audit.allowed).toBe(true);
+    expect(audit.batch.calls[0]).toMatchObject({
+      writes: false,
+      policyReason: 'trusted_task_lifecycle_verify_acceptance'
+    });
+  });
+
+  test('permission-enforce allows trusted acceptance recording during archive', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const acceptancePath = path.join(projectRoot, '.ccpanes-task', 'acceptance.json');
+    const artifactPath = path.join(projectRoot, 'README.md');
+    const auditOut = path.join(tempRoot, 'archive-record-audit.json');
+    const trustedCliPath = path.join(projectRoot, 'dist', 'src', 'cli.js');
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
+
+    const output = await runCli([
+      'permission-enforce',
+      '--task',
+      currentTaskPath,
+      '--audit-out',
+      auditOut
+    ], JSON.stringify({
+      hook_event_name: 'PermissionRequest',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" record-acceptance --task "${currentTaskPath}" --artifact "${artifactPath}" > "${acceptancePath}"`
+      }
+    }), { trustedCliPath, processExecPath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    expect(output).toBe('');
+    const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
+    expect(audit.allowed).toBe(true);
+    expect(audit.dryRun.decisions[0].reason)
+      .toBe('project_policy_allow:trusted_task_lifecycle_record_acceptance');
+  });
+
+  test('hook-enforce keeps ordinary implementation writes blocked during archive', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
+
+    const output = await runCli([
+      'hook-enforce',
+      '--task',
+      currentTaskPath
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Edit',
+      tool_input: { file_path: path.join(projectRoot, 'src', 'a.ts') }
+    }));
+
+    const parsed = JSON.parse(output);
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason)
+      .toContain('phase_archive_blocks_implementation_write');
+  });
+
+  test('hook-enforce keeps an explicit project block above trusted archive lifecycle authorization', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const acceptancePath = path.join(projectRoot, '.ccpanes-task', 'acceptance.json');
+    const trustedCliPath = path.join(projectRoot, 'dist', 'src', 'cli.js');
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
+    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), JSON.stringify({
+      schema: 'ccpanes.project-policy.v1',
+      rules: [{
+        id: 'block-acceptance-probe',
+        effect: 'block',
+        reason: 'user_blocked_acceptance_probe',
+        match: { tools: ['shell'], commandContains: ['verify-acceptance'] }
+      }]
+    }), 'utf8');
+
+    const output = await runCli([
+      'hook-enforce',
+      '--task',
+      currentTaskPath
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" verify-acceptance --input "${acceptancePath}"`
+      }
+    }), { trustedCliPath, processExecPath: 'C:\\Program Files\\nodejs\\node.exe' });
+
+    const parsed = JSON.parse(output);
+    expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason)
+      .toContain('project_policy_block:user_blocked_acceptance_probe');
+  });
+
   test('hook-enforce no-ops when Codex cwd is outside the task worktree', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const outsideRoot = path.join(tempRoot, 'outside-project');

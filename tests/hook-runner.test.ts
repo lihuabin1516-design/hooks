@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
   runHookEventDryRun,
+  runHookEventDryRunWithProjectPolicy,
   runHookEventWithTaskBindingMismatch
 } from '../src/hook-runner.js';
 import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
@@ -43,6 +44,95 @@ function staleParentCheck(): TaskBindingCheck {
 }
 
 describe('runHookEventDryRun', () => {
+  const trustedCliPath = 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js';
+  const trustedOptions = {
+    trustedCliPath,
+    processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
+  };
+
+  test('allows trusted acceptance verification during archive as a non-write call', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" verify-acceptance --input "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`
+      }
+    }, trustedOptions);
+
+    expect(result.allowed).toBe(true);
+    expect(result.batch.calls[0]).toMatchObject({
+      writes: false,
+      policyReason: 'trusted_task_lifecycle_verify_acceptance'
+    });
+    expect(result.dryRun.decisions[0].reason)
+      .toBe('project_policy_allow:trusted_task_lifecycle_verify_acceptance');
+  });
+
+  test('resolves a relative trusted CLI entrypoint from the task worktree', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: {
+        command: 'node dist/src/cli.js verify-acceptance --input .ccpanes-task/acceptance.json'
+      }
+    }, trustedOptions);
+
+    expect(result.allowed).toBe(true);
+    expect(result.batch.calls[0]).toMatchObject({ writes: false });
+  });
+
+  test('allows trusted acceptance recording to the current task artifact during archive', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" --check "npm test=pass=ok; 1 test passed" --truth "live-gates=pass=ok" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`
+      }
+    }, trustedOptions);
+
+    expect(result.allowed).toBe(true);
+    expect(result.dryRun.decisions[0].reason)
+      .toBe('project_policy_allow:trusted_task_lifecycle_record_acceptance');
+  });
+
+  test('allows a trusted same-task archive to verify transition', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: {
+        command: `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase verify --workspace "cc-pane" --notes "refresh acceptance"`
+      }
+    }, trustedOptions);
+
+    expect(result.allowed).toBe(true);
+    expect(result.dryRun.decisions[0].reason)
+      .toBe('project_policy_allow:trusted_task_lifecycle_phase_transition');
+  });
+
+  test.each([
+    ['untrusted CLI', 'node "D:\\cc-pane\\project-alpha\\evil-cli.js" verify-acceptance --input "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"'],
+    ['wrong acceptance output', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" > "D:\\cc-pane\\project-alpha\\result.json"`],
+    ['artifact outside worktree', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "D:\\cc-pane\\other\\secret.txt" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`],
+    ['compound acceptance command', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"; npm install bad`],
+    ['archive to build transition', `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build`],
+    ['different task transition', `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "other-task" --phase verify`]
+  ])('keeps unsafe archive lifecycle command blocked: %s', async (_label, command) => {
+    const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/cc-pane/project-alpha',
+      tool_name: 'Bash',
+      tool_input: { command }
+    }, trustedOptions);
+
+    expect(result.allowed).toBe(false);
+    expect(result.dryRun.decisions[0].reason)
+      .toBe('phase_archive_blocks_implementation_write');
+  });
+
   test('adapts a hook event and returns dry-run decisions without mutating inputs', () => {
     const result = runHookEventDryRun(task(), {
       hook_event_name: 'PreToolUse',
