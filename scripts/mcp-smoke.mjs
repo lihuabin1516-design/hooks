@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { deployRuntime } from '../dist/src/runtime-deployment.js';
 
 const auditRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'gzl-hooks-mcp-smoke-'));
 const projectRoot = path.join(auditRoot, 'project-alpha');
@@ -11,6 +13,7 @@ const taskDir = path.join(projectRoot, '.ccpanes-task');
 const currentTaskPath = path.join(taskDir, 'current-task.json');
 const acceptancePath = path.join(taskDir, 'acceptance.json');
 const trustedCliPath = path.resolve('dist/src/cli.js');
+const runtimeIdentity = JSON.parse(await fs.readFile(path.resolve('dist/src/runtime-identity.json'), 'utf8'));
 const taskAuditDir = path.join(auditRoot, Buffer.from('mcp-smoke', 'utf8').toString('base64url'));
 const task = {
   schema: 'ccpanes.task-selection.v1',
@@ -20,7 +23,7 @@ const task = {
   worktreeRoot: projectRoot,
   mainRepoRoot: null,
   branch: null,
-  head: null,
+  head: runtimeIdentity.gitCommit,
   owner: { leaderSessionId: null, paneId: null, layoutId: null },
   phase: 'build',
   createdAt: '2026-09-14T00:00:00.000Z',
@@ -40,7 +43,11 @@ const transport = new StdioClientTransport({
 const client = new Client({ name: 'gzl-hooks-smoke', version: '1.0.0' });
 
 async function callHook(command, event) {
-  const result = await client.callTool({
+  return callHookWith(client, command, event);
+}
+
+async function callHookWith(targetClient, command, event) {
+  const result = await targetClient.callTool({
     name: 'dispatch',
     arguments: { command, event }
   });
@@ -49,10 +56,88 @@ async function callHook(command, event) {
   return result.content[0].text;
 }
 
+async function copyFixtureProductionDependencies(targetRoot) {
+  const lock = JSON.parse(await fs.readFile(path.resolve('package-lock.json'), 'utf8'));
+  const packagePaths = Object.entries(lock.packages ?? {})
+    .filter(([packagePath, metadata]) => packagePath.startsWith('node_modules/') && metadata?.dev !== true)
+    .map(([packagePath]) => packagePath)
+    .sort((left, right) => left.split('/').length - right.split('/').length || left.localeCompare(right));
+  for (const packagePath of packagePaths) {
+    const source = path.resolve(packagePath);
+    try {
+      if (!(await fs.stat(source)).isDirectory()) continue;
+    } catch (error) {
+      if (error.code === 'ENOENT') continue;
+      throw error;
+    }
+    const target = path.join(targetRoot, ...packagePath.split('/'));
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.cp(source, target, {
+      recursive: true,
+      errorOnExist: true,
+      force: false,
+      filter: (sourcePath) => {
+        const relative = path.relative(source, sourcePath);
+        return relative !== 'node_modules' && !relative.startsWith(`node_modules${path.sep}`);
+      }
+    });
+  }
+}
+
+async function smokeIsolatedDeployment() {
+  const packageRoot = path.join(auditRoot, 'isolated-package');
+  const runtimeRoot = path.join(auditRoot, 'isolated-runtime');
+  const packageJson = JSON.parse(await fs.readFile(path.resolve('package.json'), 'utf8'));
+  await fs.mkdir(packageRoot, { recursive: true });
+  await fs.cp(path.resolve('dist'), path.join(packageRoot, 'dist'), { recursive: true });
+  await fs.writeFile(path.join(packageRoot, 'package.json'), `${JSON.stringify(packageJson, null, 2)}\n`, 'utf8');
+  await fs.writeFile(path.join(packageRoot, '.gitignore'), 'dist/\nnode_modules/\n', 'utf8');
+  await copyFixtureProductionDependencies(packageRoot);
+  execFileSync('git', ['init'], { cwd: packageRoot, stdio: 'ignore' });
+  execFileSync('git', ['config', 'user.name', 'MCP Smoke'], { cwd: packageRoot });
+  execFileSync('git', ['config', 'user.email', 'mcp-smoke@example.invalid'], { cwd: packageRoot });
+  execFileSync('git', ['add', 'package.json', '.gitignore'], { cwd: packageRoot });
+  execFileSync('git', ['commit', '-m', 'isolated runtime fixture'], { cwd: packageRoot, stdio: 'ignore' });
+  const fixtureCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: packageRoot, encoding: 'utf8' }).trim();
+  const fixtureIdentityPath = path.join(packageRoot, 'dist', 'src', 'runtime-identity.json');
+  const fixtureIdentity = JSON.parse(await fs.readFile(fixtureIdentityPath, 'utf8'));
+  fixtureIdentity.gitCommit = fixtureCommit;
+  fixtureIdentity.gitDirty = false;
+  await fs.writeFile(fixtureIdentityPath, `${JSON.stringify(fixtureIdentity, null, 2)}\n`, 'utf8');
+
+  const deployment = await deployRuntime({ sourceDir: packageRoot, runtimeRoot, allowRoots: [auditRoot] });
+  const isolatedTransport = new StdioClientTransport({
+    command: process.execPath,
+    args: [deployment.launcherPaths.mcpServer],
+    cwd: runtimeRoot,
+    env: { ...process.env, GZL_HOOK_AUDIT_ROOT: path.join(auditRoot, 'isolated-audits') },
+    stderr: 'pipe'
+  });
+  const isolatedClient = new Client({ name: 'gzl-hooks-isolated-smoke', version: '1.0.0' });
+  try {
+    await isolatedClient.connect(isolatedTransport);
+    const result = await isolatedClient.callTool({ name: 'runtime_identity', arguments: { expectedTaskHead: fixtureCommit } });
+    const report = JSON.parse(result.content[0].text);
+    assert.equal(report.runtimeIdentity.gitCommit, fixtureCommit);
+    assert.equal(report.taskHeadComparison.status, 'match');
+  } finally {
+    await isolatedClient.close();
+  }
+}
+
 try {
   await client.connect(transport);
   const tools = await client.listTools();
-  assert.deepEqual(tools.tools.map(({ name }) => name), ['dispatch']);
+  assert.deepEqual(tools.tools.map(({ name }) => name).sort(), ['dispatch', 'runtime_identity']);
+
+  const identityResult = await client.callTool({
+    name: 'runtime_identity',
+    arguments: { expectedTaskHead: task.head }
+  });
+  const identityReport = JSON.parse(identityResult.content[0].text);
+  assert.equal(identityReport.runtimeIdentity.source, 'build-manifest');
+  assert.equal(identityReport.runtimeIdentity.buildSha256, runtimeIdentity.buildSha256);
+  assert.equal(identityReport.taskHeadComparison.status, 'match');
 
   const sessionStart = JSON.parse(await callHook('session-start', {
     hook_event_name: 'SessionStart',
@@ -65,6 +150,7 @@ try {
   }));
   assert.equal(sessionStart.hookSpecificOutput.hookEventName, 'SessionStart');
   assert.match(sessionStart.hookSpecificOutput.additionalContext, /taskId: mcp-smoke/);
+  assert.match(sessionStart.hookSpecificOutput.additionalContext, /runtimeTaskHeadStatus: match/);
 
   const fastCtxRead = await callHook('hook-enforce', {
     hook_event_name: 'PreToolUse',
@@ -93,6 +179,38 @@ try {
   }));
   assert.equal(permission.hookSpecificOutput.decision.behavior, 'deny');
   assert.match(permission.hookSpecificOutput.decision.message, /destructive_git_reset_hard/);
+  const preHistory = await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.jsonl'), 'utf8');
+  const permissionHistory = await fs.readFile(path.join(taskAuditDir, 'permission-enforce-audit.jsonl'), 'utf8');
+  assert.match(preHistory, new RegExp(runtimeIdentity.buildSha256));
+  assert.match(permissionHistory, new RegExp(runtimeIdentity.buildSha256));
+
+  const secondTransport = new StdioClientTransport({
+    command: process.execPath,
+    args: ['dist/src/mcp-server.js'],
+    cwd: process.cwd(),
+    env: { ...process.env, GZL_HOOK_AUDIT_ROOT: auditRoot },
+    stderr: 'pipe'
+  });
+  const secondClient = new Client({ name: 'gzl-hooks-concurrent-smoke', version: '1.0.0' });
+  const concurrentIds = Array.from({ length: 12 }, (_, index) => `mcp-concurrent-${index}`);
+  try {
+    await secondClient.connect(secondTransport);
+    const outputs = await Promise.all(concurrentIds.map((toolUseId, index) => callHookWith(index % 2 === 0 ? client : secondClient, 'hook-enforce', {
+      hook_event_name: 'PreToolUse',
+      session_id: 'mcp-concurrent',
+      cwd: projectRoot,
+      tool_name: 'mcp__fastctx__inspect_local_file',
+      tool_use_id: toolUseId,
+      tool_input: { file_path: path.join(projectRoot, 'README.md') }
+    })));
+    assert.ok(outputs.every((output) => output === ''));
+  } finally {
+    await secondClient.close();
+  }
+  const concurrentHistory = (await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.jsonl'), 'utf8'))
+    .trim().split('\n').map((line) => JSON.parse(line))
+    .filter((record) => concurrentIds.includes(record.toolUseId));
+  assert.equal(concurrentHistory.length, concurrentIds.length);
 
   await fs.writeFile(currentTaskPath, `${JSON.stringify({ ...task, phase: 'archive' }, null, 2)}\n`, 'utf8');
   const verifyAcceptance = await callHook('hook-enforce', {
@@ -162,6 +280,7 @@ try {
   assert.equal(postOutput, '');
   const postAudit = await fs.readFile(path.join(taskAuditDir, 'post-tool-use-audit.jsonl'), 'utf8');
   assert.match(postAudit, /"toolUseId":"mcp-smoke-post"/);
+  assert.match(postAudit, new RegExp(runtimeIdentity.buildSha256));
 
   const stop = JSON.parse(await callHook('stop-check', {
     hook_event_name: 'Stop',
@@ -172,6 +291,8 @@ try {
   }));
   assert.equal(stop.continue, true);
   assert.match(stop.systemMessage, /verify-acceptance/);
+
+  await smokeIsolatedDeployment();
 
   process.stdout.write('MCP_SMOKE_PASS\n');
 } finally {

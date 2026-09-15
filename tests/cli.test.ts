@@ -9,8 +9,20 @@ import { appendCliRuntimeError, runCli, isCliEntrypoint } from '../src/cli.js';
 import { writeCurrentTaskAtomic } from '../src/current-task.js';
 import { buildExpectedHooksConfig } from '../src/installed-hooks.js';
 import type { CurrentTask } from '../src/types.js';
+import type { RuntimeIdentity } from '../src/runtime-identity.js';
 
 let tempRoot: string;
+
+const runtimeIdentity: RuntimeIdentity = {
+  schema: 'ccpanes.runtime-identity.v1',
+  packageName: 'ccpanes-hooks-tooling',
+  packageVersion: '0.1.0',
+  gitCommit: 'abc123',
+  gitDirty: false,
+  buildSha256: 'D'.repeat(64),
+  builtAt: '2026-09-15T00:00:00.000Z',
+  source: 'build-manifest'
+};
 
 function git(args: string[], cwd: string): string {
   return execFileSync('git', args, {
@@ -1269,6 +1281,85 @@ describe('runCli', () => {
     expect(audit.batch.task.worktreeRoot).toBe(projectRoot);
   });
 
+  test('hook-enforce retains the latest snapshot and appends every decision to history', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), head: 'def456' });
+
+    const events = [
+      {
+        hook_event_name: 'PreToolUse',
+        session_id: 'session-1',
+        turn_id: 'turn-1',
+        tool_use_id: 'tool-allow',
+        cwd: projectRoot,
+        tool_name: 'mcp__fastctx__inspect_local_file',
+        tool_input: { file_path: path.join(projectRoot, 'README.md') }
+      },
+      {
+        hook_event_name: 'PreToolUse',
+        session_id: 'session-1',
+        turn_id: 'turn-1',
+        tool_use_id: 'tool-deny',
+        cwd: projectRoot,
+        tool_name: 'Bash',
+        tool_input: { command: 'git reset --hard HEAD' }
+      }
+    ];
+    for (const event of events) {
+      await runCli(['hook-enforce', '--resolve-task-from-cwd', '--audit-root', auditRoot], JSON.stringify(event), { runtimeIdentity });
+    }
+
+    const taskAuditDir = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'));
+    const snapshot = JSON.parse(await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.json'), 'utf8'));
+    const history = (await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.jsonl'), 'utf8')).trim().split('\n').map((line) => JSON.parse(line));
+
+    expect(snapshot.schema).toBe('ccpanes.hook-runner-result.v1');
+    expect(snapshot.allowed).toBe(false);
+    expect(snapshot.auditContext).toMatchObject({
+      hookEventName: 'PreToolUse',
+      sessionId: 'session-1',
+      turnId: 'turn-1',
+      toolUseId: 'tool-deny',
+      runtimeIdentity,
+      runtimeTaskHead: { status: 'mismatch', reason: 'runtime_commit_does_not_match_task_head' }
+    });
+    expect(history).toHaveLength(2);
+    expect(history.map((record) => [record.allowed, record.reason])).toEqual([
+      [true, 'non_write_call'],
+      [false, 'destructive_git_reset_hard']
+    ]);
+    expect(history[0].runtimeIdentity).toEqual(runtimeIdentity);
+  });
+
+  test('hook-enforce serializes concurrent audit writers without losing history', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const auditRoot = path.join(tempRoot, 'audits');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+    const toolUseIds = Array.from({ length: 12 }, (_, index) => `parallel-${index}`);
+
+    await Promise.all(toolUseIds.map((toolUseId) => runCli([
+      'hook-enforce', '--resolve-task-from-cwd', '--audit-root', auditRoot
+    ], JSON.stringify({
+      hook_event_name: 'PreToolUse',
+      session_id: 'parallel-session',
+      cwd: projectRoot,
+      tool_name: 'mcp__fastctx__inspect_local_file',
+      tool_use_id: toolUseId,
+      tool_input: { file_path: path.join(projectRoot, 'README.md') }
+    }), { runtimeIdentity })));
+
+    const taskAuditDir = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'));
+    const history = (await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.jsonl'), 'utf8')).trim().split('\n').map((line) => JSON.parse(line));
+    const snapshot = JSON.parse(await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.json'), 'utf8'));
+    const remainingNames = await fs.readdir(taskAuditDir);
+
+    expect(history).toHaveLength(toolUseIds.length);
+    expect(new Set(history.map((record) => record.toolUseId))).toEqual(new Set(toolUseIds));
+    expect(toolUseIds).toContain(snapshot.auditContext.toolUseId);
+    expect(remainingNames.some((name) => name.endsWith('.lock') || name.endsWith('.tmp'))).toBe(false);
+  });
+
   test('hook-enforce blocks dynamic Bash writes into user config paths', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const auditRoot = path.join(tempRoot, 'audits');
@@ -1361,7 +1452,7 @@ describe('runCli', () => {
         command: 'git reset --hard HEAD',
         description: 'Need approval to reset worktree'
       }
-    }));
+    }), { runtimeIdentity });
     const parsed = JSON.parse(output);
     const auditPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'permission-enforce-audit.json');
     const audit = JSON.parse(await fs.readFile(auditPath, 'utf8'));
@@ -1373,6 +1464,17 @@ describe('runCli', () => {
     });
     expect(audit.allowed).toBe(false);
     expect(audit.dryRun.decisions[0].reason).toBe('destructive_git_reset_hard');
+    expect(audit.auditContext.runtimeIdentity).toEqual(runtimeIdentity);
+    const historyPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'permission-enforce-audit.jsonl');
+    const history = (await fs.readFile(historyPath, 'utf8')).trim().split('\n').map((line) => JSON.parse(line));
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      schema: 'ccpanes.hook-decision-audit.v1',
+      hookEventName: 'PermissionRequest',
+      allowed: false,
+      reason: 'destructive_git_reset_hard',
+      runtimeIdentity
+    });
   });
 
   test('permission-enforce emits no decision for allowed project-local requests', async () => {
@@ -1527,7 +1629,7 @@ describe('runCli', () => {
       tool_use_id: 'toolu-post-1',
       tool_input: { command: 'npm test' },
       tool_response: { exit_code: 0, stdout: 'ok' }
-    }));
+    }), { runtimeIdentity });
     const auditPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'post-tool-use-audit.jsonl');
     const lines = (await fs.readFile(auditPath, 'utf8')).trim().split('\n');
     const record = JSON.parse(lines[0]);
@@ -1539,6 +1641,7 @@ describe('runCli', () => {
       taskId: 'task-alpha',
       toolName: 'Bash',
       toolUseId: 'toolu-post-1',
+      runtimeIdentity,
       inputSummary: { command: 'npm test' },
       responseSummary: { exit_code: 0, stdout: 'ok' }
     });

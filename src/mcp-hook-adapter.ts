@@ -1,5 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { appendCliRuntimeError, runCli } from './cli.js';
+import { getRuntimeIdentity, type RuntimeIdentity } from './runtime-identity.js';
 
 export const MCP_HOOK_COMMANDS = [
   'session-start',
@@ -40,16 +41,18 @@ export async function dispatchMcpHook(
   command: McpHookCommand,
   event: Record<string, unknown>,
   auditRoot: string,
-  runner: CliRunner = runCli
+  runner: CliRunner = runCli,
+  runtimeIdentity: RuntimeIdentity = getRuntimeIdentity()
 ): Promise<string> {
   const args = [command, '--resolve-task-from-cwd', '--audit-root', auditRoot];
   try {
     return await runner(args, JSON.stringify(event), {
       trustedCliPath: fileURLToPath(new URL('./cli.js', import.meta.url)),
-      processExecPath: process.execPath
+      processExecPath: process.execPath,
+      runtimeIdentity
     });
   } catch (error) {
-    appendCliRuntimeError(args, error);
+    appendCliRuntimeError(args, error, runtimeIdentity);
     return runtimeFailureOutput(command, error);
   }
 }

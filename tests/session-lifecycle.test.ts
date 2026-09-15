@@ -10,6 +10,18 @@ import {
   createTaskBindingMismatchStopOutput
 } from '../src/session-lifecycle.js';
 import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
+import type { RuntimeIdentity } from '../src/runtime-identity.js';
+
+const runtimeIdentity: RuntimeIdentity = {
+  schema: 'ccpanes.runtime-identity.v1',
+  packageName: 'ccpanes-hooks-tooling',
+  packageVersion: '0.1.0',
+  gitCommit: 'runtime123',
+  gitDirty: false,
+  buildSha256: 'B'.repeat(64),
+  builtAt: '2026-09-15T00:00:00.000Z',
+  source: 'build-manifest'
+};
 
 function task(root: string): CurrentTask {
   return {
@@ -61,7 +73,8 @@ describe('SessionStart lifecycle output', () => {
     const output = createSessionStartHookOutput({
       task: task(root),
       taskPath: path.join(root, '.ccpanes-task', 'current-task.json'),
-      auditRoot: 'D:/workspace/audits'
+      auditRoot: 'D:/workspace/audits',
+      runtimeIdentity
     });
 
     expect(output.hookSpecificOutput.hookEventName).toBe('SessionStart');
@@ -70,16 +83,21 @@ describe('SessionStart lifecycle output', () => {
     expect(output.hookSpecificOutput.additionalContext).toContain('phase: verify');
     expect(output.hookSpecificOutput.additionalContext).toContain('current-task.json');
     expect(output.hookSpecificOutput.additionalContext).toContain('post-tool-use-audit.jsonl');
+    expect(output.hookSpecificOutput.additionalContext).toContain('runtimeGitCommit: runtime123');
+    expect(output.hookSpecificOutput.additionalContext).toContain('runtimeTaskHeadStatus: mismatch');
+    expect(output.hookSpecificOutput.additionalContext).toContain('runtime_commit_does_not_match_task_head');
     expect(output.hookSpecificOutput.additionalContext.length).toBeLessThan(1800);
   });
 
   test('creates mismatch context with canonical and active roots', () => {
-    const output = createTaskBindingMismatchSessionStartOutput(bindingCheck());
+    const output = createTaskBindingMismatchSessionStartOutput(bindingCheck(), runtimeIdentity);
     const context = output.hookSpecificOutput.additionalContext;
 
     expect(context).toContain('taskBindingStatus: project-root-mismatch');
     expect(context).toContain('canonicalProjectRoot: D:/hooks-main');
     expect(context).toContain('declaredWorktreeRoot: D:/hooks-linked');
+    expect(context).toContain('runtimeGitCommit: runtime123');
+    expect(context).toContain(`runtimeBuildSha256: ${'B'.repeat(64)}`);
     expect(context).toContain('verify-task-binding');
   });
 });

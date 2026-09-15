@@ -1,5 +1,3 @@
-import fs from 'node:fs';
-import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { decideHookDryRun } from '../hook-dry-run.js';
 import { adaptHookEventToBatch } from '../hook-event-adapter.js';
@@ -22,6 +20,8 @@ import { createCurrentTask, validateCurrentTask, resolveCurrentTaskBindingFromCw
 import { isPathInside } from '../paths.js';
 import type { CurrentTask, HookCall, TaskBindingCheck } from '../types.js';
 import type { RunCliOptions } from '../cli-types.js';
+import { createHookDecisionAuditRecord, writeHookDecisionAudit } from '../hook-decision-audit.js';
+import { getRuntimeIdentity } from '../runtime-identity.js';
 import {
   auditPathFromRoot,
   cliPathForBootstrapAuthorization,
@@ -130,8 +130,10 @@ export async function handleHookCommands(
       ? auditOut
       : auditOut ?? (auditRoot ? auditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
-      fs.mkdirSync(path.dirname(resolvedAuditOut), { recursive: true });
-      fs.writeFileSync(resolvedAuditOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+      await writeHookDecisionAudit(
+        resolvedAuditOut,
+        createHookDecisionAuditRecord('PreToolUse', task, event, result, options.runtimeIdentity ?? getRuntimeIdentity())
+      );
     }
     return result.allowed ? '' : formatPreToolUseDeny(result);
   }
@@ -177,8 +179,10 @@ export async function handleHookCommands(
       ? auditOut
       : auditOut ?? (auditRoot ? permissionAuditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
-      fs.mkdirSync(path.dirname(resolvedAuditOut), { recursive: true });
-      fs.writeFileSync(resolvedAuditOut, `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+      await writeHookDecisionAudit(
+        resolvedAuditOut,
+        createHookDecisionAuditRecord('PermissionRequest', task, event, result, options.runtimeIdentity ?? getRuntimeIdentity())
+      );
     }
     return result.allowed ? '' : formatPermissionRequestDeny(result);
   }
@@ -206,7 +210,7 @@ export async function handleHookCommands(
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
     const resolvedAuditOut = auditOut ?? (auditRoot ? postToolUseAuditPathFromRoot(auditRoot, task) : null);
     if (resolvedAuditOut) {
-      await appendPostToolUseAudit(resolvedAuditOut, createPostToolUseAuditRecord(task, event));
+      await appendPostToolUseAudit(resolvedAuditOut, createPostToolUseAuditRecord(task, event, options.runtimeIdentity ?? getRuntimeIdentity()));
     }
     return '';
   }
@@ -227,7 +231,7 @@ export async function handleHookCommands(
       const binding = await resolveCurrentTaskBindingFromCwd(startCwd);
       if (binding.check.status === 'missing') return '';
       if (binding.check.status !== 'matched') {
-        return `${JSON.stringify(createTaskBindingMismatchSessionStartOutput(binding.check), null, 2)}\n`;
+        return `${JSON.stringify(createTaskBindingMismatchSessionStartOutput(binding.check, options.runtimeIdentity ?? getRuntimeIdentity()), null, 2)}\n`;
       }
       if (!binding.candidate) return '';
       task = binding.candidate.task;
@@ -238,7 +242,7 @@ export async function handleHookCommands(
       resolvedTaskPath = taskPath;
     }
     if (cwd && !isPathInside(task.worktreeRoot, cwd)) return '';
-    return `${JSON.stringify(createSessionStartHookOutput({ task, taskPath: resolvedTaskPath, auditRoot }), null, 2)}\n`;
+    return `${JSON.stringify(createSessionStartHookOutput({ task, taskPath: resolvedTaskPath, auditRoot, runtimeIdentity: options.runtimeIdentity ?? getRuntimeIdentity() }), null, 2)}\n`;
   }
 
   if (command === 'stop-check') {

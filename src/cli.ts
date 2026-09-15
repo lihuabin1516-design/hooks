@@ -9,6 +9,7 @@ import { handleSessionCommands } from './cli/session.js';
 import { handleTaskCommands } from './cli/task.js';
 import { handleWorkflowCommands } from './cli/workflow.js';
 import type { RunCliOptions } from './cli-types.js';
+import { createRuntimeIdentityReport, getRuntimeIdentity, type RuntimeIdentity } from './runtime-identity.js';
 
 export type { RunCliOptions } from './cli-types.js';
 
@@ -22,7 +23,7 @@ function valueAfter(args: string[], name: string): string | null {
   return index >= 0 && index + 1 < args.length ? args[index + 1] ?? null : null;
 }
 
-export function appendCliRuntimeError(args: string[], error: unknown): void {
+export function appendCliRuntimeError(args: string[], error: unknown, runtimeIdentity: RuntimeIdentity = getRuntimeIdentity()): void {
   const auditRoot = valueAfter(args, '--audit-root');
   if (!auditRoot) return;
   try {
@@ -33,6 +34,7 @@ export function appendCliRuntimeError(args: string[], error: unknown): void {
       command: args[0] ?? null,
       cwd: process.cwd(),
       pid: process.pid,
+      runtime: createRuntimeIdentityReport(runtimeIdentity),
       error: {
         name: error instanceof Error ? error.name : null,
         message: error instanceof Error ? error.message : String(error),

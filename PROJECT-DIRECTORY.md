@@ -56,9 +56,13 @@ task-risk.ts                 prompt 级 Light/Standard/Heavy 风险分类
 workflow-profile.ts          SBA 风格任务路由、闭环强度和必要检查建议
 host-adapter-registry.ts     宿主适配能力、surface、验证和边界的机器可读 registry
 runtime-profile.ts           本机运行路径、live/root/user config/reference repo 集中声明
+runtime-identity.ts          随构建部署的 commit/build SHA 身份与 task HEAD 比较
+atomic-file.ts               原子文件替换与成熟跨进程锁封装
+runtime-deployment.ts        allow-root 约束下的全载荷不可变 release、原子指针、恢复和 rollback
 hook-dry-run.ts              单次 HookCall allow/block 决策
 hook-batch.ts                批量 dry-run 输入输出模型
 hook-runner.ts               Hook 事件 + project policy 的 dry-run 执行器
+hook-decision-audit.ts       PreToolUse / PermissionRequest 快照与 append-only 历史
 post-tool-audit.ts           PostToolUse JSONL 审计
 session-lifecycle.ts         SessionStart / Stop 输出
 installed-hooks.ts           已安装 hooks 只读自检

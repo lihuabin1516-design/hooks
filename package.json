@@ -11,7 +11,7 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc -p tsconfig.json && node scripts/write-runtime-identity.mjs",
     "cli": "node dist/src/cli.js",
     "smoke": "node scripts/smoke.mjs",
     "smoke:mcp": "node scripts/mcp-smoke.mjs",
@@ -19,11 +19,13 @@
   },
   "devDependencies": {
     "@types/node": "26.1.2",
+    "@types/proper-lockfile": "^4.1.4",
     "typescript": "7.0.2",
     "vitest": "4.1.10"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
+    "proper-lockfile": "^4.1.2",
     "zod": "4.1.12"
   }
 }

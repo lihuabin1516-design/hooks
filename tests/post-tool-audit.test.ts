@@ -4,8 +4,20 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { appendPostToolUseAudit, createPostToolUseAuditRecord } from '../src/post-tool-audit.js';
 import type { CurrentTask } from '../src/types.js';
+import type { RuntimeIdentity } from '../src/runtime-identity.js';
 
 let tempRoot: string;
+
+const runtimeIdentity: RuntimeIdentity = {
+  schema: 'ccpanes.runtime-identity.v1',
+  packageName: 'ccpanes-hooks-tooling',
+  packageVersion: '0.1.0',
+  gitCommit: 'abc123',
+  gitDirty: false,
+  buildSha256: 'E'.repeat(64),
+  builtAt: '2026-09-15T00:00:00.000Z',
+  source: 'build-manifest'
+};
 
 function task(root: string): CurrentTask {
   return {
@@ -43,7 +55,7 @@ describe('createPostToolUseAuditRecord', () => {
       tool_use_id: 'toolu-1',
       tool_input: { command: 'npm test' },
       tool_response: { exit_code: 0, stdout: 'ok' }
-    });
+    }, runtimeIdentity);
 
     expect(record).toMatchObject({
       schema: 'ccpanes.post-tool-use-audit.v1',
@@ -51,6 +63,7 @@ describe('createPostToolUseAuditRecord', () => {
       cwd: tempRoot,
       toolName: 'Bash',
       toolUseId: 'toolu-1',
+      runtimeIdentity,
       inputSummary: { command: 'npm test' },
       responseSummary: { exit_code: 0, stdout: 'ok' }
     });

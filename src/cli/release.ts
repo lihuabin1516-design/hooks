@@ -17,6 +17,7 @@ import { createProductionToolkit } from '../production-toolkit.js';
 import { createAcceptanceEvidence } from '../acceptance.js';
 import { verifyAcceptanceEvidence } from '../acceptance-verify.js';
 import { CCPANES_RUNTIME_PROFILE } from '../runtime-profile.js';
+import { deployRuntime, recoverRuntime, rollbackRuntime } from '../runtime-deployment.js';
 import { validateCurrentTask } from '../current-task.js';
 import type { RunCliOptions } from '../cli-types.js';
 import {
@@ -38,6 +39,35 @@ export async function handleReleaseCommands(
   _options: RunCliOptions
 ): Promise<string | null> {
   const command = args[0];
+
+  if (command === 'deploy-runtime') {
+    const sourceDir = valueAfter(args, '--source-dir');
+    const runtimeRoot = valueAfter(args, '--runtime-root');
+    const allowRoots = valuesAfter(args, '--allow-root');
+    if (!sourceDir) throw new Error('missing --source-dir');
+    if (!runtimeRoot) throw new Error('missing --runtime-root');
+    if (allowRoots.length === 0) throw new Error('missing --allow-root');
+    const report = await deployRuntime({ sourceDir, runtimeRoot, allowRoots });
+    return `${JSON.stringify(report, null, 2)}\n`;
+  }
+
+  if (command === 'rollback-runtime') {
+    const runtimeRoot = valueAfter(args, '--runtime-root');
+    const allowRoots = valuesAfter(args, '--allow-root');
+    if (!runtimeRoot) throw new Error('missing --runtime-root');
+    if (allowRoots.length === 0) throw new Error('missing --allow-root');
+    const report = await rollbackRuntime({ runtimeRoot, allowRoots });
+    return `${JSON.stringify(report, null, 2)}\n`;
+  }
+
+  if (command === 'recover-runtime') {
+    const runtimeRoot = valueAfter(args, '--runtime-root');
+    const allowRoots = valuesAfter(args, '--allow-root');
+    if (!runtimeRoot) throw new Error('missing --runtime-root');
+    if (allowRoots.length === 0) throw new Error('missing --allow-root');
+    const report = await recoverRuntime({ runtimeRoot, allowRoots });
+    return `${JSON.stringify(report, null, 2)}\n`;
+  }
 
   if (command === 'plan-hook-install') {
     const prototypeRoot = valueAfter(args, '--prototype-root');

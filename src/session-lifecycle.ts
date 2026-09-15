@@ -1,12 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import type { CurrentTask, TaskBindingCheck } from './types.js';
+import { compareRuntimeIdentityToTaskHead, getRuntimeIdentity, type RuntimeIdentity } from './runtime-identity.js';
 
 export interface LifecycleOutputInput {
   task: CurrentTask;
   taskPath: string;
   auditRoot?: string | null;
   stopAnalysis?: StopCheckAnalysis | null;
+  runtimeIdentity?: RuntimeIdentity;
 }
 
 export interface SessionStartHookOutput {
@@ -218,6 +220,8 @@ export function analyzeStopCheckEvent(event: unknown): StopCheckAnalysis {
 
 function lifecycleLines(input: LifecycleOutputInput): string[] {
   const auditDirectory = auditDir(input.auditRoot, input.task);
+  const runtimeIdentity = input.runtimeIdentity ?? getRuntimeIdentity();
+  const runtimeComparison = compareRuntimeIdentityToTaskHead(runtimeIdentity, input.task.head);
   return [
     'ccpanes-task-probe lifecycle context',
     `taskId: ${input.task.taskId}`,
@@ -227,6 +231,11 @@ function lifecycleLines(input: LifecycleOutputInput): string[] {
     `projectPath: ${input.task.projectPath}`,
     `branch: ${formatOptional(input.task.branch)}`,
     `head: ${formatOptional(input.task.head)}`,
+    `runtimeGitCommit: ${formatOptional(runtimeIdentity.gitCommit)}`,
+    `runtimeBuildSha256: ${formatOptional(runtimeIdentity.buildSha256)}`,
+    `runtimeBuiltAt: ${formatOptional(runtimeIdentity.builtAt)}`,
+    `runtimeTaskHeadStatus: ${runtimeComparison.status}`,
+    `runtimeTaskHeadReason: ${runtimeComparison.reason}`,
     `currentTaskPath: ${input.taskPath}`,
     auditDirectory ? `auditDir: ${auditDirectory}` : 'auditDir: null',
     auditDirectory ? `preToolUseAudit: ${path.join(auditDirectory, 'hook-enforce-audit.json')}` : 'preToolUseAudit: null',
@@ -246,7 +255,8 @@ export function createSessionStartHookOutput(input: LifecycleOutputInput): Sessi
 }
 
 export function createTaskBindingMismatchSessionStartOutput(
-  check: TaskBindingCheck
+  check: TaskBindingCheck,
+  runtimeIdentity = getRuntimeIdentity()
 ): SessionStartHookOutput {
   return {
     hookSpecificOutput: {
@@ -260,6 +270,8 @@ export function createTaskBindingMismatchSessionStartOutput(
         `gitCommonDir: ${formatOptional(check.gitCommonDir)}`,
         `canonicalProjectRoot: ${formatOptional(check.canonicalProjectRoot)}`,
         `candidateTaskId: ${formatOptional(check.taskId)}`,
+        `runtimeGitCommit: ${formatOptional(runtimeIdentity.gitCommit)}`,
+        `runtimeBuildSha256: ${formatOptional(runtimeIdentity.buildSha256)}`,
         `taskPath: ${formatOptional(check.taskPath)}`,
         `taskFileRoot: ${formatOptional(check.taskFileRoot)}`,
         `declaredProjectPath: ${formatOptional(check.declaredProjectPath)}`,

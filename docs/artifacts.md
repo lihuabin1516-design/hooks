@@ -28,7 +28,11 @@
 | `ccpanes.hook-dry-run-batch.v1` | dry-run input | `src/hook-batch.ts` | 一批 HookCall 的 dry-run 输入。 |
 | `ccpanes.hook-dry-run-batch-result.v1` | `dry-run-hook` stdout | `src/hook-batch.ts` | 批量 allow/block 决策结果。 |
 | `ccpanes.hook-runner-result.v1` | hook audit JSON / stdout | `src/hook-runner.ts` | PreToolUse / PermissionRequest 的最终 allow/block/audit 结果。 |
+| `ccpanes.hook-decision-audit.v1` | `hook-enforce-audit.jsonl` / `permission-enforce-audit.jsonl` | `src/hook-decision-audit.ts` | append-only 决策历史，包含 task/session/runtime identity 和完整 runner result。 |
+| `ccpanes.hook-decision-audit-pending.v1` | `*-audit.json.pending.json` | `src/hook-decision-audit.ts` | 决策历史与兼容快照双写的中断恢复 journal。 |
 | `ccpanes.post-tool-use-audit.v1` | `post-tool-use-audit.jsonl` | `src/post-tool-audit.ts` | PostToolUse 追加审计记录。 |
+| `ccpanes.runtime-identity.v1` | `dist/src/runtime-identity.json` | `src/runtime-identity.ts` | 当前构建的 commit、dirty 状态、包版本和 JS 内容 SHA-256。 |
+| `ccpanes.runtime-identity-report.v1` | MCP `runtime_identity` | `src/runtime-identity.ts` | 运行进程身份及其与预期 task HEAD 的显式比较。 |
 | `ccpanes.workflow-advisory.v1` | UserPromptSubmit additional context | `src/workflow-advisory-hook.ts` | 给当前 prompt 注入工作流、检查项和实现标准建议。 |
 | `ccpanes.workflow-advisory-audit.v1` | workflow advisory audit JSON | `src/workflow-advisory-hook.ts` | workflow advisory 的任务级审计记录。 |
 | `ccpanes.hook-shadow-audit.v1` | hook shadow audit | `src/hook-shadow.ts` | hook 接入前 shadow 模式检查。 |
@@ -75,6 +79,12 @@
 | `ccpanes.hook-production-readiness.v1` | production readiness report | `src/hook-production-readiness.ts` | 聚合 release gate、approval、preview、apply、restore 的最终生产就绪判定。 |
 | `ccpanes.hook-go-live-approval-package.v1` | go-live approval package manifest | `src/hook-go-live-approval.ts` | 把人工授权固化为可审计批准包。 |
 | `ccpanes.hook-final-runbook.v1` | final runbook manifest | `src/hook-final-runbook.ts` | 生成最终人工执行和回滚 runbook。 |
+| `ccpanes.runtime-deployment-pointer.v1` | runtime `current.json` / `previous.json` | `src/runtime-deployment.ts` | 原子版本指针和单步可恢复回滚目标。 |
+| `ccpanes.runtime-package-identity.v1` | release `runtime-package-identity.json` | `src/runtime-deployment.ts` | `dist`、package metadata 与生产依赖的完整 payload SHA-256 和文件数。 |
+| `ccpanes.runtime-deploy-pending.v1` | runtime `deploy-pending.json` | `src/runtime-deployment.ts` | 部署中断恢复所需的已验证 from/to 事务记录。 |
+| `ccpanes.runtime-rollback-pending.v1` | runtime `rollback-pending.json` | `src/runtime-deployment.ts` | 回滚中断恢复所需的已验证 from/to 事务记录。 |
+| `ccpanes.runtime-deployment.v1` | `deploy-runtime` / `rollback-runtime` stdout | `src/runtime-deployment.ts` | 版本化部署、幂等切换或回滚的执行报告。 |
+| `ccpanes.runtime-recovery.v1` | `recover-runtime` stdout | `src/runtime-deployment.ts` | 不依赖 source 的 deploy/rollback journal 恢复结果。 |
 
 ## Codex Session Bridge Artifacts
 

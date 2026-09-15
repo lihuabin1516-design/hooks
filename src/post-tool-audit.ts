@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { CurrentTask } from './types.js';
+import { compareRuntimeIdentityToTaskHead, getRuntimeIdentity, type RuntimeIdentity, type RuntimeTaskHeadComparison } from './runtime-identity.js';
 
 const MAX_SUMMARY_CHARS = 1200;
 
@@ -13,6 +14,8 @@ export interface PostToolUseAuditRecord {
   toolName: string | null;
   toolUseId: string | null;
   observedAt: string;
+  runtimeIdentity: RuntimeIdentity;
+  runtimeTaskHead: RuntimeTaskHeadComparison;
   inputSummary: unknown;
   responseSummary: unknown;
 }
@@ -45,7 +48,7 @@ export function summarizeHookValue(value: unknown): unknown {
   return String(value);
 }
 
-export function createPostToolUseAuditRecord(task: CurrentTask, event: unknown): PostToolUseAuditRecord {
+export function createPostToolUseAuditRecord(task: CurrentTask, event: unknown, runtimeIdentity = getRuntimeIdentity()): PostToolUseAuditRecord {
   const record = asRecord(event);
   return {
     schema: 'ccpanes.post-tool-use-audit.v1',
@@ -56,6 +59,8 @@ export function createPostToolUseAuditRecord(task: CurrentTask, event: unknown):
     toolName: typeof record.tool_name === 'string' ? record.tool_name : null,
     toolUseId: typeof record.tool_use_id === 'string' ? record.tool_use_id : null,
     observedAt: new Date().toISOString(),
+    runtimeIdentity,
+    runtimeTaskHead: compareRuntimeIdentityToTaskHead(runtimeIdentity, task.head),
     inputSummary: summarizeHookValue(record.tool_input),
     responseSummary: summarizeHookValue(record.tool_response)
   };
