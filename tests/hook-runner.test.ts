@@ -118,6 +118,7 @@ describe('runHookEventDryRun', () => {
     ['wrong acceptance output', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" > "D:\\cc-pane\\project-alpha\\result.json"`],
     ['artifact outside worktree', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "D:\\cc-pane\\other\\secret.txt" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`],
     ['compound acceptance command', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"; npm install bad`],
+    ['append acceptance redirect', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" >> "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`],
     ['archive to build transition', `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build`],
     ['different task transition', `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "other-task" --phase verify`]
   ])('keeps unsafe archive lifecycle command blocked: %s', async (_label, command) => {

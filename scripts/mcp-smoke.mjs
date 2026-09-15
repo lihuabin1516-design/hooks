@@ -8,8 +8,11 @@ import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 const auditRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'gzl-hooks-mcp-smoke-'));
 const projectRoot = path.join(auditRoot, 'project-alpha');
 const taskDir = path.join(projectRoot, '.ccpanes-task');
-await fs.mkdir(taskDir, { recursive: true });
-await fs.writeFile(path.join(taskDir, 'current-task.json'), `${JSON.stringify({
+const currentTaskPath = path.join(taskDir, 'current-task.json');
+const acceptancePath = path.join(taskDir, 'acceptance.json');
+const trustedCliPath = path.resolve('dist/src/cli.js');
+const taskAuditDir = path.join(auditRoot, Buffer.from('mcp-smoke', 'utf8').toString('base64url'));
+const task = {
   schema: 'ccpanes.task-selection.v1',
   taskId: 'mcp-smoke',
   workspace: 'mcp-smoke-workspace',
@@ -24,7 +27,9 @@ await fs.writeFile(path.join(taskDir, 'current-task.json'), `${JSON.stringify({
   updatedAt: '2026-09-14T00:00:00.000Z',
   source: 'manual-import',
   notes: 'MCP lifecycle smoke fixture'
-}, null, 2)}\n`, 'utf8');
+};
+await fs.mkdir(taskDir, { recursive: true });
+await fs.writeFile(currentTaskPath, `${JSON.stringify(task, null, 2)}\n`, 'utf8');
 const transport = new StdioClientTransport({
   command: process.execPath,
   args: ['dist/src/mcp-server.js'],
@@ -89,6 +94,63 @@ try {
   assert.equal(permission.hookSpecificOutput.decision.behavior, 'deny');
   assert.match(permission.hookSpecificOutput.decision.message, /destructive_git_reset_hard/);
 
+  await fs.writeFile(currentTaskPath, `${JSON.stringify({ ...task, phase: 'archive' }, null, 2)}\n`, 'utf8');
+  const verifyAcceptance = await callHook('hook-enforce', {
+    hook_event_name: 'PreToolUse',
+    cwd: projectRoot,
+    tool_name: 'Bash',
+    tool_input: {
+      command: `node "${trustedCliPath}" verify-acceptance --input "${acceptancePath}"`
+    }
+  });
+  assert.equal(verifyAcceptance, '');
+  const verifyAcceptanceAudit = JSON.parse(await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.json'), 'utf8'));
+  assert.equal(verifyAcceptanceAudit.dryRun.decisions[0].reason, 'project_policy_allow:trusted_task_lifecycle_verify_acceptance');
+
+  const phaseTransition = await callHook('hook-enforce', {
+    hook_event_name: 'PreToolUse',
+    cwd: projectRoot,
+    tool_name: 'Bash',
+    tool_input: {
+      command: `node "${trustedCliPath}" write-current --root "${projectRoot}" --task-id mcp-smoke --phase verify --workspace mcp-smoke-workspace`
+    }
+  });
+  assert.equal(phaseTransition, '');
+  const phaseTransitionAudit = JSON.parse(await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.json'), 'utf8'));
+  assert.equal(phaseTransitionAudit.dryRun.decisions[0].reason, 'project_policy_allow:trusted_task_lifecycle_phase_transition');
+
+  const recordAcceptance = await callHook('permission-enforce', {
+    hook_event_name: 'PermissionRequest',
+    cwd: projectRoot,
+    tool_name: 'Bash',
+    tool_input: {
+      command: `node "${trustedCliPath}" record-acceptance --task "${currentTaskPath}" --artifact "${path.join(projectRoot, 'README.md')}" > "${acceptancePath}"`
+    }
+  });
+  assert.equal(recordAcceptance, '');
+  const recordAcceptanceAudit = JSON.parse(await fs.readFile(path.join(taskAuditDir, 'permission-enforce-audit.json'), 'utf8'));
+  assert.equal(recordAcceptanceAudit.dryRun.decisions[0].reason, 'project_policy_allow:trusted_task_lifecycle_record_acceptance');
+
+  const appendAcceptance = JSON.parse(await callHook('hook-enforce', {
+    hook_event_name: 'PreToolUse',
+    cwd: projectRoot,
+    tool_name: 'Bash',
+    tool_input: {
+      command: `node "${trustedCliPath}" record-acceptance --task "${currentTaskPath}" --artifact "${path.join(projectRoot, 'README.md')}" >> "${acceptancePath}"`
+    }
+  }));
+  assert.equal(appendAcceptance.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(appendAcceptance.hookSpecificOutput.permissionDecisionReason, /phase_archive_blocks_implementation_write/);
+
+  const archiveSourceWrite = JSON.parse(await callHook('hook-enforce', {
+    hook_event_name: 'PreToolUse',
+    cwd: projectRoot,
+    tool_name: 'Edit',
+    tool_input: { file_path: path.join(projectRoot, 'src', 'a.ts') }
+  }));
+  assert.equal(archiveSourceWrite.hookSpecificOutput.permissionDecision, 'deny');
+  assert.match(archiveSourceWrite.hookSpecificOutput.permissionDecisionReason, /phase_archive_blocks_implementation_write/);
+
   const postOutput = await callHook('post-enforce', {
     hook_event_name: 'PostToolUse',
     cwd: projectRoot,
@@ -98,7 +160,6 @@ try {
     tool_response: { content: [{ type: 'text', text: 'fixture' }] }
   });
   assert.equal(postOutput, '');
-  const taskAuditDir = path.join(auditRoot, Buffer.from('mcp-smoke', 'utf8').toString('base64url'));
   const postAudit = await fs.readFile(path.join(taskAuditDir, 'post-tool-use-audit.jsonl'), 'utf8');
   assert.match(postAudit, /"toolUseId":"mcp-smoke-post"/);
 
