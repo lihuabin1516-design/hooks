@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 33 — Plan Intake Dry-Run Audit Plan
+# PaneForge Hooks Phase 33 — Plan Intake Dry-Run Audit Plan
 
 日期：2026-08-07
 目标仓库：`{workspace-root}\tool\repos\hooks`
@@ -17,12 +17,12 @@ In Scope:
 - 新增 CLI：`plan-intake --root <project-root> --prompt <text> --utterance <plan text> --changed-path <path> --audit-out <json>`。
 - 复用 `detectPlanPolicyInstructions` 预览 policy candidates，不调用写入型 `capturePlanPolicyInstructions`。
 - 复用 `classifyWorkflowProfile` 输出 task route、rigor、closure 和 checks。
-- 默认不写 `.ccpanes-task/policy.md` / `.ccpanes-task/policy.json`。
-- 只有显式 `--audit-out` 写 `ccpanes.plan-intake.v1` JSON artifact。
+- 默认不写 `.paneforge-task/policy.md` / `.paneforge-task/policy.json`。
+- 只有显式 `--audit-out` 写 `paneforge.plan-intake.v1` JSON artifact。
 
 Out of Scope:
-- 不接入真实 CC-Panes plan event 配置。
-- 不写用户级 Codex / Claude / CC-Panes 配置。
+- 不接入真实 PaneForge plan event 配置。
+- 不写用户级 Codex / Claude / PaneForge 配置。
 - 不同步 live prototype。
 - 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 reference repo 内容。
@@ -35,7 +35,7 @@ Expected Behavior:
 - `--audit-out` 可生成可归档 JSON，供后续真实 plan lifecycle dry-run 使用。
 
 Fatal Failures:
-- plan-intake 写入 `.ccpanes-task/policy.*`。
+- plan-intake 写入 `.paneforge-task/policy.*`。
 - plan-intake 绕过 `policy-capture-plan` 成为第二套 policy 写入 authority。
 - workflow profile 被解释为 hard gate。
 - audit-out 未显式提供时产生落盘副作用。
@@ -65,4 +65,4 @@ Owners:
 
 Compatibility:
 - 现有 `policy-capture-plan` CLI 保持不变。
-- 新入口可被未来 CC-Panes plan event 调用为 dry-run 子步骤；真实配置接入仍需独立授权包。
+- 新入口可被未来 PaneForge plan event 调用为 dry-run 子步骤；真实配置接入仍需独立授权包。

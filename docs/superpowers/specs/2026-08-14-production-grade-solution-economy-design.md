@@ -4,7 +4,7 @@ Date: 2026-08-14
 
 ## 1. Goal
 
-Add a machine-readable advisory standard that helps CC-Panes agents remove
+Add a machine-readable advisory standard that helps PaneForge agents remove
 unnecessary implementation complexity while preserving every capability needed
 for production operation.
 
@@ -43,7 +43,7 @@ Reference:
 - Adding a new hard gate or permission authority.
 - Installing or vendoring Ponytail.
 - Adding `lite`, `full`, `ultra`, or `off` runtime modes.
-- Writing user-level Codex, Claude, or CC-Panes configuration.
+- Writing user-level Codex, Claude, or PaneForge configuration.
 - Changing task-binding, audit, acceptance, deployment, or live synchronization
   semantics.
 - Treating line count as a production-readiness measure.
@@ -66,7 +66,7 @@ acceptance state, or live configuration.
 
 `src/workflow-profile.ts` consumes the implementation-standard owner and adds
 an optional `implementationStandard` field to
-`ccpanes.workflow-profile.v1`.
+`paneforge.workflow-profile.v1`.
 
 The field is present for:
 
@@ -89,7 +89,7 @@ generic prose on unrelated tasks.
 
 ```ts
 interface ImplementationStandard {
-  schema: 'ccpanes.implementation-standard.v1';
+  schema: 'paneforge.implementation-standard.v1';
   level: 'production-grade';
   optimizationTarget: 'unnecessary-complexity';
   principles: string[];
@@ -97,7 +97,7 @@ interface ImplementationStandard {
   removalCandidates: string[];
   boundaries: string[];
   sourceModel: {
-    name: 'ccpanes.production-grade-solution-economy.v1';
+    name: 'paneforge.production-grade-solution-economy.v1';
     adaptedFrom: string;
     referenceHead: string;
     adoptedIdeas: string[];
@@ -230,7 +230,7 @@ Eval fixtures remain deterministic and do not use an LLM judge.
 - Existing consumers that ignore unknown JSON fields remain compatible.
 - TypeScript consumers compiling directly against
   `WorkflowProfileResult` must be updated in this repository.
-- The schema name remains `ccpanes.workflow-profile.v1` because existing fields
+- The schema name remains `paneforge.workflow-profile.v1` because existing fields
   and semantics are unchanged; the new nested record carries its own versioned
   schema.
 
@@ -250,7 +250,7 @@ git status --short --branch
 Acceptance assertions:
 
 1. All code-affecting workflow routes expose
-   `ccpanes.implementation-standard.v1`.
+   `paneforge.implementation-standard.v1`.
 2. The standard always identifies itself as `production-grade`.
 3. No standard text treats production safeguards as removable complexity.
 4. Read-only and documentation routes do not receive implementation guidance.

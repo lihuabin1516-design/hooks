@@ -3,21 +3,21 @@
 日期：2026-08-06<br>
 范围：只读预检；不写入用户配置；不执行 hook；不接入真实 Hook。<br>
 目标 hook：`{user-home}\skills-hub\bin\skills-hub-hook.exe`<br>
-原型目录：`{workspace-root}\tool\experiments\ccpanes-task-probe`
+原型目录：`{workspace-root}\tool\experiments\paneforge-task-probe`
 
 ## 1. 当前判断
 
 当前环境已经有两套 hook 相关机制：
 
 1. Codex 用户级 `UserPromptSubmit` 已指向 `skills-hub-hook.exe`，用于 cold skill routing。
-2. CC-Panes 的 Claude 本地配置已经有 `PreToolUse`、`PostToolUse`、`UserPromptSubmit` 等 hook，指向 `cc-panes-cli-hook.exe`。
+2. PaneForge 的 Claude 本地配置已经有 `PreToolUse`、`PostToolUse`、`UserPromptSubmit` 等 hook，指向 `paneforge-cli-hook.exe`。
 
 因此下一步不应直接把 task-probe prototype 接进真实用户配置。更稳的路径是：
 
 - 保留现有 `skills-hub-hook.exe` 作为 Codex prompt routing hook。
-- 保留现有 CC-Panes Claude hook 管线。
+- 保留现有 PaneForge Claude hook 管线。
 - 先给 prototype 增加真实 hook event stdin adapter，并继续 dry-run。
-- 再评估是否由 CC-Panes 现有 `cc-panes-cli-hook.exe` 调用该 adapter，而不是额外并联多个用户级 hook。
+- 再评估是否由 PaneForge 现有 `paneforge-cli-hook.exe` 调用该 adapter，而不是额外并联多个用户级 hook。
 
 ## 2. 只读采集对象与哈希
 
@@ -27,11 +27,11 @@
 | `{user-home}\.codex\hooks.json` | exists | 407 | `C68FE99AC5D4E8FA38404D48C4D0B894535D1789F2BDE173DEABDCE9750D3479` |
 | `{user-home}\.codex\config.toml` | exists | 16128 | `C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61` |
 | `{user-home}\.claude\settings.json` | exists | 68 | `6697AC8BF3813E484FAAE85BE37242DC958B90660EAA184B99823308E32D699F` |
-| `{user-home}\.cc-panes\.claude\settings.local.json` | exists | 3468 | `8B3F97C46BB6193CE547D49783925491EA21416CBFE2B629190D681AF103C580` |
-| `{user-home}\.cc-panes\launch-profiles.json` | exists | 87622 | `89C2D972FA1D3BD21C756A7E607F45C16C9857FCE6DECA876CA3FB0D79B30AAE` |
-| `{user-home}\.cc-panes\shared-mcp.json` | exists | 1308 | `1391170F468C9FD1A590446BAD4D06E7DBEF439CFEB92DD4D99EE550622B2B9F` |
-| `{user-home}\.cc-panes\mcp-orchestrator.json` | exists | 329 | `7B9EA296DC02AD28FB53AE73FEEF80749C924DE00061DF4B70C1C48EFECF2A2C` |
-| `{user-home}\.cc-panes\providers.json` | exists | 2549 | `2D0DA5A6B6744438C4D6D7F206A4D63073406A93D49610E6DE90549D483642E8` |
+| `{user-home}\.paneforge\.claude\settings.local.json` | exists | 3468 | `8B3F97C46BB6193CE547D49783925491EA21416CBFE2B629190D681AF103C580` |
+| `{user-home}\.paneforge\launch-profiles.json` | exists | 87622 | `89C2D972FA1D3BD21C756A7E607F45C16C9857FCE6DECA876CA3FB0D79B30AAE` |
+| `{user-home}\.paneforge\shared-mcp.json` | exists | 1308 | `1391170F468C9FD1A590446BAD4D06E7DBEF439CFEB92DD4D99EE550622B2B9F` |
+| `{user-home}\.paneforge\mcp-orchestrator.json` | exists | 329 | `7B9EA296DC02AD28FB53AE73FEEF80749C924DE00061DF4B70C1C48EFECF2A2C` |
+| `{user-home}\.paneforge\providers.json` | exists | 2549 | `2D0DA5A6B6744438C4D6D7F206A4D63073406A93D49610E6DE90549D483642E8` |
 
 敏感性说明：`providers.json` 和 `mcp-orchestrator.json` 含凭据或 token 类字段；本预检只记录文件哈希和风险，不复制内容。
 
@@ -71,14 +71,14 @@ sha256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA8579
 - 当前 task-probe prototype 的 `dry-run-hook --input` 接收的是 JSON 文件，不是 Codex hook stdin event；直接挂上不能形成真实写入门禁。
 - `timeout = 5` 对 prompt routing 合适；对路径解析、workspace scan、artifact verify 这类门禁动作偏紧。
 
-## 4. Claude / CC-Panes 当前 Hook 状态
+## 4. Claude / PaneForge 当前 Hook 状态
 
 `{user-home}\.claude\settings.json` 当前没有 hook 配置，只包含 UI/权限提示类设置。
 
-`{user-home}\.cc-panes\.claude\settings.local.json` 已存在 CC-Panes 自有 hook 管线，命令目标为：
+`{user-home}\.paneforge\.claude\settings.local.json` 已存在 PaneForge 自有 hook 管线，命令目标为：
 
 ```text
-{user-home}\AppData\Local\cc-panes\binaries\cc-panes-cli-hook.exe
+{user-home}\AppData\Local\paneforge\binaries\paneforge-cli-hook.exe
 ```
 
 已覆盖事件：
@@ -97,9 +97,9 @@ UserPromptSubmit
 
 判断：
 
-- CC-Panes/Claude 侧已经有 `PreToolUse` 和 `PostToolUse`，这是未来接入 task ownership / write gate 的更自然位置。
-- 不建议直接替换 `cc-panes-cli-hook.exe`，因为它已承担 CC-Panes 会话、等待输入、工具前后、compact、结束等多事件职责。
-- 更稳的集成方式是让 `cc-panes-cli-hook.exe` 或其上游配置在 `PreToolUse` dry-run 阶段调用 task-probe 的 adapter，作为子步骤，而不是并联一个新 hook 命令。
+- PaneForge/Claude 侧已经有 `PreToolUse` 和 `PostToolUse`，这是未来接入 task ownership / write gate 的更自然位置。
+- 不建议直接替换 `paneforge-cli-hook.exe`，因为它已承担 PaneForge 会话、等待输入、工具前后、compact、结束等多事件职责。
+- 更稳的集成方式是让 `paneforge-cli-hook.exe` 或其上游配置在 `PreToolUse` dry-run 阶段调用 task-probe 的 adapter，作为子步骤，而不是并联一个新 hook 命令。
 
 ## 5. 与当前 prototype 的能力差距
 
@@ -117,7 +117,7 @@ npm run smoke
 还缺真实接入所需能力：
 
 1. **Hook stdin adapter**  
-   需要读取 Codex/Claude/CC-Panes 实际 hook event JSON，而不是只读 `--input <file>`。
+   需要读取 Codex/Claude/PaneForge 实际 hook event JSON，而不是只读 `--input <file>`。
 
 2. **Event schema detection**  
    需要识别事件来源、tool 名称、参数字段、目标路径字段、是否写操作。
@@ -138,13 +138,13 @@ npm run smoke
 继续保留：
 
 - Codex `UserPromptSubmit` → `skills-hub-hook.exe`
-- CC-Panes Claude hooks → `cc-panes-cli-hook.exe`
+- PaneForge Claude hooks → `paneforge-cli-hook.exe`
 - task-probe prototype 作为手动 dry-run / smoke 工具包
 
 生产门禁：
 
 ```powershell
-cd {workspace-root}\tool\experiments\ccpanes-task-probe
+cd {workspace-root}\tool\experiments\paneforge-task-probe
 npm test
 npm run typecheck
 npm run build
@@ -165,16 +165,16 @@ examples/hook-events/*.json
 
 - 从 stdin 或 `--event <json-file>` 读取真实/模拟 hook event。
 - 转换为现有 `HookCall` 或 batch input。
-- 输出 `ccpanes.hook-dry-run-batch-result.v1`。
+- 输出 `paneforge.hook-dry-run-batch-result.v1`。
 - smoke 覆盖 allow/block/error。
 
-### Phase 2：CC-Panes hook 管线 dry-run 集成
+### Phase 2：PaneForge hook 管线 dry-run 集成
 
 只在得到明确授权后进行。优先研究：
 
 ```text
-{user-home}\AppData\Local\cc-panes\binaries\cc-panes-cli-hook.exe
-{user-home}\.cc-panes\.claude\settings.local.json
+{user-home}\AppData\Local\paneforge\binaries\paneforge-cli-hook.exe
+{user-home}\.paneforge\.claude\settings.local.json
 ```
 
 目标不是替换现有 hook，而是为 `tool-before` 增加可选 dry-run 子步骤。
@@ -196,8 +196,8 @@ examples/hook-events/*.json
 允许读取：
 - {user-home}\.codex\hooks.json
 - {user-home}\.codex\config.toml
-- {user-home}\.cc-panes\.claude\settings.local.json
-- {user-home}\.cc-panes\launch-profiles.json
+- {user-home}\.paneforge\.claude\settings.local.json
+- {user-home}\.paneforge\launch-profiles.json
 
 允许写入：
 - 仅用户明确指定的单个配置文件
@@ -205,7 +205,7 @@ examples/hook-events/*.json
 
 禁止：
 - 修改 auth/provider/token 文件
-- 替换 cc-panes-cli-hook.exe
+- 替换 paneforge-cli-hook.exe
 - 替换 skills-hub-hook.exe
 - 写入业务项目
 - 写入 Comet/FastCtx reference repo
@@ -229,7 +229,7 @@ rollback command
 | Risk | Impact | Mitigation |
 |---|---|---|
 | 已有 Codex prompt hook 被误改 | cold skill routing 失效 | 不替换现有 `hooks.json`；先做 adapter 和 dry-run |
-| CC-Panes Claude hook 已承担多事件职责 | 替换会破坏 session/tool lifecycle | 不替换 `cc-panes-cli-hook.exe`；只研究子步骤集成 |
+| PaneForge Claude hook 已承担多事件职责 | 替换会破坏 session/tool lifecycle | 不替换 `paneforge-cli-hook.exe`；只研究子步骤集成 |
 | provider/orchestrator 文件含凭据 | 报告或日志泄露敏感信息 | 只记录哈希；报告中不复制值 |
 | prototype 只支持 JSON 文件输入 | 真实 hook event 接不上 | 先实现 stdin/event adapter |
 | timeout 过短 | 门禁误失败 | dry-run 阶段记录耗时；真实门禁前调 timeout |
@@ -240,9 +240,9 @@ rollback command
 推荐下一步做 **Phase 1：hook event adapter**，仍只在 prototype 内实现，不改真实配置：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\hook-event-adapter.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\tests\hook-event-adapter.test.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\examples\hook-events\*.json
+{workspace-root}\tool\experiments\paneforge-task-probe\src\hook-event-adapter.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\tests\hook-event-adapter.test.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\examples\hook-events\*.json
 ```
 
 验收门禁：
@@ -254,4 +254,4 @@ npm run build
 npm run smoke
 ```
 
-完成 Phase 1 后，再决定是否做 CC-Panes hook 管线 dry-run 集成预案。
+完成 Phase 1 后，再决定是否做 PaneForge hook 管线 dry-run 集成预案。

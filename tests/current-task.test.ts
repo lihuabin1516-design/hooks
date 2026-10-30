@@ -66,15 +66,15 @@ async function realPath(candidate: string): Promise<string> {
 }
 
 async function writeTaskFileUnchecked(root: string, task: CurrentTask): Promise<void> {
-  await fs.mkdir(path.join(root, '.ccpanes-task'), { recursive: true });
+  await fs.mkdir(path.join(root, '.paneforge-task'), { recursive: true });
   await fs.writeFile(currentTaskPath(root), `${JSON.stringify(task, null, 2)}\n`, 'utf8');
 }
 
 function validTask(root: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -162,7 +162,7 @@ async function canRenameAfterRead(file: string): Promise<boolean> {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-task-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-task-'));
 });
 
 afterEach(async () => {
@@ -171,8 +171,8 @@ afterEach(async () => {
 });
 
 describe('current-task persistence', () => {
-  test('uses .ccpanes-task/current-task.json below the worktree root', () => {
-    expect(currentTaskPath(tempRoot)).toBe(path.join(tempRoot, '.ccpanes-task', 'current-task.json'));
+  test('uses .paneforge-task/current-task.json below the worktree root', () => {
+    expect(currentTaskPath(tempRoot)).toBe(path.join(tempRoot, '.paneforge-task', 'current-task.json'));
   });
 
   test('writes and reads a valid current task atomically', async () => {
@@ -186,13 +186,13 @@ describe('current-task persistence', () => {
   });
 
   test('rejects oversized current-task.json files', async () => {
-    await fs.mkdir(path.join(tempRoot, '.ccpanes-task'), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, '.paneforge-task'), { recursive: true });
     await fs.writeFile(currentTaskPath(tempRoot), 'x'.repeat(17 * 1024), 'utf8');
     await expect(readCurrentTask(tempRoot)).rejects.toThrow('current-task.json exceeds 16384 bytes');
   });
 
   test('rejects invalid schema values', async () => {
-    await fs.mkdir(path.join(tempRoot, '.ccpanes-task'), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, '.paneforge-task'), { recursive: true });
     await fs.writeFile(currentTaskPath(tempRoot), JSON.stringify({ schema: 'wrong' }), 'utf8');
     await expect(readCurrentTask(tempRoot)).rejects.toThrow('invalid current task: schema');
   });
@@ -693,8 +693,8 @@ describe('current-task persistence', () => {
     await writeCurrentTaskAtomic(tempRoot, validTask(tempRoot));
     await initGitRepo(projectRoot);
 
-    const previous = process.env.CCPANES_TASK_SEARCH_ROOT;
-    process.env.CCPANES_TASK_SEARCH_ROOT = projectRoot;
+    const previous = process.env.PANEFORGE_TASK_SEARCH_ROOT;
+    process.env.PANEFORGE_TASK_SEARCH_ROOT = projectRoot;
     try {
       const check = await inspectCurrentTaskBindingFromCwd(projectRoot);
       expect(check.status).toBe('missing');
@@ -702,9 +702,9 @@ describe('current-task persistence', () => {
       expect(check.taskId).toBeNull();
     } finally {
       if (previous === undefined) {
-        delete process.env.CCPANES_TASK_SEARCH_ROOT;
+        delete process.env.PANEFORGE_TASK_SEARCH_ROOT;
       } else {
-        process.env.CCPANES_TASK_SEARCH_ROOT = previous;
+        process.env.PANEFORGE_TASK_SEARCH_ROOT = previous;
       }
     }
   });
@@ -743,7 +743,7 @@ describe('current-task persistence', () => {
   test('rejects a task directory junction that escapes the declared worktree', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const externalTaskDir = path.join(tempRoot, 'external-task-state');
-    const taskDir = path.join(projectRoot, '.ccpanes-task');
+    const taskDir = path.join(projectRoot, '.paneforge-task');
     await fs.mkdir(projectRoot, { recursive: true });
     await fs.mkdir(externalTaskDir, { recursive: true });
     await fs.writeFile(
@@ -766,7 +766,7 @@ describe('current-task persistence', () => {
   test('rejects a current task path junction that escapes the declared worktree', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const externalTaskPath = path.join(tempRoot, 'external-current-task');
-    const taskDir = path.join(projectRoot, '.ccpanes-task');
+    const taskDir = path.join(projectRoot, '.paneforge-task');
     const taskFile = path.join(taskDir, 'current-task.json');
     await fs.mkdir(taskDir, { recursive: true });
     await fs.mkdir(externalTaskPath, { recursive: true });

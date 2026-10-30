@@ -20,7 +20,7 @@ export interface WorkflowAdvisoryHookOutput {
 }
 
 export interface WorkflowAdvisoryAuditRecord {
-  schema: 'ccpanes.workflow-advisory-audit.v1';
+  schema: 'paneforge.workflow-advisory-audit.v1';
   taskId: string;
   workspace: string;
   worktreeRoot: string;
@@ -68,7 +68,7 @@ function formatWorkflowAdvisoryContext(
   standard: NonNullable<ReturnType<typeof classifyWorkflowProfile>['implementationStandard']>
 ): string {
   const lines = [
-    'ccpanes.workflow-advisory.v1',
+    'paneforge.workflow-advisory.v1',
     `route: ${routeId}`,
     `rigor: ${rigor}`,
     `implementationStandard: ${standard.schema}`,
@@ -105,7 +105,7 @@ export function createWorkflowAdvisory(input: CreateWorkflowAdvisoryInput): Work
     : null;
   const injected = context !== null;
   const audit: WorkflowAdvisoryAuditRecord = {
-    schema: 'ccpanes.workflow-advisory-audit.v1',
+    schema: 'paneforge.workflow-advisory-audit.v1',
     taskId: input.task.taskId,
     workspace: input.task.workspace,
     worktreeRoot: input.task.worktreeRoot,

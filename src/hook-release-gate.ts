@@ -34,7 +34,7 @@ export interface VerificationCheckInput {
 }
 
 export interface HookReleaseGateReport {
-  schema: 'ccpanes.hook-release-gate.v1';
+  schema: 'paneforge.hook-release-gate.v1';
   mode: 'final-preflight';
   createdAt: string;
   packageDir: string;
@@ -59,9 +59,9 @@ export interface CreateHookReleaseGateInput {
 const forbiddenReleaseGateOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function sha256Buffer(bytes: Buffer): string {
@@ -139,7 +139,7 @@ export async function createHookReleaseGate(input: CreateHookReleaseGateInput): 
   }
 
   return {
-    schema: 'ccpanes.hook-release-gate.v1',
+    schema: 'paneforge.hook-release-gate.v1',
     mode: 'final-preflight',
     createdAt: input.now ?? new Date().toISOString(),
     packageDir: input.packageDir,

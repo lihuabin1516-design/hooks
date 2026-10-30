@@ -21,7 +21,7 @@ export interface ProjectPolicyCaptureInput {
 }
 
 export interface ProjectPolicyCaptureResult {
-  schema: 'ccpanes.project-policy-capture-result.v1';
+  schema: 'paneforge.project-policy-capture-result.v1';
   projectRoot: string;
   changed: boolean;
   ruleId: string;
@@ -69,7 +69,7 @@ export async function captureProjectPolicyInstruction(input: ProjectPolicyCaptur
   });
 
   return {
-    schema: 'ccpanes.project-policy-capture-result.v1',
+    schema: 'paneforge.project-policy-capture-result.v1',
     projectRoot: input.projectRoot,
     changed: true,
     ruleId: input.id,

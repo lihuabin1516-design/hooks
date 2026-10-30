@@ -7,7 +7,7 @@ import { createPlanIntake, normalizePlanLifecycleEvent, planIntakeAuditPathFromR
 let tempRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-plan-intake-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-plan-intake-'));
 });
 
 afterEach(async () => {
@@ -25,7 +25,7 @@ describe('createPlanIntake', () => {
     });
 
     expect(result).toMatchObject({
-      schema: 'ccpanes.plan-intake.v1',
+      schema: 'paneforge.plan-intake.v1',
       mode: 'dry-run',
       changed: false,
       projectRoot: tempRoot,
@@ -38,7 +38,7 @@ describe('createPlanIntake', () => {
       }
     });
     expect(result.workflow.implementationStandard).toMatchObject({
-      schema: 'ccpanes.implementation-standard.v1',
+      schema: 'paneforge.implementation-standard.v1',
       level: 'production-grade'
     });
     expect(result.policyPreview.actions[0]).toMatchObject({
@@ -48,8 +48,8 @@ describe('createPlanIntake', () => {
       match: { tools: ['shell'], commandContains: ['deploy-artifact'] }
     });
     expect(result.recommendedNextCommands.some((command) => command.includes('policy-capture-plan'))).toBe(true);
-    await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'policy.json'))).rejects.toThrow();
-    await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'policy.md'))).rejects.toThrow();
+    await expect(fs.stat(path.join(tempRoot, '.paneforge-task', 'policy.json'))).rejects.toThrow();
+    await expect(fs.stat(path.join(tempRoot, '.paneforge-task', 'policy.md'))).rejects.toThrow();
   });
 
   test('returns skipped policy preview while still classifying workflow', () => {
@@ -83,9 +83,9 @@ describe('writePlanIntakeAuditAtomic', () => {
     await writePlanIntakeAuditAtomic(outPath, result);
     const audit = JSON.parse(await fs.readFile(outPath, 'utf8'));
 
-    expect(audit.schema).toBe('ccpanes.plan-intake.v1');
+    expect(audit.schema).toBe('paneforge.plan-intake.v1');
     expect(audit.workflow.implementationStandard).toMatchObject({
-      schema: 'ccpanes.implementation-standard.v1',
+      schema: 'paneforge.implementation-standard.v1',
       level: 'production-grade'
     });
     expect(audit.policyPreview.actions[0]).toMatchObject({
@@ -97,27 +97,27 @@ describe('writePlanIntakeAuditAtomic', () => {
 });
 
 describe('normalizePlanLifecycleEvent', () => {
-  test('normalizes CC-Panes plan lifecycle event fields for dry-run intake', () => {
+  test('normalizes PaneForge plan lifecycle event fields for dry-run intake', () => {
     const result = normalizePlanLifecycleEvent({
       event: {
-        schema: 'ccpanes.plan-lifecycle-event.v1',
+        schema: 'paneforge.plan-lifecycle-event.v1',
         cwd: path.join(tempRoot, 'packages', 'demo'),
         prompt: 'event prompt',
         planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
         changedPaths: ['src/plan-intake.ts', ' src/plan-intake.ts '],
-        source: 'cc-panes-plan'
+        source: 'paneforge-plan'
       },
       fallbackPrompt: 'cli prompt',
       fallbackChangedPaths: ['src/cli.ts']
     });
 
     expect(result).toEqual({
-      schema: 'ccpanes.plan-lifecycle-event.v1',
+      schema: 'paneforge.plan-lifecycle-event.v1',
       cwd: path.join(tempRoot, 'packages', 'demo'),
       prompt: 'cli prompt',
       text: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
       changedPaths: ['src/plan-intake.ts', 'src/cli.ts'],
-      source: 'cc-panes-plan'
+      source: 'paneforge-plan'
     });
   });
 

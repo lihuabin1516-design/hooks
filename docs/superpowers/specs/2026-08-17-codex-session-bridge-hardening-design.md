@@ -2,9 +2,9 @@
 
 ## Goal
 
-Harden the existing Codex + CC-Panes session federation and Codex App sidebar
+Harden the existing Codex + PaneForge session federation and Codex App sidebar
 projection before submission. The change closes the independent review findings
-without replacing Codex or CC-Panes authority, without editing their native
+without replacing Codex or PaneForge authority, without editing their native
 session stores, and without widening the current bridge into a general session
 manager.
 
@@ -36,7 +36,7 @@ The design is based on the repository state observed on 2026-08-17:
   issue in the current task change.
 
 This document supersedes conflicting hardening details in
-`2026-08-15-codex-ccpanes-session-federation-design.md`. That earlier document
+`2026-08-15-codex-paneforge-session-federation-design.md`. That earlier document
 remains the feature design and historical decision record.
 
 ## Scope
@@ -62,14 +62,14 @@ remains the feature design and historical decision record.
 
 ### Out of scope
 
-- modifying Codex rollout JSONL, Codex SQLite, CC-Panes storage, global Codex
+- modifying Codex rollout JSONL, Codex SQLite, PaneForge storage, global Codex
   configuration, or either official application;
 - adding a background service, watcher, scheduler, or retry daemon;
 - reading `thread_history_1.sqlite` projection rows or `item_json`;
 - automatically executing rollback when Codex lacks a supported clear-name
   operation;
-- importing all Codex App or CLI conversations into CC-Panes;
-- changing CC-Panes Session, Pane, PTY, Task, or launch-history authority;
+- importing all Codex App or CLI conversations into PaneForge;
+- changing PaneForge Session, Pane, PTY, Task, or launch-history authority;
 - deleting or rewriting existing v1/v2 generated artifacts;
 - committing, pushing, integrating, or releasing as part of this specification
   phase.
@@ -80,7 +80,7 @@ remains the feature design and historical decision record.
 | --- | --- | --- | --- |
 | Codex thread ID, cwd, source, name | Codex App Server | authoritative current state | query and controlled name command |
 | Codex rollout and state SQLite | Codex | authoritative/history inputs | bounded read-only source |
-| CC-Panes Session, PTY, Task, launch | official CC-Panes | authoritative current/history state | explicit typed snapshot input |
+| PaneForge Session, PTY, Task, launch | official PaneForge | authoritative current/history state | explicit typed snapshot input |
 | App sidebar listed/pinned state | Codex App host | authoritative current host state | snapshot plus host pin command |
 | Federation graph | hooks repository | derived projection | rebuildable read model |
 | Sidebar plan | hooks repository | derived control intent | immutable digest-bound proposal |
@@ -89,7 +89,7 @@ remains the feature design and historical decision record.
 | `current-task.json` | current task worktree | authoritative task binding | bounded validated input |
 
 The federation graph, plan, journal, apply result, receipt, and reconciliation
-never become an authority for native Codex or CC-Panes state. Mutations continue
+never become an authority for native Codex or PaneForge state. Mutations continue
 to route through the official owner operation.
 
 ## Component Boundaries
@@ -101,7 +101,7 @@ Owns:
 - Codex thread identity syntax;
 - path and identity privacy projection;
 - session artifact schemas;
-- CC-Panes snapshot validation and freshness classification;
+- PaneForge snapshot validation and freshness classification;
 - project attribution and graph construction;
 - final artifact diagnostics;
 - current-task file safety.
@@ -110,7 +110,7 @@ Does not own:
 
 - App Server transport;
 - name or pin execution;
-- CC-Panes live state collection;
+- PaneForge live state collection;
 - sidebar host mutation.
 
 ### App Server adapter
@@ -182,7 +182,7 @@ The projection rules are type-specific:
 The projection covers, at minimum:
 
 - thread IDs from SQLite rows, rollout metadata, filenames, delegation, task
-  binding, and CC-Panes references;
+  binding, and PaneForge references;
 - `cwdRaw`, `cwdNorm`, rollout paths, source database paths, task-context paths,
   project paths, and evidence paths;
 - `originator`, source labels, titles, summaries, and previews;
@@ -253,22 +253,22 @@ identity.
 
 ## Snapshot Freshness and Automatic Eligibility
 
-### CC-Panes snapshot lifecycle
+### PaneForge snapshot lifecycle
 
-The CC-Panes snapshot contract gains a normalized Session lifecycle field:
+The PaneForge snapshot contract gains a normalized Session lifecycle field:
 
 ```ts
-type CcPanesSessionLifecycle = "active" | "historical" | "unknown";
+type PaneForgeSessionLifecycle = "active" | "historical" | "unknown";
 ```
 
-The snapshot producer derives this field from official CC-Panes state. The hooks
+The snapshot producer derives this field from official PaneForge state. The hooks
 repository validates but does not invent or upgrade it from title or timestamp
 proximity.
 
 The federation graph records a first-class source state:
 
 ```ts
-interface FederationCcPanesSourceState {
+interface FederationPaneForgeSourceState {
   availability: "missing" | "present";
   freshness: "fresh" | "stale" | "future" | "unknown";
   generatedAt: string | null;
@@ -282,7 +282,7 @@ Each concrete Codex thread node separately records
 
 - a snapshot is present;
 - its timestamp is within the configured maximum age and future-skew bounds;
-- the relevant Codex thread is joined by explicit IDs to a CC-Panes Session
+- the relevant Codex thread is joined by explicit IDs to a PaneForge Session
   whose normalized lifecycle is `active`;
 - the Session project exactly matches the graph project;
 - the linked thread and graph node are concrete rather than inferred.
@@ -294,7 +294,7 @@ diagnostic evidence only.
 ### Explicit selection
 
 An explicit `--thread-id` may bypass missing, stale, future, historical, or
-unknown CC-Panes automatic-selection evidence. It does not bypass:
+unknown PaneForge automatic-selection evidence. It does not bypass:
 
 - concrete graph membership;
 - active user-thread storage eligibility;
@@ -561,7 +561,7 @@ Changed schemas:
 | Codex session index | `hooks.codex-session-index/v3` |
 | Codex session resolution | `hooks.codex-session-resolution/v3` |
 | Session retention manifest | `hooks.codex-session-retention/v2` |
-| CC-Panes session snapshot | `hooks.ccpanes-session-snapshot/v2` |
+| PaneForge session snapshot | `hooks.paneforge-session-snapshot/v2` |
 | Session federation graph | `hooks.session-federation/v2` |
 | Sidebar plan | `hooks.codex-sidebar-plan/v2` |
 | Sidebar apply journal | `hooks.codex-sidebar-apply-journal/v1` |
@@ -593,7 +593,7 @@ Codex rollout/state SQLite (read-only)
   -> core validation and privacy projection
   -> session index v3
   -> federation graph v2
-       + CC-Panes snapshot v2 freshness/lifecycle
+       + PaneForge snapshot v2 freshness/lifecycle
   -> sidebar plan v2
        + fresh App Server list/read
        + fresh App host before snapshot
@@ -625,8 +625,8 @@ The core does not import the App Server adapter or sidebar modules.
 | Unsafe raw index field | omit/skip according to field authority; emit typed diagnostic | fix source or regenerate |
 | `threadHistoryDb` missing/unreadable | availability diagnostic only | no session impact |
 | current-task path swap | fail `read-failed` | restore stable regular file and retry |
-| stale/future CC-Panes snapshot | disable automatic selection | collect v2 snapshot or use explicit thread selection |
-| historical/unknown CC-Panes Session | disable automatic selection | explicit selection with live checks |
+| stale/future PaneForge snapshot | disable automatic selection | collect v2 snapshot or use explicit thread selection |
+| historical/unknown PaneForge Session | disable automatic selection | explicit selection with live checks |
 | fallback thread cwd/source conflict | reject candidate/action | rebuild graph or select correct thread |
 | journal prepare/update failure | stop before next mutation | repair output path and resume |
 | timeout/transport loss after dispatch | journal and result `unknown` | explicit fresh-client apply reconciliation |
@@ -656,7 +656,7 @@ Each hardening concern starts with a focused failing test before implementation.
    and CLI tests.
 6. A path swap between pre-`lstat`, open handle, and post-`lstat` fails closed.
 7. A normal stable current-task file still reads and validates.
-8. Stale, future, historical, and unknown CC-Panes snapshot states cannot grant
+8. Stale, future, historical, and unknown PaneForge snapshot states cannot grant
    automatic sidebar eligibility.
 9. A fresh snapshot with an explicitly joined active Session can grant automatic
    eligibility.
@@ -668,7 +668,7 @@ Each hardening concern starts with a focused failing test before implementation.
 2. A fallback `thread/read` with non-CLI source is rejected.
 3. The same live checks apply during plan, apply before-state, and post-write
    observation.
-4. Explicit selection bypasses CC-Panes freshness only, not live scope, source,
+4. Explicit selection bypasses PaneForge freshness only, not live scope, source,
    project relation, storage, or snapshot freshness.
 5. Journal `prepared` exists before client initialization and before any
    `setThreadName` call.
@@ -704,7 +704,7 @@ Each hardening concern starts with a focused failing test before implementation.
 - `tests/codex-session-cli.test.ts`
 - `tests/session-federation.test.ts`
 - `tests/session-federation-artifact.test.ts`
-- `tests/ccpanes-session-snapshot.test.ts`
+- `tests/paneforge-session-snapshot.test.ts`
 - `tests/codex-app-server-client.test.ts`
 - `tests/codex-sidebar.test.ts`
 
@@ -751,7 +751,7 @@ Contains only the core-owned concern:
 - shared thread identity owner;
 - complete artifact privacy projection and typed diagnostics;
 - index/resolution/retention schema updates;
-- CC-Panes snapshot lifecycle/freshness contract;
+- PaneForge snapshot lifecycle/freshness contract;
 - federation v2 eligibility;
 - current-task handle identity;
 - `threadHistoryDb` availability-only behavior;
@@ -777,7 +777,7 @@ Stop implementation and return for design review when:
 
 - official Codex protocol behavior contradicts the assumed name-set or
   `thread/read` contract;
-- official CC-Panes state cannot provide a trustworthy normalized active versus
+- official PaneForge state cannot provide a trustworthy normalized active versus
   historical lifecycle;
 - a platform cannot expose stable current-task file identity;
 - durable journal replacement cannot be completed before side effects;
@@ -795,7 +795,7 @@ Known residual risk after this design:
 - explicit selection intentionally permits controlled handling of historical
   threads, but only after current App Server and host-state validation;
 - the bridge remains a derived federation layer, not native shared storage
-  between Codex App, Codex CLI, and CC-Panes.
+  between Codex App, Codex CLI, and PaneForge.
 
 ## Delivery Order
 

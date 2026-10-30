@@ -12,7 +12,7 @@ export interface HookWriteRestoreEntry {
 }
 
 export interface HookWriteRestoreReport {
-  schema: 'ccpanes.hook-write-restore.v1';
+  schema: 'paneforge.hook-write-restore.v1';
   mode: 'guarded-restore';
   createdAt: string;
   applyReportPath: string;
@@ -32,9 +32,9 @@ export interface CreateHookWriteRestoreInput {
 const forbiddenRestoreOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeRestoreOutDir(outDir: string): void {
@@ -72,7 +72,7 @@ export async function createHookWriteRestore(input: CreateHookWriteRestoreInput)
   if (input.allowRoots.length === 0) throw new Error('missing --allow-root');
 
   const applyReport = asRecord(JSON.parse(await fs.readFile(input.applyReportPath, 'utf8')));
-  if (applyReport.schema !== 'ccpanes.hook-write-apply.v1') throw new Error('invalid apply report: schema');
+  if (applyReport.schema !== 'paneforge.hook-write-apply.v1') throw new Error('invalid apply report: schema');
   if (applyReport.mode !== 'guarded-apply') throw new Error('invalid apply report: mode');
   if (applyReport.passed !== true) throw new Error('invalid apply report: passed must be true');
 
@@ -110,7 +110,7 @@ export async function createHookWriteRestore(input: CreateHookWriteRestoreInput)
   }
 
   return {
-    schema: 'ccpanes.hook-write-restore.v1',
+    schema: 'paneforge.hook-write-restore.v1',
     mode: 'guarded-restore',
     createdAt: input.now ?? new Date().toISOString(),
     applyReportPath: input.applyReportPath,

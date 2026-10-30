@@ -25,7 +25,7 @@ CLI router
 - `src/cli/hook.ts`、`src/hook-runner.ts`、`src/hook-decision-audit.ts`、`src/post-tool-audit.ts`、`src/session-lifecycle.ts`：hook 拦截、授权、快照/追加审计和生命周期输出
 - `src/atomic-file.ts`、`src/runtime-deployment.ts`：以成熟进程锁串行化审计和部署，校验 clean build 与完整 package payload，保存不可变 release，通过稳定启动器和原子 `current.json` 指针切换、恢复及回滚
 - `src/agents-entry.ts`、`src/project-bootstrap.ts`：AGENTS.md 托管块和项目初始化
-- `src/codex-session-*.ts`、`src/codex-sidebar*.ts`、`src/ccpanes-session-snapshot.ts`、`src/session-federation*.ts`：会话桥接、索引和侧边栏归因
+- `src/codex-session-*.ts`、`src/codex-sidebar*.ts`、`src/paneforge-session-snapshot.ts`、`src/session-federation*.ts`：会话桥接、索引和侧边栏归因
 - `src/hook-install-plan.ts`、`src/hook-package*.ts`、`src/hook-apply-plan.ts`、`src/hook-write-*.ts`、`src/hook-production-readiness.ts`、`src/hook-go-live-approval.ts`、`src/hook-final-runbook.ts`、`src/production-toolkit.ts`、`src/acceptance*.ts`：发布、审批、写入和验收产物
 
 ## 命令流
@@ -50,9 +50,9 @@ external event
 
 1. `cli.ts` 只保留入口和 handler registry；命令族解析放在 `src/cli/*.ts`，领域规则继续回到 owner 模块。
 2. 规则、状态和路径判断都回到 owner 模块。
-3. `dist/`、`live/`、`.tmp-smoke/`、`/.ccpanes-task/` 这类目录属于运行产物或状态边界，不手改成源码。
+3. `dist/`、`live/`、`.tmp-smoke/`、`/.paneforge-task/` 这类目录属于运行产物或状态边界，不手改成源码。
 4. 任何 repo/live 同步先在 repo 走 `npm run verify`，再走 live 的只读一致性校验。
 5. Codex MCP 安装必须同时覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`；工具 matcher 至少覆盖 `apply_patch`、`Bash` 与 FastCtx 的 `inspect_local_file`、`grep`、`glob`、`replace`。
-6. `archive` 默认继续阻断实现写入；只有当前可信 CLI、精确任务路径和单命令语法同时匹配时，才允许读取 `verify-acceptance`、定向写入 `.ccpanes-task/acceptance.json`，或将同一 task 从 `archive` 回退到 `verify`。该例外不得开启 `build`、切换 task 或覆盖 project policy block。
+6. `archive` 默认继续阻断实现写入；只有当前可信 CLI、精确任务路径和单命令语法同时匹配时，才允许读取 `verify-acceptance`、定向写入 `.paneforge-task/acceptance.json`，或将同一 task 从 `archive` 回退到 `verify`。该例外不得开启 `build`、切换 task 或覆盖 project policy block。
 7. 运行时身份是证据，不是授权旁路。`runtimeTaskHeadStatus=mismatch` 明确表示当前进程加载的 commit 与 task HEAD 不同，必须重启到正确版本后再验收。
 8. PreToolUse / PermissionRequest 的 `*-audit.json` 保持最新快照兼容；同名 `*.jsonl` 是 append-only 决策历史。二者都记录 runtime identity，但身份不改变既有 allow/deny 语义。

@@ -19,7 +19,7 @@ export interface HookWritePreviewEntry {
 }
 
 export interface HookWritePreview {
-  schema: 'ccpanes.hook-write-preview.v1';
+  schema: 'paneforge.hook-write-preview.v1';
   mode: 'dry-run-write-preview';
   createdAt: string;
   approvalCheckPath: string;
@@ -37,9 +37,9 @@ export interface CreateHookWritePreviewInput {
 const forbiddenWritePreviewOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeWritePreviewOutDir(outDir: string): void {
@@ -74,15 +74,15 @@ function choosePatch(configPath: string, patches: { path: string; text: string }
   if (normalized.includes('.codex')) {
     return patches.find((patch) => path.basename(patch.path).toLowerCase().includes('codex'))?.text ?? patches[0]?.text ?? '';
   }
-  if (normalized.includes('.cc-panes') || normalized.includes('ccpanes')) {
-    return patches.find((patch) => path.basename(patch.path).toLowerCase().includes('ccpanes'))?.text ?? patches[0]?.text ?? '';
+  if (normalized.includes('.paneforge') || normalized.includes('paneforge')) {
+    return patches.find((patch) => path.basename(patch.path).toLowerCase().includes('paneforge'))?.text ?? patches[0]?.text ?? '';
   }
   return patches[0]?.text ?? '';
 }
 
 function createAfterText(before: string, patch: string): string {
   const separator = before.endsWith('\n') ? '\n' : '\n\n';
-  return `${before}${separator}# ccpanes-hook-preview:begin\n${patch.trimEnd()}\n# ccpanes-hook-preview:end\n`;
+  return `${before}${separator}# paneforge-hook-preview:begin\n${patch.trimEnd()}\n# paneforge-hook-preview:end\n`;
 }
 
 function createSimpleDiff(configPath: string, before: string, after: string): string {
@@ -102,12 +102,12 @@ function createSimpleDiff(configPath: string, before: string, after: string): st
 export async function createHookWritePreview(input: CreateHookWritePreviewInput): Promise<HookWritePreview> {
   assertSafeWritePreviewOutDir(input.outDir);
   const approvalCheck = asRecord(JSON.parse(await fs.readFile(input.approvalCheckPath, 'utf8')));
-  if (approvalCheck.schema !== 'ccpanes.hook-approval-check.v1') throw new Error('invalid approval check: schema');
+  if (approvalCheck.schema !== 'paneforge.hook-approval-check.v1') throw new Error('invalid approval check: schema');
   if (approvalCheck.passed !== true) throw new Error('invalid approval check: passed must be true');
   const applyPlanPath = typeof approvalCheck.applyPlanPath === 'string' ? approvalCheck.applyPlanPath : '';
   if (!applyPlanPath) throw new Error('invalid approval check: applyPlanPath');
   const applyPlan = asRecord(JSON.parse(await fs.readFile(applyPlanPath, 'utf8')));
-  if (applyPlan.schema !== 'ccpanes.hook-apply-plan.v1') throw new Error('invalid apply plan: schema');
+  if (applyPlan.schema !== 'paneforge.hook-apply-plan.v1') throw new Error('invalid apply plan: schema');
 
   await fs.rm(input.outDir, { recursive: true, force: true });
   await fs.mkdir(path.join(input.outDir, 'before'), { recursive: true });
@@ -149,7 +149,7 @@ export async function createHookWritePreview(input: CreateHookWritePreviewInput)
   }
 
   const backupManifest = {
-    schema: 'ccpanes.hook-backup-manifest.v1',
+    schema: 'paneforge.hook-backup-manifest.v1',
     mode: 'dry-run-preview',
     createdAt: input.now ?? new Date().toISOString(),
     entries: backupEntries
@@ -157,7 +157,7 @@ export async function createHookWritePreview(input: CreateHookWritePreviewInput)
   previewArtifacts.unshift(await writeArtifact(path.join(input.outDir, 'backup-manifest.json'), `${JSON.stringify(backupManifest, null, 2)}\n`, 'backup-manifest'));
 
   const preview: HookWritePreview = {
-    schema: 'ccpanes.hook-write-preview.v1',
+    schema: 'paneforge.hook-write-preview.v1',
     mode: 'dry-run-write-preview',
     createdAt: input.now ?? new Date().toISOString(),
     approvalCheckPath: input.approvalCheckPath,

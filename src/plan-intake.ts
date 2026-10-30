@@ -5,7 +5,7 @@ import { classifyWorkflowProfile, type WorkflowProfileResult } from './workflow-
 
 export type PlanIntakePolicyPreviewStatus = 'would_capture' | 'would_clear' | 'skipped';
 
-export const PLAN_LIFECYCLE_EVENT_SCHEMA = 'ccpanes.plan-lifecycle-event.v1' as const;
+export const PLAN_LIFECYCLE_EVENT_SCHEMA = 'paneforge.plan-lifecycle-event.v1' as const;
 
 export interface PlanIntakePolicyPreviewAction {
   status: PlanIntakePolicyPreviewStatus;
@@ -36,7 +36,7 @@ export interface PlanIntakeInput {
 }
 
 export interface PlanIntakeResult {
-  schema: 'ccpanes.plan-intake.v1';
+  schema: 'paneforge.plan-intake.v1';
   mode: 'dry-run';
   projectRoot: string;
   changed: false;
@@ -203,7 +203,7 @@ export function createPlanIntake(input: PlanIntakeInput): PlanIntakeResult {
     changedPaths: input.changedPaths
   });
   return {
-    schema: 'ccpanes.plan-intake.v1',
+    schema: 'paneforge.plan-intake.v1',
     mode: 'dry-run',
     projectRoot: input.projectRoot,
     changed: false,

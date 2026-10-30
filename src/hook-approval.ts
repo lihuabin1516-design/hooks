@@ -4,7 +4,7 @@ import path from 'node:path';
 import { isPathInside } from './paths.js';
 
 export interface HookApproval {
-  schema: 'ccpanes.hook-approval.v1';
+  schema: 'paneforge.hook-approval.v1';
   approved: boolean;
   applyPlanSha256: string;
   releaseGateSha256: string;
@@ -32,7 +32,7 @@ export interface HookApprovalConfigSnapshot {
 }
 
 export interface HookApprovalCheckReport {
-  schema: 'ccpanes.hook-approval-check.v1';
+  schema: 'paneforge.hook-approval-check.v1';
   mode: 'approval-preflight';
   createdAt: string;
   applyPlanPath: string;
@@ -51,9 +51,9 @@ export interface CheckHookApprovalInput {
 const forbiddenApprovalOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function sha256Buffer(bytes: Buffer): string {
@@ -113,7 +113,7 @@ export async function checkHookApproval(input: CheckHookApprovalInput): Promise<
   const checks: HookApprovalCheck[] = [];
   const failures: string[] = [];
 
-  addCheck(checks, 'approval schema', approval.schema === 'ccpanes.hook-approval.v1', `schema=${approval.schema}`);
+  addCheck(checks, 'approval schema', approval.schema === 'paneforge.hook-approval.v1', `schema=${approval.schema}`);
   addCheck(checks, 'approval intent', approval.approved === true, `approved=${approval.approved}`);
 
   const actualApplyPlanSha256 = sha256Buffer(Buffer.from(applyPlanText, 'utf8'));
@@ -160,7 +160,7 @@ export async function checkHookApproval(input: CheckHookApprovalInput): Promise<
   }
 
   return {
-    schema: 'ccpanes.hook-approval-check.v1',
+    schema: 'paneforge.hook-approval-check.v1',
     mode: 'approval-preflight',
     createdAt: now,
     applyPlanPath: input.applyPlanPath,

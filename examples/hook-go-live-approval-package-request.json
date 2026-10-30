@@ -1,7 +1,7 @@
 {
   "command": "create-go-live-approval-package",
-  "readiness": "./examples/example-task/.ccpanes-task/production-readiness.json",
-  "outDir": "./examples/example-task/.ccpanes-task/go-live-approval-package",
+  "readiness": "./examples/example-task/.paneforge-task/production-readiness.json",
+  "outDir": "./examples/example-task/.paneforge-task/go-live-approval-package",
   "approvedBy": "AI001",
   "approvalNote": "manual authorization approved",
   "upstreamHook": "C:/Users/AI001/skills-hub/bin/skills-hub-hook.exe",

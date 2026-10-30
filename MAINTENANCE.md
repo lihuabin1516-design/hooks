@@ -5,9 +5,9 @@ This file collects operational details that do not belong in the public README.
 ## Authority and boundaries
 
 - Source repo: `{workspace-root}\tool\repos\hooks`
-- Live runtime: `{workspace-root}\tool\experiments\ccpanes-task-probe`
-- Task state: `<project>\.ccpanes-task`
-- User configs: `{user-home}\.codex`, `{user-home}\.cc-panes`
+- Live runtime: `{workspace-root}\tool\experiments\paneforge-task-probe`
+- Task state: `<project>\.paneforge-task`
+- User configs: `{user-home}\.codex`, `{user-home}\.paneforge`
 - Upstream hook executable: `{user-home}\skills-hub\bin\skills-hub-hook.exe`
 - FastCtx executable: `{user-home}\.fastctx\bin\fastctx.exe`
 
@@ -28,16 +28,16 @@ git status --short
 Live runtime:
 
 ```powershell
-cd {workspace-root}\tool\experiments\ccpanes-task-probe
+cd {workspace-root}\tool\experiments\paneforge-task-probe
 npm run verify
 node dist/src/cli.js verify-installed-hooks `
   --hooks-json {user-home}\.codex\hooks.json `
-  --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe `
-  --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits `
+  --prototype-root {workspace-root}\tool\experiments\paneforge-task-probe `
+  --audit-root {workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits `
   --config {user-home}\.codex\config.toml
 node dist/src/cli.js verify-live-consistency `
   --repo-root {workspace-root}\tool\repos\hooks `
-  --live-root {workspace-root}\tool\experiments\ccpanes-task-probe
+  --live-root {workspace-root}\tool\experiments\paneforge-task-probe
 ```
 
 ## Sync flow

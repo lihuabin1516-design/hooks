@@ -12,7 +12,7 @@ export interface HookPackageFile {
 }
 
 export interface HookPackageManifest {
-  schema: 'ccpanes.hook-package-manifest.v1';
+  schema: 'paneforge.hook-package-manifest.v1';
   mode: 'review-only';
   createdAt: string;
   target: HookInstallTarget;
@@ -23,7 +23,7 @@ export interface HookPackageManifest {
 }
 
 export interface HookRollbackPlan {
-  schema: 'ccpanes.hook-rollback-plan.v1';
+  schema: 'paneforge.hook-rollback-plan.v1';
   mode: 'manual-rollback';
   createdAt: string;
   target: HookInstallTarget;
@@ -44,9 +44,9 @@ export interface CreateHookPackageInput {
 const forbiddenPackageOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafePackageOutDir(outDir: string): void {
@@ -70,7 +70,7 @@ async function writeTextFile(filePath: string, text: string, kind: HookPackageFi
 function createRollbackPlan(installPlan: HookInstallPlan, now: string): HookRollbackPlan {
   const configPaths = installPlan.proposedConfigChanges.map((change) => change.configPath);
   return {
-    schema: 'ccpanes.hook-rollback-plan.v1',
+    schema: 'paneforge.hook-rollback-plan.v1',
     mode: 'manual-rollback',
     createdAt: now,
     target: installPlan.target,
@@ -87,7 +87,7 @@ function createRollbackPlan(installPlan: HookInstallPlan, now: string): HookRoll
       'npm run typecheck',
       'npm run build',
       'npm run smoke',
-      'hook-shadow synthetic event returns ccpanes.hook-shadow-audit.v1'
+      'hook-shadow synthetic event returns paneforge.hook-shadow-audit.v1'
     ]
   };
 }
@@ -136,7 +136,7 @@ export async function createHookPackage(input: CreateHookPackageInput): Promise<
   files.push(await writeTextFile(path.join(input.outDir, 'ACCEPTANCE-CHECKLIST.md'), createChecklist(installPlan), 'acceptance-checklist'));
 
   const manifest: HookPackageManifest = {
-    schema: 'ccpanes.hook-package-manifest.v1',
+    schema: 'paneforge.hook-package-manifest.v1',
     mode: 'review-only',
     createdAt: now,
     target: input.target,

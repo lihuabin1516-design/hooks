@@ -14,7 +14,7 @@ function sha256Text(text: string): string {
 async function writeApplyReport(configPath: string, backupPath: string, before: string, after: string): Promise<string> {
   const reportPath = path.join(tempRoot, 'hook-write-apply.json');
   await fs.writeFile(reportPath, `${JSON.stringify({
-    schema: 'ccpanes.hook-write-apply.v1',
+    schema: 'paneforge.hook-write-apply.v1',
     mode: 'guarded-apply',
     createdAt: '2026-08-06T00:00:00.000Z',
     approvalCheckPath: path.join(tempRoot, 'approval-check.json'),
@@ -34,7 +34,7 @@ async function writeApplyReport(configPath: string, backupPath: string, before: 
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-write-restore-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-write-restore-'));
 });
 
 afterEach(async () => {
@@ -62,7 +62,7 @@ describe('createHookWriteRestore', () => {
       now: '2026-08-06T00:00:01.000Z'
     });
 
-    expect(report.schema).toBe('ccpanes.hook-write-restore.v1');
+    expect(report.schema).toBe('paneforge.hook-write-restore.v1');
     expect(report.mode).toBe('guarded-restore');
     expect(report.passed).toBe(true);
     expect(report.entries).toHaveLength(1);

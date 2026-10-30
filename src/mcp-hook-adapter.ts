@@ -16,7 +16,7 @@ export type McpHookCommand = typeof MCP_HOOK_COMMANDS[number];
 type CliRunner = typeof runCli;
 
 function runtimeFailureOutput(command: McpHookCommand, error: unknown): string {
-  const message = `CC-Panes hook runtime failed: ${error instanceof Error ? error.message : String(error)}`;
+  const message = `PaneForge hook runtime failed: ${error instanceof Error ? error.message : String(error)}`;
   if (command === 'hook-enforce') {
     return `${JSON.stringify({
       hookSpecificOutput: {

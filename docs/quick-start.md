@@ -66,7 +66,7 @@ Get-ChildItem -Recurse (Join-Path $demoRoot 'audits')
 ```
 
 You should see `deny`, and the reason should contain
-`ccpanes-task-probe: project_policy_block:plan_block_command`.
+`paneforge-task-probe: project_policy_block:plan_block_command`.
 
 ## Bootstrap a project
 

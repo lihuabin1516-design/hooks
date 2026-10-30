@@ -8,11 +8,11 @@ import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
 
 function task(phase: CurrentTask['phase'] = 'build'): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
-    projectPath: 'D:\\cc-pane\\project-alpha',
-    worktreeRoot: 'D:\\cc-pane\\project-alpha',
+    workspace: 'paneforge',
+    projectPath: 'D:\\paneforge\\project-alpha',
+    worktreeRoot: 'D:\\paneforge\\project-alpha',
     mainRepoRoot: null,
     branch: null,
     head: null,
@@ -27,24 +27,24 @@ function task(phase: CurrentTask['phase'] = 'build'): CurrentTask {
 
 function staleParentCheck(): TaskBindingCheck {
   return {
-    schema: 'ccpanes.task-binding-check.v1',
+    schema: 'paneforge.task-binding-check.v1',
     status: 'stale-parent-binding',
     reason: 'task_found_above_current_git_root',
-    cwd: 'D:\\cc-pane\\project-alpha',
-    gitRoot: 'D:\\cc-pane\\project-alpha',
-    gitCommonDir: 'D:\\cc-pane\\project-alpha\\.git',
-    canonicalProjectRoot: 'D:\\cc-pane\\project-alpha',
-    taskPath: 'D:\\cc-pane\\.ccpanes-task\\current-task.json',
-    taskFileRoot: 'D:\\cc-pane',
-    declaredProjectPath: 'D:\\cc-pane',
-    declaredWorktreeRoot: 'D:\\cc-pane',
+    cwd: 'D:\\paneforge\\project-alpha',
+    gitRoot: 'D:\\paneforge\\project-alpha',
+    gitCommonDir: 'D:\\paneforge\\project-alpha\\.git',
+    canonicalProjectRoot: 'D:\\paneforge\\project-alpha',
+    taskPath: 'D:\\paneforge\\.paneforge-task\\current-task.json',
+    taskFileRoot: 'D:\\paneforge',
+    declaredProjectPath: 'D:\\paneforge',
+    declaredWorktreeRoot: 'D:\\paneforge',
     declaredMainRepoRoot: null,
     taskId: 'parent-task'
   };
 }
 
 describe('runHookEventDryRun', () => {
-  const trustedCliPath = 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js';
+  const trustedCliPath = 'D:\\paneforge\\project-alpha\\dist\\src\\cli.js';
   const trustedOptions = {
     trustedCliPath,
     processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
@@ -53,10 +53,10 @@ describe('runHookEventDryRun', () => {
   test('allows trusted acceptance verification during archive as a non-write call', async () => {
     const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: {
-        command: `node "${trustedCliPath}" verify-acceptance --input "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`
+        command: `node "${trustedCliPath}" verify-acceptance --input "D:\\paneforge\\project-alpha\\.paneforge-task\\acceptance.json"`
       }
     }, trustedOptions);
 
@@ -72,10 +72,10 @@ describe('runHookEventDryRun', () => {
   test('resolves a relative trusted CLI entrypoint from the task worktree', async () => {
     const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: {
-        command: 'node dist/src/cli.js verify-acceptance --input .ccpanes-task/acceptance.json'
+        command: 'node dist/src/cli.js verify-acceptance --input .paneforge-task/acceptance.json'
       }
     }, trustedOptions);
 
@@ -86,10 +86,10 @@ describe('runHookEventDryRun', () => {
   test('allows trusted acceptance recording to the current task artifact during archive', async () => {
     const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: {
-        command: `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" --check "npm test=pass=ok; 1 test passed" --truth "live-gates=pass=ok" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`
+        command: `node "${trustedCliPath}" record-acceptance --task "D:\\paneforge\\project-alpha\\.paneforge-task\\current-task.json" --artifact "src/a.ts" --check "npm test=pass=ok; 1 test passed" --truth "live-gates=pass=ok" > "D:\\paneforge\\project-alpha\\.paneforge-task\\acceptance.json"`
       }
     }, trustedOptions);
 
@@ -101,10 +101,10 @@ describe('runHookEventDryRun', () => {
   test('allows a trusted same-task archive to verify transition', async () => {
     const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: {
-        command: `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase verify --workspace "cc-pane" --notes "refresh acceptance"`
+        command: `node "${trustedCliPath}" write-current --root "D:\\paneforge\\project-alpha" --task-id "task-alpha" --phase verify --workspace "paneforge" --notes "refresh acceptance"`
       }
     }, trustedOptions);
 
@@ -114,17 +114,17 @@ describe('runHookEventDryRun', () => {
   });
 
   test.each([
-    ['untrusted CLI', 'node "D:\\cc-pane\\project-alpha\\evil-cli.js" verify-acceptance --input "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"'],
-    ['wrong acceptance output', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" > "D:\\cc-pane\\project-alpha\\result.json"`],
-    ['artifact outside worktree', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "D:\\cc-pane\\other\\secret.txt" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`],
-    ['compound acceptance command', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" > "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"; npm install bad`],
-    ['append acceptance redirect', `node "${trustedCliPath}" record-acceptance --task "D:\\cc-pane\\project-alpha\\.ccpanes-task\\current-task.json" --artifact "src/a.ts" >> "D:\\cc-pane\\project-alpha\\.ccpanes-task\\acceptance.json"`],
-    ['archive to build transition', `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build`],
-    ['different task transition', `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "other-task" --phase verify`]
+    ['untrusted CLI', 'node "D:\\paneforge\\project-alpha\\evil-cli.js" verify-acceptance --input "D:\\paneforge\\project-alpha\\.paneforge-task\\acceptance.json"'],
+    ['wrong acceptance output', `node "${trustedCliPath}" record-acceptance --task "D:\\paneforge\\project-alpha\\.paneforge-task\\current-task.json" --artifact "src/a.ts" > "D:\\paneforge\\project-alpha\\result.json"`],
+    ['artifact outside worktree', `node "${trustedCliPath}" record-acceptance --task "D:\\paneforge\\project-alpha\\.paneforge-task\\current-task.json" --artifact "D:\\paneforge\\other\\secret.txt" > "D:\\paneforge\\project-alpha\\.paneforge-task\\acceptance.json"`],
+    ['compound acceptance command', `node "${trustedCliPath}" record-acceptance --task "D:\\paneforge\\project-alpha\\.paneforge-task\\current-task.json" --artifact "src/a.ts" > "D:\\paneforge\\project-alpha\\.paneforge-task\\acceptance.json"; npm install bad`],
+    ['append acceptance redirect', `node "${trustedCliPath}" record-acceptance --task "D:\\paneforge\\project-alpha\\.paneforge-task\\current-task.json" --artifact "src/a.ts" >> "D:\\paneforge\\project-alpha\\.paneforge-task\\acceptance.json"`],
+    ['archive to build transition', `node "${trustedCliPath}" write-current --root "D:\\paneforge\\project-alpha" --task-id "task-alpha" --phase build`],
+    ['different task transition', `node "${trustedCliPath}" write-current --root "D:\\paneforge\\project-alpha" --task-id "other-task" --phase verify`]
   ])('keeps unsafe archive lifecycle command blocked: %s', async (_label, command) => {
     const result = await runHookEventDryRunWithProjectPolicy(task('archive'), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command }
     }, trustedOptions);
@@ -138,15 +138,15 @@ describe('runHookEventDryRun', () => {
     const result = runHookEventDryRun(task(), {
       hook_event_name: 'PreToolUse',
       tool_name: 'Edit',
-      tool_input: { file_path: 'D:/cc-pane/project-alpha/src/a.ts' }
+      tool_input: { file_path: 'D:/paneforge/project-alpha/src/a.ts' }
     });
 
-    expect(result.schema).toBe('ccpanes.hook-runner-result.v1');
+    expect(result.schema).toBe('paneforge.hook-runner-result.v1');
     expect(result.mode).toBe('dry-run');
     expect(result.taskId).toBe('task-alpha');
     expect(result.allowed).toBe(true);
     expect(result.batch.calls).toEqual([
-      { tool: 'edit', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true }
+      { tool: 'edit', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true }
     ]);
     expect(result.dryRun.decisions[0].action).toBe('allow');
     expect(result.dryRun.decisions[0].reason).toBe('build_write_inside_worktree');
@@ -168,7 +168,7 @@ describe('runHookEventDryRun', () => {
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PreToolUse',
       tool_name: 'Edit',
-      tool_input: { file_path: 'D:/cc-pane/project-alpha/src/a.ts' }
+      tool_input: { file_path: 'D:/paneforge/project-alpha/src/a.ts' }
     }, 'project-root-mismatch');
 
     expect(result.allowed).toBe(false);
@@ -179,7 +179,7 @@ describe('runHookEventDryRun', () => {
   test('blocks unproven shell commands when task binding scope is mismatched', () => {
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command: 'npm run build' }
     }, 'stale-parent-binding');
@@ -195,13 +195,13 @@ describe('runHookEventDryRun', () => {
   });
 
   test('allows only exact write-current bootstrap shell command during stale-parent-binding', () => {
-    const trustedCliPath = 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js';
+    const trustedCliPath = 'D:\\paneforge\\project-alpha\\dist\\src\\cli.js';
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: {
-        command: `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build --workspace "project-alpha" --notes "bootstrap"`
+        command: `node "${trustedCliPath}" write-current --root "D:\\paneforge\\project-alpha" --task-id "task-alpha" --phase build --workspace "project-alpha" --notes "bootstrap"`
       }
     }, staleParentCheck(), {
       trustedCliPath,
@@ -213,7 +213,7 @@ describe('runHookEventDryRun', () => {
       action: 'allow',
       reason: 'task_binding_bootstrap_write',
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha'
+      targetPath: 'D:/paneforge/project-alpha'
     });
   });
 
@@ -221,13 +221,13 @@ describe('runHookEventDryRun', () => {
     ['leading newline', '\n'],
     ['trailing newline', '']
   ])('rejects exact write-current bootstrap with %s before shell analyzer trimming', (_label, prefix) => {
-    const trustedCliPath = 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js';
-    const exactCommand = `node "${trustedCliPath}" write-current --root "D:\\cc-pane\\project-alpha" --task-id "task-alpha" --phase build`;
+    const trustedCliPath = 'D:\\paneforge\\project-alpha\\dist\\src\\cli.js';
+    const exactCommand = `node "${trustedCliPath}" write-current --root "D:\\paneforge\\project-alpha" --task-id "task-alpha" --phase build`;
     const command = prefix ? `${prefix}${exactCommand}` : `${exactCommand}\n`;
 
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command }
     }, staleParentCheck(), {
@@ -245,10 +245,10 @@ describe('runHookEventDryRun', () => {
       hook_event_name: 'PreToolUse',
       tool_name: 'apply_patch',
       tool_input: {
-        patch: '*** Begin Patch\n*** Update File: D:/cc-pane/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
+        patch: '*** Begin Patch\n*** Update File: D:/paneforge/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
       }
     }, staleParentCheck(), {
-      trustedCliPath: 'D:\\cc-pane\\project-alpha\\dist\\src\\cli.js',
+      trustedCliPath: 'D:\\paneforge\\project-alpha\\dist\\src\\cli.js',
       processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
     });
 
@@ -260,7 +260,7 @@ describe('runHookEventDryRun', () => {
   test('blocks redirected output from a read-only shell command when task binding scope is mismatched', () => {
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command: 'git status > status.txt' }
     }, 'stale-parent-binding');
@@ -268,7 +268,7 @@ describe('runHookEventDryRun', () => {
     expect(result.allowed).toBe(false);
     expect(result.batch.calls[0]).toMatchObject({
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha/status.txt',
+      targetPath: 'D:/paneforge/project-alpha/status.txt',
       writes: true
     });
     expect(result.dryRun.decisions[0].reason)
@@ -278,7 +278,7 @@ describe('runHookEventDryRun', () => {
   test('blocks a compound shell command with a read-only prefix when task binding scope is mismatched', () => {
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PermissionRequest',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command: 'npm test && npm install foo' }
     }, 'stale-parent-binding');
@@ -286,7 +286,7 @@ describe('runHookEventDryRun', () => {
     expect(result.allowed).toBe(false);
     expect(result.batch.calls[0]).toMatchObject({
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha',
+      targetPath: 'D:/paneforge/project-alpha',
       writes: true
     });
     expect(result.dryRun.decisions[0].reason)
@@ -299,7 +299,7 @@ describe('runHookEventDryRun', () => {
   ])('blocks write-capable read-only prefix variants for %s', (hookEventName, command) => {
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: hookEventName,
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command }
     }, 'stale-parent-binding');
@@ -307,7 +307,7 @@ describe('runHookEventDryRun', () => {
     expect(result.allowed).toBe(false);
     expect(result.batch.calls[0]).toMatchObject({
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha',
+      targetPath: 'D:/paneforge/project-alpha',
       writes: true
     });
     expect(result.dryRun.decisions[0].reason)
@@ -318,7 +318,7 @@ describe('runHookEventDryRun', () => {
     const result = runHookEventWithTaskBindingMismatch(task(), {
       hook_event_name: 'PreToolUse',
       tool_name: 'Read',
-      tool_input: { file_path: 'D:/cc-pane/project-alpha/README.md' }
+      tool_input: { file_path: 'D:/paneforge/project-alpha/README.md' }
     }, 'stale-parent-binding');
 
     expect(result.allowed).toBe(true);

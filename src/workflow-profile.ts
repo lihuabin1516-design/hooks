@@ -45,7 +45,7 @@ export interface WorkflowProfileInput {
 }
 
 export interface WorkflowProfileResult {
-  schema: 'ccpanes.workflow-profile.v1';
+  schema: 'paneforge.workflow-profile.v1';
   route: WorkflowRoute;
   rigor: TaskRiskTier;
   risk: TaskRiskResult;
@@ -58,7 +58,7 @@ export interface WorkflowProfileResult {
   promptLength: number;
   cwd: string | null;
   sourceModel: {
-    name: 'ccpanes.sba-adapted-workflow.v1';
+    name: 'paneforge.sba-adapted-workflow.v1';
     adaptedFrom: string;
     adoptedIdeas: string[];
   };
@@ -93,14 +93,14 @@ const productionChecks: WorkflowCheck[] = [
   ...fullLocalChecks,
   {
     name: 'installed-hooks',
-    command: 'node dist/src/cli.js verify-installed-hooks --hooks-json C:\\Users\\AI001\\.codex\\hooks.json --prototype-root D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe --audit-root D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\live\\dynamic-audits --config C:\\Users\\AI001\\.codex\\config.toml',
+    command: 'node dist/src/cli.js verify-installed-hooks --hooks-json C:\\Users\\AI001\\.codex\\hooks.json --prototype-root D:\\paneforge\\tool\\experiments\\paneforge-task-probe --audit-root D:\\paneforge\\tool\\experiments\\paneforge-task-probe\\live\\dynamic-audits --config C:\\Users\\AI001\\.codex\\config.toml',
     required: true,
     phase: 'production',
     reason: 'checks the real Codex hook registration contract without applying writes'
   },
   {
     name: 'live-consistency',
-    command: 'node dist/src/cli.js verify-live-consistency --repo-root D:\\cc-pane\\tool\\repos\\hooks --live-root D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe',
+    command: 'node dist/src/cli.js verify-live-consistency --repo-root D:\\paneforge\\tool\\repos\\hooks --live-root D:\\paneforge\\tool\\experiments\\paneforge-task-probe',
     required: true,
     phase: 'production',
     reason: 'hash-compares repo source/build surfaces against the live hook runtime after synchronization'
@@ -114,7 +114,7 @@ const productionChecks: WorkflowCheck[] = [
   },
   {
     name: 'reference-repos',
-    command: 'git -C D:\\cc-pane\\tool\\repos\\comet status --short && git -C D:\\cc-pane\\tool\\repos\\fastctx status --short',
+    command: 'git -C D:\\paneforge\\tool\\repos\\comet status --short && git -C D:\\paneforge\\tool\\repos\\fastctx status --short',
     required: true,
     phase: 'audit',
     reason: 'proves reference repositories stayed clean'
@@ -128,7 +128,7 @@ const productionChecks: WorkflowCheck[] = [
   },
   {
     name: 'live-verification',
-    command: 'cd D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe && npm test && npm run typecheck && npm run build && npm run smoke',
+    command: 'cd D:\\paneforge\\tool\\experiments\\paneforge-task-probe && npm test && npm run typecheck && npm run build && npm run smoke',
     required: true,
     phase: 'production',
     reason: 'proves the live hook runtime matches the shipped behavior after synchronization'
@@ -278,7 +278,7 @@ function checksFor(closure: WorkflowClosureProfile): WorkflowCheck[] {
 function gatesFor(route: WorkflowRoute, closure: WorkflowClosureProfile): string[] {
   const gates = [
     'current-task.json remains the task scope authority',
-    '.ccpanes-task/policy.json remains the executable allow/block authority',
+    '.paneforge-task/policy.json remains the executable allow/block authority',
     'task-risk and workflow-profile are advisory; hard writes still go through hook-enforce and permission-enforce'
   ];
   if (route.id === 'project-policy') {
@@ -298,7 +298,7 @@ function gatesFor(route: WorkflowRoute, closure: WorkflowClosureProfile): string
 
 function boundariesFor(route: WorkflowRoute, closure: WorkflowClosureProfile): string[] {
   const boundaries = [
-    'do not modify user-level Codex, Claude, or CC-Panes config without explicit write approval',
+    'do not modify user-level Codex, Claude, or PaneForge config without explicit write approval',
     'do not execute skills-hub-hook.exe as part of ordinary repo maintenance',
     'do not write reference repositories except status/HEAD/hash inspection',
     'keep generated dist/ out of tracked source unless a release artifact explicitly owns it'
@@ -331,7 +331,7 @@ export function classifyWorkflowProfile(input: WorkflowProfileInput): WorkflowPr
   const route = detectRoute(input.prompt, changedPaths, risk);
   const closure = closureFor(route, risk, changedPaths);
   return {
-    schema: 'ccpanes.workflow-profile.v1',
+    schema: 'paneforge.workflow-profile.v1',
     route,
     rigor: risk.tier,
     risk,
@@ -344,7 +344,7 @@ export function classifyWorkflowProfile(input: WorkflowProfileInput): WorkflowPr
     promptLength: input.prompt.length,
     cwd: input.cwd ?? null,
     sourceModel: {
-      name: 'ccpanes.sba-adapted-workflow.v1',
+      name: 'paneforge.sba-adapted-workflow.v1',
       adaptedFrom: 'https://github.com/WoJiSama/skill-based-architecture',
       adoptedIdeas: ['progressive rigor', 'thin-shell routing', 'task closure', 'scenario testing']
     }

@@ -17,11 +17,11 @@ import {
 } from '../src/project-policy.js';
 import type { CurrentTask, HookCall } from '../src/types.js';
 
-function task(worktreeRoot = 'D:/cc-pane/project-alpha', phase: CurrentTask['phase'] = 'build'): CurrentTask {
+function task(worktreeRoot = 'D:/paneforge/project-alpha', phase: CurrentTask['phase'] = 'build'): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: worktreeRoot,
     worktreeRoot,
     mainRepoRoot: null,
@@ -39,7 +39,7 @@ function task(worktreeRoot = 'D:/cc-pane/project-alpha', phase: CurrentTask['pha
 describe('project policy', () => {
   test('validates policy rules and normalizes single-value match aliases', () => {
     const policy = validateProjectPolicy({
-      schema: 'ccpanes.project-policy.v1',
+      schema: 'paneforge.project-policy.v1',
       rules: [{
         id: 'allow-docs-shape',
         effect: 'allow',
@@ -66,7 +66,7 @@ describe('project policy', () => {
 
   test('last matching rule wins for project-local block/open edits', () => {
     const policy = validateProjectPolicy({
-      schema: 'ccpanes.project-policy.v1',
+      schema: 'paneforge.project-policy.v1',
       rules: [
         {
           id: 'block-generated',
@@ -82,7 +82,7 @@ describe('project policy', () => {
         }
       ]
     });
-    const call: HookCall = { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/generated/fixture.ts', writes: true };
+    const call: HookCall = { tool: 'write', targetPath: 'D:/paneforge/project-alpha/generated/fixture.ts', writes: true };
 
     expect(applyProjectPolicyToCall(task(), call, policy)).toMatchObject({
       policyEffect: 'allow',
@@ -92,7 +92,7 @@ describe('project policy', () => {
 
   test('matches shell commands by commandContains', () => {
     const policy = validateProjectPolicy({
-      schema: 'ccpanes.project-policy.v1',
+      schema: 'paneforge.project-policy.v1',
       rules: [{
         id: 'block-custom-shell',
         effect: 'block',
@@ -102,7 +102,7 @@ describe('project policy', () => {
     });
     const call: HookCall = {
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha',
+      targetPath: 'D:/paneforge/project-alpha',
       writes: false,
       command: 'node scripts/publish-artifact.mjs'
     };
@@ -114,17 +114,17 @@ describe('project policy', () => {
   });
 
   test('missing policy file preserves current behavior input', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'ccpanes-policy-'));
+    const root = await mkdtemp(path.join(os.tmpdir(), 'paneforge-policy-'));
 
     await expect(readProjectPolicy(root)).resolves.toBeNull();
   });
 
   test('malformed policy fails closed through validation error', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'ccpanes-policy-'));
-    const policyDir = path.join(root, '.ccpanes-task');
+    const root = await mkdtemp(path.join(os.tmpdir(), 'paneforge-policy-'));
+    const policyDir = path.join(root, '.paneforge-task');
     await mkdir(policyDir, { recursive: true });
     await writeFile(path.join(policyDir, 'policy.json'), JSON.stringify({
-      schema: 'ccpanes.project-policy.v1',
+      schema: 'paneforge.project-policy.v1',
       rules: [{ id: 'bad', effect: 'maybe', reason: 'bad' }]
     }), 'utf8');
 
@@ -149,7 +149,7 @@ describe('project policy', () => {
 
     expect(added.rules).toHaveLength(1);
     expect(disabled.rules[0].enabled).toBe(false);
-    expect(cleared.schema).toBe('ccpanes.project-policy.v1');
+    expect(cleared.schema).toBe('paneforge.project-policy.v1');
     expect(cleared.rules.every((candidate) => candidate.enabled === false)).toBe(true);
   });
 
@@ -167,7 +167,7 @@ describe('project policy', () => {
   });
 
   test('writes policy atomically under the project task directory', async () => {
-    const root = await mkdtemp(path.join(os.tmpdir(), 'ccpanes-policy-'));
+    const root = await mkdtemp(path.join(os.tmpdir(), 'paneforge-policy-'));
     const policy = addProjectPolicyRule(emptyProjectPolicy(), createProjectPolicyRule({
       id: 'block-publish',
       effect: 'block',

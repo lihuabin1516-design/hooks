@@ -1,12 +1,12 @@
-# Codex + CC-Panes Session Federation Design
+# Codex + PaneForge Session Federation Design
 
 ## Goal
 
 Provide one externally governed session view for Codex App, Codex CLI, and
-CC-Panes without replacing any product's state authority. The bridge must:
+PaneForge without replacing any product's state authority. The bridge must:
 
 1. report project-owned sessions separately from merely related sessions;
-2. map Codex thread IDs to CC-Panes Session, Task, and launch records;
+2. map Codex thread IDs to PaneForge Session, Task, and launch records;
 3. choose the correct continuation route for each session;
 4. make selected CLI-backed threads visible in the Codex App native sidebar
    through official App Server naming plus the Codex App host pin operation.
@@ -34,15 +34,15 @@ threads plus one CLI thread. Even this subset is not a semantic ownership
 proof because an external-project evaluation can run with the hooks repository
 as cwd.
 
-The current implementation also defines `source: ccpanes` and
-`scopeMatch: launch-history` but does not ingest CC-Panes launch history,
+The current implementation also defines `source: paneforge` and
+`scopeMatch: launch-history` but does not ingest PaneForge launch history,
 Session, Task, or PTY facts. It therefore cannot express the observed chain:
 
 ```text
 Codex App thread
   -> controller CLI thread
-  -> CC-Panes launch record
-  -> CC-Panes PTY Session and Task
+  -> PaneForge launch record
+  -> PaneForge PTY Session and Task
   -> resumed Codex thread
 ```
 
@@ -52,7 +52,7 @@ Codex App thread
 
 - Codex owns Codex thread identity, rollout history, thread metadata, and
   resume semantics.
-- Official CC-Panes owns Pane, Session, PTY, launch history, and terminal
+- Official PaneForge owns Pane, Session, PTY, launch history, and terminal
   output.
 - Companion Coordinator owns Workflow, Worker, Binding, Outbox, and result
   state.
@@ -61,12 +61,12 @@ Codex App thread
 
 ### Invariants
 
-1. A CC-Panes Session ID is not rewritten into a Codex thread ID.
+1. A PaneForge Session ID is not rewritten into a Codex thread ID.
 2. A derived federation edge never becomes authority for either product.
 3. Direct edits to Codex rollout JSONL or SQLite files are outside the design.
 4. Codex thread naming uses only the official App Server protocol; pinning uses
    the official Codex App host operation.
-5. CC-Panes live facts are imported from an explicit snapshot or adapter
+5. PaneForge live facts are imported from an explicit snapshot or adapter
    response; no token, dynamic port, or private endpoint is persisted.
 6. Default project counts exclude ancestor-only, prompt-only, archived, and
    subagent records.
@@ -76,9 +76,9 @@ Codex App thread
 ### A. Keep cwd-only attribution
 
 Smallest implementation, but it preserves the current over-counting and cannot
-map CC-Panes runtime identities. Rejected.
+map PaneForge runtime identities. Rejected.
 
-### B. Copy CC-Panes and Codex state into one new database
+### B. Copy PaneForge and Codex state into one new database
 
 This would create a competing source of truth, introduce migrations and
 reconciliation risk, and couple the bridge to private persistence layouts.
@@ -121,8 +121,8 @@ Evidence is typed rather than encoded into one enum:
 ```ts
 type SessionEvidence =
   | { kind: "task-binding"; projectPath: string; taskId: string }
-  | { kind: "ccpanes-launch"; projectPath: string; launchId: string }
-  | { kind: "ccpanes-session"; projectPath: string; sessionId: string }
+  | { kind: "paneforge-launch"; projectPath: string; launchId: string }
+  | { kind: "paneforge-session"; projectPath: string; sessionId: string }
   | { kind: "cwd"; relation: "exact" | "descendant" | "ancestor" }
   | { kind: "primary-target"; target: string }
   | { kind: "prompt-mention"; target: string }
@@ -143,13 +143,13 @@ path, and relative SQLite `rollout_path` values against that root. Sources and
 rollout records therefore expose absolute paths and relative rollout rows cannot
 collapse onto an empty normalized key.
 
-### CC-Panes snapshot
+### PaneForge snapshot
 
 The bridge accepts a typed, read-only snapshot:
 
 ```ts
-interface CcPanesSessionSnapshot {
-  schemaVersion: "hooks.ccpanes-session-snapshot/v1";
+interface PaneForgeSessionSnapshot {
+  schemaVersion: "hooks.paneforge-session-snapshot/v1";
   generatedAt: string;
   launches: Array<{
     launchId: string;
@@ -171,12 +171,12 @@ interface CcPanesSessionSnapshot {
 }
 ```
 
-The snapshot can be produced by a Codex App agent using registered CC-Panes
+The snapshot can be produced by a Codex App agent using registered PaneForge
 tools or by a future Companion adapter. The hooks CLI validates the file but
-does not discover or persist CC-Panes credentials.
+does not discover or persist PaneForge credentials.
 
-`sessions[].launchId` is the explicit join key between a CC-Panes launch-history
-record and the PTY Session it created. When the installed CC-Panes inventory
+`sessions[].launchId` is the explicit join key between a PaneForge launch-history
+record and the PTY Session it created. When the installed PaneForge inventory
 cannot establish that join, the value remains `null`; the bridge does not infer
 it from title or timestamp proximity.
 
@@ -184,7 +184,7 @@ it from title or timestamp proximity.
 
 `hooks.session-federation/v1` contains typed nodes and edges:
 
-- nodes: `codex-thread`, `ccpanes-session`, `ccpanes-task`, `ccpanes-launch`;
+- nodes: `codex-thread`, `paneforge-session`, `paneforge-task`, `paneforge-launch`;
 - edges: `resumed-from`, `launched`, `hosts`, `belongs-to-task`,
   `delegated-from`, `controller-for`.
 
@@ -196,10 +196,10 @@ remain explicit and never replace exact identifiers.
 Explicit conflicts are exclusion gates and are evaluated before positive
 attribution:
 
-1. any conflicting primary target, task binding, or CC-Panes launch evidence
+1. any conflicting primary target, task binding, or PaneForge launch evidence
    -> `unrelated`, even when another task/launch item exactly matches;
 2. matched task binding, or a thread ID referenced by an exact-project
-   CC-Panes launch/Session record -> `owned`;
+   PaneForge launch/Session record -> `owned`;
 3. exact/descendant cwd with a compatible primary target -> `supporting`;
 4. prompt-only evidence -> `mentioned`;
 5. ancestor cwd without stronger evidence -> `ambient`;
@@ -240,7 +240,7 @@ Only threads satisfying all of these conditions are selected by default:
 - thread source is `user`;
 - storage is active;
 - App visibility is `readable-hidden`;
-- the thread is linked to a live/recent CC-Panes launch or explicitly selected
+- the thread is linked to a live/recent PaneForge launch or explicitly selected
   by thread ID.
 
 The command opens the installed App Server read-only while building the plan so
@@ -285,7 +285,7 @@ writes are reconciled by re-reading the thread before reporting failure.
 Generated names are bounded and preserve the original title:
 
 ```text
-[CC-Panes] <original title>
+[PaneForge] <original title>
 ```
 
 The bridge does not rename already user-customized threads unless the plan
@@ -305,7 +305,7 @@ Existing commands remain compatible. New or changed commands:
 ```powershell
 node dist/src/cli.js codex-sessions scan `
   --project PROJECT `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --out live/codex-session-index-v2.json
 
 node dist/src/cli.js codex-sessions resolve `
@@ -314,7 +314,7 @@ node dist/src/cli.js codex-sessions resolve `
 
 node dist/src/cli.js codex-sessions graph `
   --project PROJECT `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --out live/session-federation.json
 
 node dist/src/cli.js codex-sessions sidebar-plan `
@@ -339,7 +339,7 @@ names until v2 acceptance is complete.
 
 ## Failure, Recovery, and Rollback
 
-- Missing CC-Panes snapshot: Codex-only indexing continues with a warning.
+- Missing PaneForge snapshot: Codex-only indexing continues with a warning.
 - Invalid snapshot: federation generation fails before output replacement.
 - App Server unavailable: plan generation remains available; name apply reports
   a typed connection failure.
@@ -356,7 +356,7 @@ rewritten.
 ## Privacy and Observability
 
 Artifacts contain IDs, paths, relation evidence, timestamps, and bounded
-titles/summaries. They exclude raw credentials, CC-Panes endpoint data, full
+titles/summaries. They exclude raw credentials, PaneForge endpoint data, full
 transcripts, screenshot payloads, and raw prompts unless a bounded prompt
 excerpt is already part of the existing index contract.
 
@@ -366,7 +366,7 @@ Diagnostics include:
 - excluded-count reasons;
 - edge-confidence distribution;
 - App Server request result and reconciliation state;
-- CC-Panes snapshot age.
+- PaneForge snapshot age.
 
 ## Verification
 
@@ -376,7 +376,7 @@ Required tests:
 2. archived and subagent records require explicit flags;
 3. exact cwd with conflicting primary-target evidence is `unrelated` and stays
    out of default-visible totals;
-4. CC-Panes launch and Session records create deterministic graph edges;
+4. PaneForge launch and Session records create deterministic graph edges;
 5. duplicate snapshots produce identical graph semantics;
 6. malformed or stale snapshots produce typed diagnostics;
 7. sidebar plan includes readable-hidden threads and excludes listed threads;
@@ -399,10 +399,10 @@ Live acceptance uses one selected CLI thread. It verifies:
 ## Delivery Boundaries
 
 This phase changes only the hooks repository and generated `live/` artifacts.
-It does not modify the CC-Panes application, Codex application executable,
+It does not modify the PaneForge application, Codex application executable,
 Codex rollout files, Codex SQLite files directly, global Codex configuration,
 or Companion source repository.
 
-Native display of the CC-Panes PTY itself is represented by its linked Codex
-thread. The PTY Session ID and live status remain CC-Panes-owned metadata shown
+Native display of the PaneForge PTY itself is represented by its linked Codex
+thread. The PTY Session ID and live status remain PaneForge-owned metadata shown
 through the federation graph, not a synthetic Codex thread.

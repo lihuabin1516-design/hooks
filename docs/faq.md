@@ -2,7 +2,7 @@
 
 ## Is this tied to one host?
 
-No. The core model is agent-agnostic. CC-Panes is a compatible host, not the whole project.
+No. The core model is agent-agnostic. PaneForge is a compatible host, not the whole project.
 
 ## What problem does this solve?
 

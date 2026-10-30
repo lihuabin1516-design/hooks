@@ -10,7 +10,7 @@ export interface HookFinalRunbookFile {
 }
 
 export interface HookFinalRunbook {
-  schema: 'ccpanes.hook-final-runbook.v1';
+  schema: 'paneforge.hook-final-runbook.v1';
   mode: 'manual-execution-runbook';
   createdAt: string;
   outDir: string;
@@ -45,9 +45,9 @@ export interface CreateHookFinalRunbookInput {
 const forbiddenRunbookOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeRunbookOutDir(outDir: string): void {
@@ -163,7 +163,7 @@ export async function createHookFinalRunbook(input: CreateHookFinalRunbookInput)
   const now = input.now ?? new Date().toISOString();
   const goLiveText = await fs.readFile(input.goLiveManifestPath, 'utf8');
   const goLive = asRecord(JSON.parse(goLiveText));
-  if (goLive.schema !== 'ccpanes.hook-go-live-approval-package.v1') throw new Error('invalid go-live manifest: schema');
+  if (goLive.schema !== 'paneforge.hook-go-live-approval-package.v1') throw new Error('invalid go-live manifest: schema');
   if (goLive.mode !== 'manual-approval-package') throw new Error('invalid go-live manifest: mode');
   const manualApproval = asRecord(goLive.manualApproval);
   if (manualApproval.approved !== true) throw new Error('manual approval must be approved');
@@ -203,7 +203,7 @@ export async function createHookFinalRunbook(input: CreateHookFinalRunbookInput)
   files.push(await writeTextFile(path.join(input.outDir, 'ROLLBACK-CHECKLIST.md'), createRollbackChecklist(targets), 'rollback-checklist'));
 
   const manifest: HookFinalRunbook = {
-    schema: 'ccpanes.hook-final-runbook.v1',
+    schema: 'paneforge.hook-final-runbook.v1',
     mode: 'manual-execution-runbook',
     createdAt: now,
     outDir: input.outDir,

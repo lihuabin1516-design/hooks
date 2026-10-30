@@ -53,7 +53,7 @@ export {
   type CodexSessionPromptDerivedPathProjection
 } from './codex-session-index-artifact.js';
 
-export type CodexSessionSource = 'codex-app' | 'codex-cli' | 'ccpanes' | 'unknown';
+export type CodexSessionSource = 'codex-app' | 'codex-cli' | 'paneforge' | 'unknown';
 export type CodexThreadSource = 'user' | 'subagent' | 'automation' | 'unknown';
 export type CodexScopeMatch = 'exact' | 'descendant' | 'ancestor' | 'launch-history' | 'prompt-mention' | 'unknown';
 
@@ -132,7 +132,7 @@ function textFromContent(content: unknown): string | null {
   return null;
 }
 
-const TASK_BINDING_MARKER = 'ccpanes-task-probe lifecycle context';
+const TASK_BINDING_MARKER = 'paneforge-task-probe lifecycle context';
 const MAX_LIFECYCLE_BLOCK_LENGTH = 8 * 1024;
 const LIFECYCLE_KEYS = new Set([
   'taskId',
@@ -548,7 +548,7 @@ function isoFromDb(value: unknown): string | null {
 
 function sourceFrom(originator: string | null, source: string | null): CodexSessionSource {
   const joined = `${originator ?? ''} ${source ?? ''}`.toLowerCase();
-  if (joined.includes('ccpanes') || joined.includes('cc-panes')) return 'ccpanes';
+  if (joined.includes('paneforge') || joined.includes('paneforge')) return 'paneforge';
   if (joined.includes('codex desktop') || joined.includes('vscode')) return 'codex-app';
   if (joined.includes('codex-tui') || joined.includes('cli')) return 'codex-cli';
   return 'unknown';
@@ -621,7 +621,7 @@ function deriveSessionProjection(input: {
           projectPathNorm: rawTaskProjectPathNorm
         }
       : null,
-    ccpanesLaunch: null
+    paneforgeLaunch: null
   });
   const primaryTarget = sanitizePromptDerivedPrimaryTarget(rawPrimaryTarget);
   const taskBinding = sanitizeCodexSessionTaskBinding(rawTaskBinding);

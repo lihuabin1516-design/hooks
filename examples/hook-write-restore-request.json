@@ -1,7 +1,7 @@
 {
   "command": "restore-hook-write",
-  "applyReport": "./examples/example-task/.ccpanes-task/hook-write-apply.json",
-  "out": "./examples/example-task/.ccpanes-task/hook-write-restore.json",
+  "applyReport": "./examples/example-task/.paneforge-task/hook-write-apply.json",
+  "out": "./examples/example-task/.paneforge-task/hook-write-restore.json",
   "allowRoots": [
     "./examples/example-task/synthetic-config-root"
   ],

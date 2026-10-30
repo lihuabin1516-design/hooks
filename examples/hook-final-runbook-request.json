@@ -1,7 +1,7 @@
 {
   "command": "create-final-runbook",
-  "goLiveManifest": "./examples/example-task/.ccpanes-task/go-live-approval-package/manifest.json",
-  "outDir": "./examples/example-task/.ccpanes-task/final-runbook",
+  "goLiveManifest": "./examples/example-task/.paneforge-task/go-live-approval-package/manifest.json",
+  "outDir": "./examples/example-task/.paneforge-task/final-runbook",
   "expectedArtifacts": [
     "manifest.json",
     "FINAL-RUNBOOK.md",

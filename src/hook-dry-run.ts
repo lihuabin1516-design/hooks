@@ -4,9 +4,9 @@ import type { CurrentTask, HookCall, HookDryRunDecision } from './types.js';
 const forbiddenRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function isForbiddenPath(targetPath: string): boolean {

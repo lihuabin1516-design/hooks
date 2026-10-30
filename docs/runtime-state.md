@@ -7,10 +7,10 @@
 | 层级 | 路径 | 用途 |
 |---|---|---|
 | 源码仓库 | `{workspace-root}\tool\repos\hooks` | TypeScript 源码、测试、文档和 package 元数据 |
-| live 运行副本 | `{workspace-root}\tool\experiments\ccpanes-task-probe` | 已构建 CLI、全局 hooks、生效验证 |
-| 项目本地任务状态 | `<project>\.ccpanes-task` | 当前 task、policy、bootstrap report |
+| live 运行副本 | `{workspace-root}\tool\experiments\paneforge-task-probe` | 已构建 CLI、全局 hooks、生效验证 |
+| 项目本地任务状态 | `<project>\.paneforge-task` | 当前 task、policy、bootstrap report |
 | 项目接入点 | `<project>\AGENTS.md` | 托管块和项目级接手说明 |
-| 用户级引用 | `%USERPROFILE%\.codex`、`%USERPROFILE%\.cc-panes`、`%USERPROFILE%\.fastctx\bin\fastctx.exe`、`%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe` | 只读核验对象或上游引用 |
+| 用户级引用 | `%USERPROFILE%\.codex`、`%USERPROFILE%\.paneforge`、`%USERPROFILE%\.fastctx\bin\fastctx.exe`、`%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe` | 只读核验对象或上游引用 |
 
 ## 忽略目录
 
@@ -19,8 +19,8 @@
 - `dist/`
 - `live/`
 - `.tmp-smoke/`
-- `/.ccpanes/`
-- `/.ccpanes-task/`
+- `/.paneforge/`
+- `/.paneforge-task/`
 - `node_modules/`
 - `*.log`
 - `.env`、`.env.*`
@@ -58,7 +58,7 @@ permission-enforce-audit.jsonl# append-only PermissionRequest 历史
 post-tool-use-audit.jsonl     # append-only PostToolUse 历史
 ```
 
-决策历史记录 allow/deny、主 reason、target path、task/workspace/worktree、session/turn/tool-use 标识、时间、运行时身份和完整 runner result。每条记录有唯一 `auditId`；历史追加与快照替换之间先写 pending journal，下一次写入会按 `auditId` 补齐未完成事务且不会重复追加。快照根部仍为 `ccpanes.hook-runner-result.v1`，新增的 `auditContext` 只提供证据，不参与裁决。
+决策历史记录 allow/deny、主 reason、target path、task/workspace/worktree、session/turn/tool-use 标识、时间、运行时身份和完整 runner result。每条记录有唯一 `auditId`；历史追加与快照替换之间先写 pending journal，下一次写入会按 `auditId` 补齐未完成事务且不会重复追加。快照根部仍为 `paneforge.hook-runner-result.v1`，新增的 `auditContext` 只提供证据，不参与裁决。
 
 ## 版本化 runtime 部署
 

@@ -2,8 +2,8 @@ node_modules/
 dist/
 live/
 .tmp-smoke/
-/.ccpanes/
-/.ccpanes-task/
+/.paneforge/
+/.paneforge-task/
 /CLAUDE.md
 *.log
 .env

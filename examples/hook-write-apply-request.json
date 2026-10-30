@@ -1,8 +1,8 @@
 {
   "command": "apply-hook-write",
-  "writePreview": "./examples/example-task/.ccpanes-task/hook-write-preview/write-preview.json",
-  "approvalCheck": "./examples/example-task/.ccpanes-task/hook-approval-check.json",
-  "out": "./examples/example-task/.ccpanes-task/hook-write-apply.json",
+  "writePreview": "./examples/example-task/.paneforge-task/hook-write-preview/write-preview.json",
+  "approvalCheck": "./examples/example-task/.paneforge-task/hook-approval-check.json",
+  "out": "./examples/example-task/.paneforge-task/hook-write-apply.json",
   "allowRoots": [
     "./examples/example-task/synthetic-config-root"
   ],

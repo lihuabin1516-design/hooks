@@ -35,7 +35,7 @@ const CODEX_SESSIONS_OPTION_KINDS = {
   '--thread-history-db': 'value',
   '--project': 'value',
   '--task-context': 'value',
-  '--ccpanes-snapshot': 'value',
+  '--paneforge-snapshot': 'value',
   '--out': 'value',
   '--json': 'boolean',
   '--include-archived': 'boolean',
@@ -52,7 +52,7 @@ const CODEX_SESSIONS_COMMON_OPTIONS = new Set<CodexSessionsOption>([
   '--thread-history-db',
   '--project',
   '--task-context',
-  '--ccpanes-snapshot'
+  '--paneforge-snapshot'
 ]);
 
 export interface CodexSessionsCommonOptions {
@@ -169,10 +169,10 @@ export function parseCodexSessionsOptions(
     threadHistoryDb: values.get('--thread-history-db') ?? null,
     project: values.get('--project') ?? null,
     taskContextPath: values.get('--task-context') ?? null,
-    snapshotPath: values.get('--ccpanes-snapshot') ?? null
+    snapshotPath: values.get('--paneforge-snapshot') ?? null
   };
   if (common.snapshotPath && !common.project) {
-    throw new Error('--ccpanes-snapshot requires --project');
+    throw new Error('--paneforge-snapshot requires --project');
   }
   if (action === 'resolve') {
     if (!common.project) throw new Error('missing --project');
@@ -251,7 +251,7 @@ export function parseHandoffGenerateOptions(args: string[]): HandoffGenerateOpti
   const project = values.get('--project');
   if (!project) throw new Error('missing --project');
   const mode = values.get('--mode');
-  if (mode !== 'ccpanes-worker' && mode !== 'codex-app-visual') {
+  if (mode !== 'paneforge-worker' && mode !== 'codex-app-visual') {
     throw new Error(`invalid handoff mode: ${mode ?? null}`);
   }
   return {
@@ -293,7 +293,7 @@ export function parseVerificationCheck(value: string): VerificationCheckInput {
 }
 
 export function parseHookInstallTarget(value: string | null): HookInstallTarget {
-  if (value === 'codex' || value === 'ccpanes' || value === 'both') return value;
+  if (value === 'codex' || value === 'paneforge' || value === 'both') return value;
   throw new Error(`invalid hook install target: ${value}`);
 }
 
@@ -317,12 +317,12 @@ export function formatPreToolUseDeny(result: HookRunnerResult): string {
   const blocked = result.dryRun.decisions.find((decision: HookRunnerResult['dryRun']['decisions'][number]) => decision.action === 'block');
   const reason = blocked
     ? `${blocked.reason}${blocked.targetPath ? `: ${blocked.targetPath}` : ''}`
-    : 'blocked by ccpanes task probe';
+    : 'blocked by paneforge task probe';
   return `${JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
-      permissionDecisionReason: `ccpanes-task-probe: ${reason}`
+      permissionDecisionReason: `paneforge-task-probe: ${reason}`
     }
   }, null, 2)}\n`;
 }
@@ -331,13 +331,13 @@ export function formatPermissionRequestDeny(result: HookRunnerResult): string {
   const blocked = result.dryRun.decisions.find((decision: HookRunnerResult['dryRun']['decisions'][number]) => decision.action === 'block');
   const reason = blocked
     ? `${blocked.reason}${blocked.targetPath ? `: ${blocked.targetPath}` : ''}`
-    : 'blocked by ccpanes task probe';
+    : 'blocked by paneforge task probe';
   return `${JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PermissionRequest',
       decision: {
         behavior: 'deny',
-        message: `ccpanes-task-probe: ${reason}`
+        message: `paneforge-task-probe: ${reason}`
       }
     }
   }, null, 2)}\n`;
@@ -373,7 +373,7 @@ export async function readStdin(): Promise<string> {
 
 export function projectPolicyCliResult(command: string, root: string, changed: boolean, policy: unknown, extra: Record<string, unknown> = {}): string {
   return `${JSON.stringify({
-    schema: 'ccpanes.project-policy-cli-result.v1',
+    schema: 'paneforge.project-policy-cli-result.v1',
     command,
     path: projectPolicyPath(root),
     changed,

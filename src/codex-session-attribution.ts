@@ -103,8 +103,8 @@ export function assertCodexSessionProjectOwnerInvariant(
 
 export type SessionEvidence =
   | { kind: 'task-binding'; projectPath: string; taskId: string }
-  | { kind: 'ccpanes-launch'; projectPath: string; launchId: string }
-  | { kind: 'ccpanes-session'; projectPath: string; sessionId: string }
+  | { kind: 'paneforge-launch'; projectPath: string; launchId: string }
+  | { kind: 'paneforge-session'; projectPath: string; sessionId: string }
   | { kind: 'cwd'; relation: 'exact' | 'descendant' | 'ancestor' }
   | { kind: 'primary-target'; target: string }
   | { kind: 'prompt-mention'; target: string }
@@ -121,7 +121,7 @@ export interface AttributionInput {
     taskId: string;
     projectPathNorm: string;
   } | null;
-  ccpanesLaunch: {
+  paneforgeLaunch: {
     launchId: string;
     projectPathNorm: string;
   } | null;
@@ -246,11 +246,11 @@ export function classifyProjectRelation(
       taskId: input.taskBinding.taskId
     });
   }
-  if (input.ccpanesLaunch) {
+  if (input.paneforgeLaunch) {
     evidence.push({
-      kind: 'ccpanes-launch',
-      projectPath: input.ccpanesLaunch.projectPathNorm,
-      launchId: input.ccpanesLaunch.launchId
+      kind: 'paneforge-launch',
+      projectPath: input.paneforgeLaunch.projectPathNorm,
+      launchId: input.paneforgeLaunch.launchId
     });
   }
 
@@ -274,12 +274,12 @@ export function classifyProjectRelation(
   );
   const launchRelation = classifyExplicitPath(
     projectNorm,
-    input.ccpanesLaunch?.projectPathNorm ?? null
+    input.paneforgeLaunch?.projectPathNorm ?? null
   );
   const ownershipReasons: string[] = [];
   if (taskRelation === 'exact') ownershipReasons.push('matched task binding');
   if (launchRelation === 'exact') {
-    ownershipReasons.push('matched CC-Panes launch');
+    ownershipReasons.push('matched PaneForge launch');
   }
 
   const conflictReasons: string[] = [];
@@ -290,7 +290,7 @@ export function classifyProjectRelation(
     conflictReasons.push('task binding conflicts with project');
   }
   if (launchRelation === 'conflict') {
-    conflictReasons.push('CC-Panes launch conflicts with project');
+    conflictReasons.push('PaneForge launch conflicts with project');
   }
   if (conflictReasons.length > 0) {
     return {

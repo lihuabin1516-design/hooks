@@ -14,8 +14,8 @@ import type { RuntimeIdentity } from '../src/runtime-identity.js';
 let tempRoot: string;
 
 const runtimeIdentity: RuntimeIdentity = {
-  schema: 'ccpanes.runtime-identity.v1',
-  packageName: 'ccpanes-hooks-tooling',
+  schema: 'paneforge.runtime-identity.v1',
+  packageName: 'paneforge-hooks-tooling',
   packageVersion: '0.1.0',
   gitCommit: 'abc123',
   gitDirty: false,
@@ -66,9 +66,9 @@ function sha256Text(text: string): string {
 
 function task(root: string, taskId: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId,
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -84,7 +84,7 @@ function task(root: string, taskId: string): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-cli-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-cli-'));
 });
 
 afterEach(async () => {
@@ -95,7 +95,7 @@ describe('runCli', () => {
   test('prints a resume probe JSON document', async () => {
     const output = await runCli(['probe', '--utterance', '继续', '--session', 'leader-1']);
     const parsed = JSON.parse(output);
-    expect(parsed.schema).toBe('ccpanes.resume-probe.v1');
+    expect(parsed.schema).toBe('paneforge.resume-probe.v1');
     expect(parsed.action).toBe('none');
   });
 
@@ -149,7 +149,7 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.task-risk.v1',
+      schema: 'paneforge.task-risk.v1',
       tier: 'standard',
       reason: 'standard_code_task',
       cwd: tempRoot
@@ -172,7 +172,7 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.workflow-profile.v1',
+      schema: 'paneforge.workflow-profile.v1',
       route: { id: 'hook-runtime' },
       rigor: 'standard',
       closure: { bucket: 'full' },
@@ -180,7 +180,7 @@ describe('runCli', () => {
     });
     expect(parsed.checks.map((check: { command: string }) => check.command)).toContain('npm run smoke');
     expect(parsed.implementationStandard).toMatchObject({
-      schema: 'ccpanes.implementation-standard.v1',
+      schema: 'paneforge.implementation-standard.v1',
       level: 'production-grade',
       optimizationTarget: 'unnecessary-complexity'
     });
@@ -208,7 +208,7 @@ describe('runCli', () => {
     expect(parsed.hookSpecificOutput).toMatchObject({
       hookEventName: 'UserPromptSubmit'
     });
-    expect(parsed.hookSpecificOutput.additionalContext).toContain('ccpanes.workflow-advisory.v1');
+    expect(parsed.hookSpecificOutput.additionalContext).toContain('paneforge.workflow-advisory.v1');
     expect(parsed.hookSpecificOutput.additionalContext).toContain('level: production-grade');
     const auditPath = path.join(
       auditRoot,
@@ -285,13 +285,13 @@ describe('runCli', () => {
   test('prints host adapter registry and filters by host', async () => {
     const registryOutput = await runCli(['host-adapter-registry']);
     const registry = JSON.parse(registryOutput);
-    expect(registry.schema).toBe('ccpanes.host-adapter-registry.v1');
+    expect(registry.schema).toBe('paneforge.host-adapter-registry.v1');
     expect(registry.adapters.map((adapter: { id: string }) => adapter.id)).toContain('codex');
 
     const codexOutput = await runCli(['host-adapter-registry', '--host', 'codex']);
     const codex = JSON.parse(codexOutput);
     expect(codex).toMatchObject({
-      schema: 'ccpanes.host-adapter.v1',
+      schema: 'paneforge.host-adapter.v1',
       adapter: { id: 'codex', status: 'supported' }
     });
     expect(codex.adapter.surfaces).toEqual(expect.arrayContaining([
@@ -301,8 +301,8 @@ describe('runCli', () => {
 
   test('includes scanErrors for invalid scanned current-task files', async () => {
     const badRoot = path.join(tempRoot, 'bad-project');
-    await fs.mkdir(path.join(badRoot, '.ccpanes-task'), { recursive: true });
-    await fs.writeFile(path.join(badRoot, '.ccpanes-task', 'current-task.json'), JSON.stringify({ schema: 'wrong' }), 'utf8');
+    await fs.mkdir(path.join(badRoot, '.paneforge-task'), { recursive: true });
+    await fs.writeFile(path.join(badRoot, '.paneforge-task', 'current-task.json'), JSON.stringify({ schema: 'wrong' }), 'utf8');
 
     const output = await runCli(['probe', '--utterance', '继续', '--session', 'leader-1', '--workspace-root', tempRoot]);
     const parsed = JSON.parse(output);
@@ -314,8 +314,8 @@ describe('runCli', () => {
 
   test('writes current-task.json only under the provided fixture root', async () => {
     const output = await runCli(['write-current', '--root', tempRoot, '--task-id', 'task-alpha', '--phase', 'build']);
-    expect(JSON.parse(output).path).toBe(path.join(tempRoot, '.ccpanes-task', 'current-task.json'));
-    await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
+    expect(JSON.parse(output).path).toBe(path.join(tempRoot, '.paneforge-task', 'current-task.json'));
+    await expect(fs.stat(path.join(tempRoot, '.paneforge-task', 'current-task.json'))).resolves.toBeTruthy();
   });
 
   test('creates a missing non-Git root before writing current-task metadata', async () => {
@@ -332,8 +332,8 @@ describe('runCli', () => {
     ]);
 
     expect(JSON.parse(output).path)
-      .toBe(path.join(projectRoot, '.ccpanes-task', 'current-task.json'));
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'current-task.json')))
+      .toBe(path.join(projectRoot, '.paneforge-task', 'current-task.json'));
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'current-task.json')))
       .resolves.toBeTruthy();
   });
 
@@ -353,7 +353,7 @@ describe('runCli', () => {
       'build'
     ]);
     const written = JSON.parse(
-      await fs.readFile(path.join(linkedRoot, '.ccpanes-task', 'current-task.json'), 'utf8')
+      await fs.readFile(path.join(linkedRoot, '.paneforge-task', 'current-task.json'), 'utf8')
     );
     const expectedMainRoot = await realPath(mainRoot);
     const expectedLinkedRoot = await realPath(linkedRoot);
@@ -363,7 +363,7 @@ describe('runCli', () => {
     expect(written.worktreeRoot).toBe(expectedLinkedRoot);
     expect(written.branch).toBe('phase51-linked');
     expect(written.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
-    expect(written.notes).toBe('task binding written by CC-Panes hooks');
+    expect(written.notes).toBe('task binding written by PaneForge hooks');
   });
 
   test('verify-task-binding reports a matched linked worktree', async () => {
@@ -390,7 +390,7 @@ describe('runCli', () => {
     const expectedLinkedRoot = await realPath(linkedRoot);
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.task-binding-check.v1',
+      schema: 'paneforge.task-binding-check.v1',
       status: 'matched',
       gitRoot: expectedLinkedRoot,
       canonicalProjectRoot: expectedMainRoot,
@@ -681,16 +681,16 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.project-bootstrap-result.v1',
+      schema: 'paneforge.project-bootstrap-result.v1',
       taskId: 'task-alpha',
       phase: 'shape'
     });
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'current-task.json'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'current-task.json'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(projectRoot, 'AGENTS.md'))).resolves.toBeTruthy();
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).resolves.toBeTruthy();
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).resolves.toBeTruthy();
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'bootstrap-report.json'))).resolves.toBeTruthy();
-    expect(JSON.parse(await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), 'utf8')).rules).toEqual([]);
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.md'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.json'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'bootstrap-report.json'))).resolves.toBeTruthy();
+    expect(JSON.parse(await fs.readFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), 'utf8')).rules).toEqual([]);
   });
 
   test('installs and validates AGENTS.md hook entry through CLI', async () => {
@@ -704,19 +704,19 @@ describe('runCli', () => {
     const text = await fs.readFile(path.join(projectRoot, 'AGENTS.md'), 'utf8');
 
     expect(install).toMatchObject({
-      schema: 'ccpanes.agents-entry-result.v1',
+      schema: 'paneforge.agents-entry-result.v1',
       changed: true,
       action: 'updated'
     });
     expect(validate).toMatchObject({
-      schema: 'ccpanes.agents-entry-validate.v1',
+      schema: 'paneforge.agents-entry-validate.v1',
       exists: true,
       markerPresent: true,
       valid: true
     });
     expect(secondInstall.changed).toBe(false);
     expect(text).toContain('Keep this project section.');
-    expect(text).toContain('<!-- ccpanes-hooks:begin -->');
+    expect(text).toContain('<!-- paneforge-hooks:begin -->');
   });
 
   test('manages project policy rules through CLI commands', async () => {
@@ -751,7 +751,7 @@ describe('runCli', () => {
     });
     expect(listParsed.ruleCount).toBe(1);
     expect(validateParsed.valid).toBe(true);
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.json'))).resolves.toBeTruthy();
   });
 
   test('captures project policy instruction through CLI', async () => {
@@ -775,11 +775,11 @@ describe('runCli', () => {
       'publish-artifact'
     ]);
     const parsed = JSON.parse(output);
-    const ledger = await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.md'), 'utf8');
-    const policy = JSON.parse(await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const ledger = await fs.readFile(path.join(projectRoot, '.paneforge-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.project-policy-capture-result.v1',
+      schema: 'paneforge.project-policy-capture-result.v1',
       changed: true,
       ruleId: 'block-publish',
       policyRuleCount: 1
@@ -804,11 +804,11 @@ describe('runCli', () => {
       '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。'
     ]);
     const parsed = JSON.parse(output);
-    const ledger = await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.md'), 'utf8');
-    const policy = JSON.parse(await fs.readFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const ledger = await fs.readFile(path.join(projectRoot, '.paneforge-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.plan-policy-capture-result.v1',
+      schema: 'paneforge.plan-policy-capture-result.v1',
       changed: true,
       capturedCount: 1,
       clearedCount: 0
@@ -842,15 +842,15 @@ describe('runCli', () => {
     const audit = JSON.parse(await fs.readFile(auditOut, 'utf8'));
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.plan-intake.v1',
+      schema: 'paneforge.plan-intake.v1',
       mode: 'dry-run',
       changed: false,
       workflow: { route: { id: 'project-policy' } },
       policyPreview: { wouldCaptureCount: 1, wouldChangeProjectPolicy: true }
     });
     expect(audit.policyPreview.actions[0].reason).toBe('plan_block_command');
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).rejects.toThrow();
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).rejects.toThrow();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.json'))).rejects.toThrow();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.md'))).rejects.toThrow();
   });
 
   test('previews plan lifecycle intake by resolving current-task from event cwd and writing task audit', async () => {
@@ -870,19 +870,19 @@ describe('runCli', () => {
       '--changed-path',
       'src/cli.ts'
     ], JSON.stringify({
-      schema: 'ccpanes.plan-lifecycle-event.v1',
+      schema: 'paneforge.plan-lifecycle-event.v1',
       cwd: nestedCwd,
       prompt: 'event prompt',
       planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
       changedPaths: ['src/plan-intake.ts'],
-      source: 'cc-panes-plan'
+      source: 'paneforge-plan'
     }));
     const parsed = JSON.parse(output);
     const auditPath = path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'plan-intake-audit.json');
     const audit = JSON.parse(await fs.readFile(auditPath, 'utf8'));
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.plan-intake.v1',
+      schema: 'paneforge.plan-intake.v1',
       mode: 'dry-run',
       changed: false,
       projectRoot,
@@ -892,8 +892,8 @@ describe('runCli', () => {
     expect(parsed.prompt).toContain('CLI prompt wins');
     expect(audit.projectRoot).toBe(projectRoot);
     expect(audit.workflow.changedPaths).toEqual(['src/plan-intake.ts', 'src/cli.ts']);
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.json'))).rejects.toThrow();
-    await expect(fs.stat(path.join(projectRoot, '.ccpanes-task', 'policy.md'))).rejects.toThrow();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.json'))).rejects.toThrow();
+    await expect(fs.stat(path.join(projectRoot, '.paneforge-task', 'policy.md'))).rejects.toThrow();
   });
 
   test('plan lifecycle intake no-ops when event cwd has no current task ancestor', async () => {
@@ -907,7 +907,7 @@ describe('runCli', () => {
       '--audit-root',
       auditRoot
     ], JSON.stringify({
-      schema: 'ccpanes.plan-lifecycle-event.v1',
+      schema: 'paneforge.plan-lifecycle-event.v1',
       cwd: orphanCwd,
       planText: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。'
     }));
@@ -938,7 +938,7 @@ describe('runCli', () => {
 
   test('plan lifecycle intake accepts explicit task and utterance without stdin event', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskFile = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskFile = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const auditRoot = path.join(tempRoot, 'audits');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
 
@@ -956,7 +956,7 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
 
     expect(parsed).toMatchObject({
-      schema: 'ccpanes.plan-intake.v1',
+      schema: 'paneforge.plan-intake.v1',
       mode: 'dry-run',
       projectRoot,
       policyPreview: { wouldCaptureCount: 1 }
@@ -1017,7 +1017,7 @@ describe('runCli', () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const inputPath = path.join(tempRoot, 'hook-batch.json');
     await fs.writeFile(inputPath, JSON.stringify({
-      schema: 'ccpanes.hook-dry-run-batch.v1',
+      schema: 'paneforge.hook-dry-run-batch.v1',
       task: task(projectRoot, 'task-alpha'),
       calls: [
         { tool: 'read', targetPath: path.join(projectRoot, 'src', 'a.ts'), writes: false },
@@ -1029,14 +1029,14 @@ describe('runCli', () => {
     const output = await runCli(['dry-run-hook', '--input', inputPath]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-dry-run-batch-result.v1');
+    expect(parsed.schema).toBe('paneforge.hook-dry-run-batch-result.v1');
     expect(parsed.decisions.map((item: { action: string }) => item.action)).toEqual(['allow', 'allow', 'block']);
     expect(parsed.decisions[2].reason).toBe('forbidden_user_config_path');
   });
 
   test('adapts a hook event JSON file into a hook dry-run batch', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const eventPath = path.join(tempRoot, 'hook-event.json');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
     await fs.writeFile(eventPath, JSON.stringify({
@@ -1048,7 +1048,7 @@ describe('runCli', () => {
     const output = await runCli(['adapt-hook-event', '--task', currentTaskPath, '--event', eventPath]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-dry-run-batch.v1');
+    expect(parsed.schema).toBe('paneforge.hook-dry-run-batch.v1');
     expect(parsed.task.taskId).toBe('task-alpha');
     expect(parsed.calls).toEqual([
       { tool: 'edit', targetPath: path.join(projectRoot, 'src', 'a.ts'), writes: true }
@@ -1057,7 +1057,7 @@ describe('runCli', () => {
 
   test('runs hook-runner from stdin and prints dry-run result JSON', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
 
     const output = await runCli([
@@ -1071,7 +1071,7 @@ describe('runCli', () => {
     }));
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-runner-result.v1');
+    expect(parsed.schema).toBe('paneforge.hook-runner-result.v1');
     expect(parsed.mode).toBe('dry-run');
     expect(parsed.allowed).toBe(true);
     expect(parsed.dryRun.decisions[0].reason).toBe('build_write_inside_worktree');
@@ -1079,7 +1079,7 @@ describe('runCli', () => {
 
   test('hook-enforce emits a Codex PreToolUse deny decision for blocked writes', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const auditOut = path.join(tempRoot, 'hook-enforce-audit.json');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
 
@@ -1104,14 +1104,14 @@ describe('runCli', () => {
     expect(parsed.hookSpecificOutput.hookEventName).toBe('PreToolUse');
     expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
     expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain('forbidden_user_config_path');
-    expect(audit.schema).toBe('ccpanes.hook-runner-result.v1');
+    expect(audit.schema).toBe('paneforge.hook-runner-result.v1');
     expect(audit.allowed).toBe(false);
   });
 
   test('hook-enforce allows trusted acceptance verification during archive', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
-    const acceptancePath = path.join(projectRoot, '.ccpanes-task', 'acceptance.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
+    const acceptancePath = path.join(projectRoot, '.paneforge-task', 'acceptance.json');
     const auditOut = path.join(tempRoot, 'archive-verify-audit.json');
     const trustedCliPath = path.join(projectRoot, 'dist', 'src', 'cli.js');
     await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
@@ -1142,8 +1142,8 @@ describe('runCli', () => {
 
   test('permission-enforce allows trusted acceptance recording during archive', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
-    const acceptancePath = path.join(projectRoot, '.ccpanes-task', 'acceptance.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
+    const acceptancePath = path.join(projectRoot, '.paneforge-task', 'acceptance.json');
     const artifactPath = path.join(projectRoot, 'README.md');
     const auditOut = path.join(tempRoot, 'archive-record-audit.json');
     const trustedCliPath = path.join(projectRoot, 'dist', 'src', 'cli.js');
@@ -1173,7 +1173,7 @@ describe('runCli', () => {
 
   test('hook-enforce keeps ordinary implementation writes blocked during archive', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
 
     const output = await runCli([
@@ -1195,12 +1195,12 @@ describe('runCli', () => {
 
   test('hook-enforce keeps an explicit project block above trusted archive lifecycle authorization', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
-    const acceptancePath = path.join(projectRoot, '.ccpanes-task', 'acceptance.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
+    const acceptancePath = path.join(projectRoot, '.paneforge-task', 'acceptance.json');
     const trustedCliPath = path.join(projectRoot, 'dist', 'src', 'cli.js');
     await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
-    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), JSON.stringify({
-      schema: 'ccpanes.project-policy.v1',
+    await fs.writeFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), JSON.stringify({
+      schema: 'paneforge.project-policy.v1',
       rules: [{
         id: 'block-acceptance-probe',
         effect: 'block',
@@ -1231,7 +1231,7 @@ describe('runCli', () => {
   test('hook-enforce no-ops when Codex cwd is outside the task worktree', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const outsideRoot = path.join(tempRoot, 'outside-project');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
 
     const output = await runCli([
@@ -1314,7 +1314,7 @@ describe('runCli', () => {
     const snapshot = JSON.parse(await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.json'), 'utf8'));
     const history = (await fs.readFile(path.join(taskAuditDir, 'hook-enforce-audit.jsonl'), 'utf8')).trim().split('\n').map((line) => JSON.parse(line));
 
-    expect(snapshot.schema).toBe('ccpanes.hook-runner-result.v1');
+    expect(snapshot.schema).toBe('paneforge.hook-runner-result.v1');
     expect(snapshot.allowed).toBe(false);
     expect(snapshot.auditContext).toMatchObject({
       hookEventName: 'PreToolUse',
@@ -1460,7 +1460,7 @@ describe('runCli', () => {
     expect(parsed.hookSpecificOutput.hookEventName).toBe('PermissionRequest');
     expect(parsed.hookSpecificOutput.decision).toEqual({
       behavior: 'deny',
-      message: 'ccpanes-task-probe: destructive_git_reset_hard: ' + projectRoot.replace(/\\/g, '/')
+      message: 'paneforge-task-probe: destructive_git_reset_hard: ' + projectRoot.replace(/\\/g, '/')
     });
     expect(audit.allowed).toBe(false);
     expect(audit.dryRun.decisions[0].reason).toBe('destructive_git_reset_hard');
@@ -1469,7 +1469,7 @@ describe('runCli', () => {
     const history = (await fs.readFile(historyPath, 'utf8')).trim().split('\n').map((line) => JSON.parse(line));
     expect(history).toHaveLength(1);
     expect(history[0]).toMatchObject({
-      schema: 'ccpanes.hook-decision-audit.v1',
+      schema: 'paneforge.hook-decision-audit.v1',
       hookEventName: 'PermissionRequest',
       allowed: false,
       reason: 'destructive_git_reset_hard',
@@ -1501,8 +1501,8 @@ describe('runCli', () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const auditRoot = path.join(tempRoot, 'audits');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
-    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), JSON.stringify({
-      schema: 'ccpanes.project-policy.v1',
+    await fs.writeFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), JSON.stringify({
+      schema: 'paneforge.project-policy.v1',
       rules: [{
         id: 'block-publish-probe',
         effect: 'block',
@@ -1540,8 +1540,8 @@ describe('runCli', () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     const auditRoot = path.join(tempRoot, 'audits');
     await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'shape' });
-    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), JSON.stringify({
-      schema: 'ccpanes.project-policy.v1',
+    await fs.writeFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), JSON.stringify({
+      schema: 'paneforge.project-policy.v1',
       rules: [{
         id: 'allow-docs-shape',
         effect: 'allow',
@@ -1574,7 +1574,7 @@ describe('runCli', () => {
   test('permission-enforce fails closed when project policy json is malformed', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
-    await fs.writeFile(path.join(projectRoot, '.ccpanes-task', 'policy.json'), '{not-json', 'utf8');
+    await fs.writeFile(path.join(projectRoot, '.paneforge-task', 'policy.json'), '{not-json', 'utf8');
 
     const output = await runCli([
       'permission-enforce',
@@ -1637,7 +1637,7 @@ describe('runCli', () => {
     expect(output).toBe('');
     expect(lines).toHaveLength(1);
     expect(record).toMatchObject({
-      schema: 'ccpanes.post-tool-use-audit.v1',
+      schema: 'paneforge.post-tool-use-audit.v1',
       taskId: 'task-alpha',
       toolName: 'Bash',
       toolUseId: 'toolu-post-1',
@@ -1717,7 +1717,7 @@ describe('runCli', () => {
 
     expect(parsed.hookSpecificOutput.hookEventName).toBe('SessionStart');
     expect(parsed.hookSpecificOutput.additionalContext).toContain('taskId: task-alpha');
-    expect(parsed.hookSpecificOutput.additionalContext).toContain(path.join(projectRoot, '.ccpanes-task', 'current-task.json'));
+    expect(parsed.hookSpecificOutput.additionalContext).toContain(path.join(projectRoot, '.paneforge-task', 'current-task.json'));
     expect(parsed.hookSpecificOutput.additionalContext).toContain(path.join(auditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url')));
   });
 
@@ -1821,7 +1821,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.installed-hooks.verify.v1');
+    expect(parsed.schema).toBe('paneforge.installed-hooks.verify.v1');
     expect(parsed.passed).toBe(true);
   });
 
@@ -1847,7 +1847,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.live-consistency.verify.v1');
+    expect(parsed.schema).toBe('paneforge.live-consistency.verify.v1');
     expect(parsed.mode).toBe('read-only');
     expect(parsed.passed).toBe(true);
     expect(parsed.summary.sourceCompared).toBeGreaterThan(0);
@@ -1875,7 +1875,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.production-toolkit-manifest.v1');
+    expect(parsed.schema).toBe('paneforge.production-toolkit-manifest.v1');
     await expect(fs.stat(path.join(outDir, 'INSTALL-HOOKS.ps1'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'VERIFY-INSTALLED.ps1'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'BOOTSTRAP-PROJECT.ps1'))).resolves.toBeTruthy();
@@ -1907,7 +1907,7 @@ describe('runCli', () => {
 
   test('runs hook-shadow from stdin, records upstream metadata, and writes audit output', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const outPath = path.join(tempRoot, 'shadow-audit.json');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
@@ -1929,17 +1929,17 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
     const written = JSON.parse(await fs.readFile(outPath, 'utf8'));
 
-    expect(parsed.schema).toBe('ccpanes.hook-shadow-audit.v1');
+    expect(parsed.schema).toBe('paneforge.hook-shadow-audit.v1');
     expect(parsed.mode).toBe('shadow');
     expect(parsed.upstreamHook.sha256).toMatch(/^[A-F0-9]{64}$/);
     expect(parsed.runner.allowed).toBe(true);
-    expect(written.schema).toBe('ccpanes.hook-shadow-audit.v1');
+    expect(written.schema).toBe('paneforge.hook-shadow-audit.v1');
     expect(written.runner.dryRun.decisions[0].reason).toBe('build_write_inside_worktree');
   });
 
   test('prints review-only hook install plan and writes plan output', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const outPath = path.join(tempRoot, 'hook-install-plan.json');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
@@ -1948,7 +1948,7 @@ describe('runCli', () => {
     const output = await runCli([
       'plan-hook-install',
       '--prototype-root',
-      'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      'D:/paneforge/tool/experiments/paneforge-task-probe',
       '--task',
       currentTaskPath,
       '--target',
@@ -1961,17 +1961,17 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
     const written = JSON.parse(await fs.readFile(outPath, 'utf8'));
 
-    expect(parsed.schema).toBe('ccpanes.hook-install-plan.v1');
+    expect(parsed.schema).toBe('paneforge.hook-install-plan.v1');
     expect(parsed.mode).toBe('review-only');
     expect(parsed.target).toBe('both');
     expect(parsed.proposedConfigChanges).toHaveLength(2);
     expect(parsed.proposedConfigChanges[0].patchCandidate).toContain('hook-shadow');
-    expect(written.schema).toBe('ccpanes.hook-install-plan.v1');
+    expect(written.schema).toBe('paneforge.hook-install-plan.v1');
   });
 
   test('creates review-only hook package and prints manifest', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const outDir = path.join(tempRoot, 'hook-package');
     await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
@@ -1980,7 +1980,7 @@ describe('runCli', () => {
     const output = await runCli([
       'create-hook-package',
       '--prototype-root',
-      'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      'D:/paneforge/tool/experiments/paneforge-task-probe',
       '--task',
       currentTaskPath,
       '--target',
@@ -1992,7 +1992,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-package-manifest.v1');
+    expect(parsed.schema).toBe('paneforge.hook-package-manifest.v1');
     expect(parsed.mode).toBe('review-only');
     expect(parsed.files.some((file: { path: string }) => file.path.endsWith('rollback-plan.json'))).toBe(true);
     await expect(fs.stat(path.join(outDir, 'manifest.json'))).resolves.toBeTruthy();
@@ -2001,7 +2001,7 @@ describe('runCli', () => {
 
   test('rehearses hook package and writes report', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const outDir = path.join(tempRoot, 'hook-package');
     const reportPath = path.join(tempRoot, 'hook-package-rehearsal.json');
@@ -2010,7 +2010,7 @@ describe('runCli', () => {
     const manifest = JSON.parse(await runCli([
       'create-hook-package',
       '--prototype-root',
-      'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      'D:/paneforge/tool/experiments/paneforge-task-probe',
       '--task',
       currentTaskPath,
       '--target',
@@ -2033,15 +2033,15 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
     const written = JSON.parse(await fs.readFile(reportPath, 'utf8'));
 
-    expect(parsed.schema).toBe('ccpanes.hook-package-rehearsal.v1');
+    expect(parsed.schema).toBe('paneforge.hook-package-rehearsal.v1');
     expect(parsed.passed).toBe(true);
     expect(parsed.failures).toEqual([]);
-    expect(written.schema).toBe('ccpanes.hook-package-rehearsal.v1');
+    expect(written.schema).toBe('paneforge.hook-package-rehearsal.v1');
   });
 
   test('creates release gate report with config snapshots and repo status', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const outDir = path.join(tempRoot, 'hook-package');
     const configPath = path.join(tempRoot, 'config.toml');
@@ -2055,7 +2055,7 @@ describe('runCli', () => {
     await runCli([
       'create-hook-package',
       '--prototype-root',
-      'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      'D:/paneforge/tool/experiments/paneforge-task-probe',
       '--task',
       currentTaskPath,
       '--target',
@@ -2085,17 +2085,17 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
     const written = JSON.parse(await fs.readFile(reportPath, 'utf8'));
 
-    expect(parsed.schema).toBe('ccpanes.hook-release-gate.v1');
+    expect(parsed.schema).toBe('paneforge.hook-release-gate.v1');
     expect(parsed.mode).toBe('final-preflight');
     expect(parsed.passed).toBe(true);
     expect(parsed.configSnapshots[0].sha256).toMatch(/^[A-F0-9]{64}$/);
     expect(parsed.referenceRepos[0].status).toBe('clean');
-    expect(written.schema).toBe('ccpanes.hook-release-gate.v1');
+    expect(written.schema).toBe('paneforge.hook-release-gate.v1');
   });
 
   test('creates staged hook apply plan from release gate', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const packageDir = path.join(tempRoot, 'hook-package');
     const configPath = path.join(tempRoot, 'config.toml');
@@ -2110,7 +2110,7 @@ describe('runCli', () => {
     await runCli([
       'create-hook-package',
       '--prototype-root',
-      'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      'D:/paneforge/tool/experiments/paneforge-task-probe',
       '--task',
       currentTaskPath,
       '--target',
@@ -2146,7 +2146,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-apply-plan.v1');
+    expect(parsed.schema).toBe('paneforge.hook-apply-plan.v1');
     expect(parsed.mode).toBe('staged-review');
     expect(parsed.releaseGatePassed).toBe(true);
     await expect(fs.stat(path.join(outDir, 'apply-plan.json'))).resolves.toBeTruthy();
@@ -2155,7 +2155,7 @@ describe('runCli', () => {
 
   test('checks hook approval package and writes approval report', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const packageDir = path.join(tempRoot, 'hook-package');
     const configPath = path.join(tempRoot, 'config.toml');
@@ -2171,7 +2171,7 @@ describe('runCli', () => {
     await fs.mkdir(repoPath, { recursive: true });
     execFileSync('git', ['init'], { cwd: repoPath, stdio: 'ignore' });
     await runCli([
-      'create-hook-package', '--prototype-root', 'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      'create-hook-package', '--prototype-root', 'D:/paneforge/tool/experiments/paneforge-task-probe',
       '--task', currentTaskPath, '--target', 'both', '--upstream-hook', upstreamHook, '--out-dir', packageDir
     ]);
     const manifest = JSON.parse(await fs.readFile(path.join(packageDir, 'manifest.json'), 'utf8'));
@@ -2181,7 +2181,7 @@ describe('runCli', () => {
     ]);
     await runCli(['create-hook-apply-plan', '--release-gate', releaseGatePath, '--out-dir', applyPlanDir]);
     await fs.writeFile(approvalPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-approval.v1',
+      schema: 'paneforge.hook-approval.v1',
       approved: true,
       applyPlanSha256: await sha256File(applyPlanPath),
       releaseGateSha256: await sha256File(releaseGatePath),
@@ -2196,15 +2196,15 @@ describe('runCli', () => {
     const parsed = JSON.parse(output);
     const written = JSON.parse(await fs.readFile(reportPath, 'utf8'));
 
-    expect(parsed.schema).toBe('ccpanes.hook-approval-check.v1');
+    expect(parsed.schema).toBe('paneforge.hook-approval-check.v1');
     expect(parsed.passed).toBe(true);
     expect(parsed.checks.find((check: { name: string; result: string }) => check.name === 'approval intent')?.result).toBe('pass');
-    expect(written.schema).toBe('ccpanes.hook-approval-check.v1');
+    expect(written.schema).toBe('paneforge.hook-approval-check.v1');
   });
 
   test('creates hook write preview from approval check', async () => {
     const projectRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(projectRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
     const upstreamHook = path.join(tempRoot, 'skills-hub-hook.exe');
     const packageDir = path.join(tempRoot, 'hook-package');
     const configPath = path.join(tempRoot, 'config.toml');
@@ -2220,12 +2220,12 @@ describe('runCli', () => {
     await fs.writeFile(configPath, 'original = true\n', 'utf8');
     await fs.mkdir(repoPath, { recursive: true });
     execFileSync('git', ['init'], { cwd: repoPath, stdio: 'ignore' });
-    await runCli(['create-hook-package', '--prototype-root', 'D:/cc-pane/tool/experiments/ccpanes-task-probe', '--task', currentTaskPath, '--target', 'both', '--upstream-hook', upstreamHook, '--out-dir', packageDir]);
+    await runCli(['create-hook-package', '--prototype-root', 'D:/paneforge/tool/experiments/paneforge-task-probe', '--task', currentTaskPath, '--target', 'both', '--upstream-hook', upstreamHook, '--out-dir', packageDir]);
     const manifest = JSON.parse(await fs.readFile(path.join(packageDir, 'manifest.json'), 'utf8'));
     await runCli(['release-gate', '--package-dir', packageDir, '--expected-upstream-sha256', manifest.upstreamHookSha256, '--config', configPath, '--repo', repoPath, '--check', 'smoke=pass=SMOKE_PASS', '--out', releaseGatePath]);
     await runCli(['create-hook-apply-plan', '--release-gate', releaseGatePath, '--out-dir', applyPlanDir]);
     await fs.writeFile(approvalPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-approval.v1',
+      schema: 'paneforge.hook-approval.v1',
       approved: true,
       applyPlanSha256: await sha256File(applyPlanPath),
       releaseGateSha256: await sha256File(releaseGatePath),
@@ -2240,7 +2240,7 @@ describe('runCli', () => {
     const output = await runCli(['preview-hook-write', '--approval-check', approvalCheckPath, '--out-dir', outDir]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-write-preview.v1');
+    expect(parsed.schema).toBe('paneforge.hook-write-preview.v1');
     expect(parsed.mode).toBe('dry-run-write-preview');
     expect(parsed.entries[0].configPath).toBe(configPath);
     await expect(fs.stat(path.join(outDir, 'write-preview.json'))).resolves.toBeTruthy();
@@ -2267,12 +2267,12 @@ describe('runCli', () => {
     await fs.writeFile(afterPath, after, 'utf8');
     await fs.writeFile(diffPath, `--- ${configPath}\n+++ ${configPath}.preview\n@@\n`, 'utf8');
     await fs.writeFile(approvalCheckPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-approval-check.v1',
+      schema: 'paneforge.hook-approval-check.v1',
       passed: true,
       applyPlanPath: path.join(previewFixture, 'apply-plan.json')
     }, null, 2)}\n`, 'utf8');
     await fs.writeFile(writePreviewPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-write-preview.v1',
+      schema: 'paneforge.hook-write-preview.v1',
       mode: 'dry-run-write-preview',
       createdAt: '2026-08-06T00:00:00.000Z',
       approvalCheckPath,
@@ -2301,7 +2301,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-write-apply.v1');
+    expect(parsed.schema).toBe('paneforge.hook-write-apply.v1');
     expect(parsed.mode).toBe('guarded-apply');
     expect(parsed.passed).toBe(true);
     await expect(fs.readFile(configPath, 'utf8')).resolves.toBe(after);
@@ -2322,7 +2322,7 @@ describe('runCli', () => {
     await fs.writeFile(configPath, after, 'utf8');
     await fs.writeFile(backupPath, before, 'utf8');
     await fs.writeFile(applyReportPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-write-apply.v1',
+      schema: 'paneforge.hook-write-apply.v1',
       mode: 'guarded-apply',
       createdAt: '2026-08-06T00:00:00.000Z',
       approvalCheckPath: path.join(tempRoot, 'approval-check.json'),
@@ -2350,7 +2350,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-write-restore.v1');
+    expect(parsed.schema).toBe('paneforge.hook-write-restore.v1');
     expect(parsed.mode).toBe('guarded-restore');
     expect(parsed.passed).toBe(true);
     await expect(fs.readFile(configPath, 'utf8')).resolves.toBe(before);
@@ -2370,7 +2370,7 @@ describe('runCli', () => {
     const restoreReportPath = path.join(tempRoot, 'restore-report.json');
     const readinessPath = path.join(tempRoot, 'production-readiness.json');
     await fs.writeFile(releaseGatePath, `${JSON.stringify({
-      schema: 'ccpanes.hook-release-gate.v1',
+      schema: 'paneforge.hook-release-gate.v1',
       mode: 'final-preflight',
       passed: true,
       configSnapshots: [{ path: configPath, exists: true, size: before.length, lastWriteUtc: '2026-08-06T00:00:00.000Z', sha256: sha256Text(before) }],
@@ -2379,7 +2379,7 @@ describe('runCli', () => {
       failures: []
     }, null, 2)}\n`, 'utf8');
     await fs.writeFile(approvalCheckPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-approval-check.v1',
+      schema: 'paneforge.hook-approval-check.v1',
       mode: 'approval-preflight',
       passed: true,
       applyPlanPath: path.join(tempRoot, 'apply-plan.json'),
@@ -2388,7 +2388,7 @@ describe('runCli', () => {
       failures: []
     }, null, 2)}\n`, 'utf8');
     await fs.writeFile(writePreviewPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-write-preview.v1',
+      schema: 'paneforge.hook-write-preview.v1',
       mode: 'dry-run-write-preview',
       approvalCheckPath,
       approvalCheckPassed: true,
@@ -2396,14 +2396,14 @@ describe('runCli', () => {
       artifacts: []
     }, null, 2)}\n`, 'utf8');
     await fs.writeFile(applyReportPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-write-apply.v1',
+      schema: 'paneforge.hook-write-apply.v1',
       mode: 'guarded-apply',
       passed: true,
       entries: [{ configPath, beforeSha256: sha256Text(before), afterSha256: sha256Text(`${before}# preview\n`), verifiedAfterSha256: sha256Text(`${before}# preview\n`) }],
       failures: []
     }, null, 2)}\n`, 'utf8');
     await fs.writeFile(restoreReportPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-write-restore.v1',
+      schema: 'paneforge.hook-write-restore.v1',
       mode: 'guarded-restore',
       passed: true,
       entries: [{ configPath, beforeSha256: sha256Text(before), afterSha256: sha256Text(`${before}# preview\n`), restoredSha256: sha256Text(before) }],
@@ -2427,7 +2427,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-production-readiness.v1');
+    expect(parsed.schema).toBe('paneforge.hook-production-readiness.v1');
     expect(parsed.mode).toBe('final-readiness');
     expect(parsed.ready).toBe(true);
     await expect(fs.stat(readinessPath)).resolves.toBeTruthy();
@@ -2445,7 +2445,7 @@ describe('runCli', () => {
     const readinessPath = path.join(tempRoot, 'production-readiness.json');
     const outDir = path.join(tempRoot, 'go-live-approval-package');
     await fs.writeFile(releaseGatePath, `${JSON.stringify({
-      schema: 'ccpanes.hook-release-gate.v1',
+      schema: 'paneforge.hook-release-gate.v1',
       mode: 'final-preflight',
       passed: true,
       configSnapshots: [{ path: configPath, exists: true, size: configText.length, lastWriteUtc: '2026-08-06T00:00:00.000Z', sha256: sha256Text(configText) }],
@@ -2457,7 +2457,7 @@ describe('runCli', () => {
       await fs.writeFile(filePath, '{}\n', 'utf8');
     }
     await fs.writeFile(readinessPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-production-readiness.v1',
+      schema: 'paneforge.hook-production-readiness.v1',
       mode: 'final-readiness',
       ready: true,
       releaseGatePath,
@@ -2484,7 +2484,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-go-live-approval-package.v1');
+    expect(parsed.schema).toBe('paneforge.hook-go-live-approval-package.v1');
     expect(parsed.manualApproval.approvedBy).toBe('AI001');
     await expect(fs.stat(path.join(outDir, 'manifest.json'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'GO-LIVE-APPROVAL.md'))).resolves.toBeTruthy();
@@ -2496,7 +2496,7 @@ describe('runCli', () => {
     const outDir = path.join(tempRoot, 'final-runbook');
     await fs.mkdir(goLiveDir, { recursive: true });
     await fs.writeFile(goLiveManifestPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-go-live-approval-package.v1',
+      schema: 'paneforge.hook-go-live-approval-package.v1',
       mode: 'manual-approval-package',
       createdAt: '2026-08-06T00:00:00.000Z',
       outDir: goLiveDir,
@@ -2517,7 +2517,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.hook-final-runbook.v1');
+    expect(parsed.schema).toBe('paneforge.hook-final-runbook.v1');
     expect(parsed.mode).toBe('manual-execution-runbook');
     await expect(fs.stat(path.join(outDir, 'manifest.json'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'FINAL-RUNBOOK.md'))).resolves.toBeTruthy();
@@ -2525,7 +2525,7 @@ describe('runCli', () => {
 
   test('prints acceptance evidence JSON for a task and artifact', async () => {
     const taskRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(taskRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(taskRoot, '.paneforge-task', 'current-task.json');
     const artifactPath = path.join(tempRoot, 'artifact.md');
     await writeCurrentTaskAtomic(taskRoot, task(taskRoot, 'task-alpha'));
     await fs.writeFile(artifactPath, 'artifact content', 'utf8');
@@ -2539,7 +2539,7 @@ describe('runCli', () => {
     ]);
     const parsed = JSON.parse(output);
 
-    expect(parsed.schema).toBe('ccpanes.acceptance.v1');
+    expect(parsed.schema).toBe('paneforge.acceptance.v1');
     expect(parsed.taskId).toBe('task-alpha');
     expect(parsed.artifactHashes[0].path).toBe(artifactPath);
     expect(parsed.artifactHashes[0].sha256).toMatch(/^[A-F0-9]{64}$/);
@@ -2553,10 +2553,10 @@ describe('runCli', () => {
 
   test('rejects invalid current task JSON when recording acceptance evidence', async () => {
     const taskRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(taskRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(taskRoot, '.paneforge-task', 'current-task.json');
     await fs.mkdir(path.dirname(currentTaskPath), { recursive: true });
     await fs.writeFile(currentTaskPath, `${JSON.stringify({
-      schema: 'ccpanes.task-selection.v1',
+      schema: 'paneforge.task-selection.v1',
       taskId: 'task-alpha'
     })}\n`, 'utf8');
 
@@ -2569,7 +2569,7 @@ describe('runCli', () => {
 
   test('prints acceptance verify JSON from an input file', async () => {
     const taskRoot = path.join(tempRoot, 'project-alpha');
-    const currentTaskPath = path.join(taskRoot, '.ccpanes-task', 'current-task.json');
+    const currentTaskPath = path.join(taskRoot, '.paneforge-task', 'current-task.json');
     const artifactPath = path.join(tempRoot, 'artifact.md');
     const acceptancePath = path.join(tempRoot, 'acceptance.json');
     await writeCurrentTaskAtomic(taskRoot, task(taskRoot, 'task-alpha'));
@@ -2586,7 +2586,7 @@ describe('runCli', () => {
     const verifyOutput = await runCli(['verify-acceptance', '--input', acceptancePath]);
     const parsed = JSON.parse(verifyOutput);
 
-    expect(parsed.schema).toBe('ccpanes.acceptance.verify.v1');
+    expect(parsed.schema).toBe('paneforge.acceptance.verify.v1');
     expect(parsed.taskId).toBe('task-alpha');
     expect(parsed.passed).toBe(true);
     expect(parsed.artifactResults[0].status).toBe('match');
@@ -2596,13 +2596,13 @@ describe('runCli', () => {
 
 describe('isCliEntrypoint', () => {
   test('matches Windows paths using file URL conversion', () => {
-    const argvPath = 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\dist\\src\\cli.js';
+    const argvPath = 'D:\\paneforge\\tool\\experiments\\paneforge-task-probe\\dist\\src\\cli.js';
     expect(isCliEntrypoint(pathToFileURL(argvPath).href, argvPath)).toBe(true);
   });
 
   test('does not match a different entrypoint', () => {
-    const cliPath = 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\dist\\src\\cli.js';
-    const otherPath = 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\dist\\src\\other.js';
+    const cliPath = 'D:\\paneforge\\tool\\experiments\\paneforge-task-probe\\dist\\src\\cli.js';
+    const otherPath = 'D:\\paneforge\\tool\\experiments\\paneforge-task-probe\\dist\\src\\other.js';
     expect(isCliEntrypoint(pathToFileURL(cliPath).href, otherPath)).toBe(false);
   });
 });
@@ -2619,7 +2619,7 @@ describe('appendCliRuntimeError', () => {
     const text = await fs.readFile(path.join(auditRoot, 'hook-runtime-errors.jsonl'), 'utf8');
     const record = JSON.parse(text.trim());
     expect(record).toMatchObject({
-      schema: 'ccpanes.hook-runtime-error.v1',
+      schema: 'paneforge.hook-runtime-error.v1',
       command: 'session-start',
       error: {
         name: 'Error',

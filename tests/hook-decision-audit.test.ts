@@ -10,8 +10,8 @@ import type { CurrentTask } from '../src/types.js';
 let tempRoot: string;
 
 const runtimeIdentity: RuntimeIdentity = {
-  schema: 'ccpanes.runtime-identity.v1',
-  packageName: 'ccpanes-hooks-tooling',
+  schema: 'paneforge.runtime-identity.v1',
+  packageName: 'paneforge-hooks-tooling',
   packageVersion: '0.1.0',
   gitCommit: 'abc123',
   gitDirty: false,
@@ -21,7 +21,7 @@ const runtimeIdentity: RuntimeIdentity = {
 };
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-hook-audit-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-hook-audit-'));
 });
 
 afterEach(async () => {
@@ -30,7 +30,7 @@ afterEach(async () => {
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'audit-recovery',
     workspace: 'test',
     projectPath: tempRoot,

@@ -11,7 +11,7 @@ const runtimeIdentity = getRuntimeIdentity();
 const server = new McpServer({ name: 'gzl-hooks', version: runtimeIdentity.packageVersion });
 
 server.registerTool('runtime_identity', {
-  description: 'Report the loaded CC-Panes hook build identity and optionally compare it with an expected task HEAD.',
+  description: 'Report the loaded PaneForge hook build identity and optionally compare it with an expected task HEAD.',
   inputSchema: z.object({
     expectedTaskHead: z.string().min(1).optional()
   })
@@ -23,7 +23,7 @@ server.registerTool('runtime_identity', {
 }));
 
 server.registerTool('dispatch', {
-  description: 'Dispatch a Codex lifecycle event through the installed CC-Panes workflow hooks.',
+  description: 'Dispatch a Codex lifecycle event through the installed PaneForge workflow hooks.',
   inputSchema: z.object({
     command: z.enum(MCP_HOOK_COMMANDS),
     event: z.record(z.string(), z.unknown())

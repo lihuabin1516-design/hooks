@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 28 — AGENTS Auto Injection Plan
+# PaneForge Hooks Phase 28 — AGENTS Auto Injection Plan
 
 日期：2026-08-07<br>
 目标仓库：`{workspace-root}\tool\repos\hooks`<br>
@@ -16,13 +16,13 @@ In Scope:
 - 新增 CLI：
   - `agents-install --root <project-root>`
   - `agents-validate --root <project-root>`
-- `agents-install` 使用 marker 只管理 CC-Panes hook block：
-  - `<!-- ccpanes-hooks:begin -->`
-  - `<!-- ccpanes-hooks:end -->`
+- `agents-install` 使用 marker 只管理 PaneForge hook block：
+  - `<!-- paneforge-hooks:begin -->`
+  - `<!-- paneforge-hooks:end -->`
 - `BOOTSTRAP-PROJECT.ps1` 同时执行 `write-current`、`agents-install`、`agents-validate`。
 Out of Scope:
 - 不自动扫描或批量改写所有项目。
-- 不写用户级 Codex / CC-Panes 配置。
+- 不写用户级 Codex / PaneForge 配置。
 - 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 Expected Behavior:

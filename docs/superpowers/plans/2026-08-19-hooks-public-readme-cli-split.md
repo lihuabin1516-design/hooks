@@ -103,7 +103,7 @@ Run: `npm test`, `npm run typecheck`
 - [ ] Rewrite README around:
   - what the tool does
   - why it exists
-  - how it fits with CC-Panes and Codex App
+  - how it fits with PaneForge and Codex App
   - quick start
   - support / contribution links
 - [ ] Remove local hard paths and maintenance-only content from README.

@@ -10,9 +10,9 @@ let tempRoot: string;
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: path.join(tempRoot, 'project-alpha'),
     worktreeRoot: path.join(tempRoot, 'project-alpha'),
     mainRepoRoot: null,
@@ -28,7 +28,7 @@ function task(): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-hook-rehearsal-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-hook-rehearsal-'));
 });
 
 afterEach(async () => {
@@ -42,7 +42,7 @@ describe('rehearseHookPackage', () => {
     await fs.writeFile(upstreamHook, 'fixture upstream binary bytes', 'utf8');
     const manifest = await createHookPackage({
       task: task(),
-      prototypeRoot: 'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      prototypeRoot: 'D:/paneforge/tool/experiments/paneforge-task-probe',
       target: 'both',
       upstreamHookPath: upstreamHook,
       outDir,
@@ -55,7 +55,7 @@ describe('rehearseHookPackage', () => {
       now: '2026-08-06T00:00:06.000Z'
     });
 
-    expect(report.schema).toBe('ccpanes.hook-package-rehearsal.v1');
+    expect(report.schema).toBe('paneforge.hook-package-rehearsal.v1');
     expect(report.mode).toBe('dry-run-rehearsal');
     expect(report.passed).toBe(true);
     expect(report.failures).toEqual([]);

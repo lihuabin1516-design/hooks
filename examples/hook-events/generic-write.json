@@ -1,5 +1,5 @@
 {
-  "schema": "ccpanes.hook-event.v1",
+  "schema": "paneforge.hook-event.v1",
   "calls": [
     {
       "tool": "read",

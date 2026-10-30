@@ -29,7 +29,7 @@ export function appendCliRuntimeError(args: string[], error: unknown, runtimeIde
   try {
     fs.mkdirSync(auditRoot, { recursive: true });
     const record = {
-      schema: 'ccpanes.hook-runtime-error.v1',
+      schema: 'paneforge.hook-runtime-error.v1',
       recordedAt: new Date().toISOString(),
       command: args[0] ?? null,
       cwd: process.cwd(),

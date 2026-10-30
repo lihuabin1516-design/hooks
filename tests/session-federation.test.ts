@@ -1,11 +1,11 @@
 import { describe, expect, test } from 'vitest';
 import {
-  validateCcPanesSessionSnapshot,
-  type CcPanesSessionSnapshot
-} from '../src/ccpanes-session-snapshot.js';
+  validatePaneForgeSessionSnapshot,
+  type PaneForgeSessionSnapshot
+} from '../src/paneforge-session-snapshot.js';
 import type { CodexSessionRecord } from '../src/codex-session-index.js';
 import {
-  attachCcPanesAttribution,
+  attachPaneForgeAttribution,
   buildSessionFederation
 } from '../src/session-federation.js';
 
@@ -49,10 +49,10 @@ function codexSession(
 }
 
 function snapshot(
-  overrides: Partial<CcPanesSessionSnapshot> = {}
-): CcPanesSessionSnapshot {
+  overrides: Partial<PaneForgeSessionSnapshot> = {}
+): PaneForgeSessionSnapshot {
   return {
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: snapshotGeneratedAt,
     launches: [],
     sessions: [],
@@ -62,7 +62,7 @@ function snapshot(
 
 function controllerCapacitySnapshot(
   sessionCount: number
-): CcPanesSessionSnapshot {
+): PaneForgeSessionSnapshot {
   const launches = Array.from({ length: 10_000 }, (_, index) => ({
     launchId: `capacity-launch-${index}`,
     projectPath: project,
@@ -85,7 +85,7 @@ function controllerCapacitySnapshot(
   return snapshot({ launches, sessions });
 }
 
-describe('attachCcPanesAttribution', () => {
+describe('attachPaneForgeAttribution', () => {
   test.each([
     [
       'launch.launchId',
@@ -179,12 +179,12 @@ describe('attachCcPanesAttribution', () => {
     'ignores an unsafe validated snapshot relationship at %s',
     (_field, relationship) => {
       const secret = `AKIA${'P'.repeat(16)}`;
-      const unsafeSnapshot = validateCcPanesSessionSnapshot({
-        schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+      const unsafeSnapshot = validatePaneForgeSessionSnapshot({
+        schemaVersion: 'hooks.paneforge-session-snapshot/v1',
         generatedAt: snapshotGeneratedAt,
         ...relationship(secret)
       });
-      const attached = attachCcPanesAttribution({
+      const attached = attachPaneForgeAttribution({
         project,
         sessions: [codexSession({
           threadId: 'snapshot-privacy-thread',
@@ -199,7 +199,7 @@ describe('attachCcPanesAttribution', () => {
           relationReasons: ['no project ownership evidence'],
           evidence: []
         })],
-        ccpanes: unsafeSnapshot
+        paneforge: unsafeSnapshot
       });
 
       expect(attached[0]).toMatchObject({
@@ -242,26 +242,26 @@ describe('attachCcPanesAttribution', () => {
       'typed project conflict: evidence.task-binding.projectPath=d:/other/project'
     ],
     [
-      'ccpanes-launch evidence',
+      'paneforge-launch evidence',
       {
         evidence: [{
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: 'd:/other/project',
           launchId: 'foreign-launch'
         }]
       },
-      'typed project conflict: evidence.ccpanes-launch.projectPath=d:/other/project'
+      'typed project conflict: evidence.paneforge-launch.projectPath=d:/other/project'
     ],
     [
-      'ccpanes-session evidence',
+      'paneforge-session evidence',
       {
         evidence: [{
-          kind: 'ccpanes-session',
+          kind: 'paneforge-session',
           projectPath: 'd:/other/project',
           sessionId: 'foreign-session'
         }]
       },
-      'typed project conflict: evidence.ccpanes-session.projectPath=d:/other/project'
+      'typed project conflict: evidence.paneforge-session.projectPath=d:/other/project'
     ]
   ] satisfies Array<[string, Partial<CodexSessionRecord>, string]>)(
     'forces unrelated/0 when typed conflict comes from %s',
@@ -271,10 +271,10 @@ describe('attachCcPanesAttribution', () => {
         relationReasons: ['wording is not a conflict authority'],
         ...overrides
       });
-      const attached = attachCcPanesAttribution({
+      const attached = attachPaneForgeAttribution({
         project,
         sessions: [base],
-        ccpanes: snapshot({
+        paneforge: snapshot({
           launches: [{
             launchId: 'launch-conflict',
             projectPath: project,
@@ -307,12 +307,12 @@ describe('attachCcPanesAttribution', () => {
         ]),
         evidence: expect.arrayContaining([
           {
-            kind: 'ccpanes-launch',
+            kind: 'paneforge-launch',
             projectPath: projectNorm,
             launchId: 'launch-conflict'
           },
           {
-            kind: 'ccpanes-session',
+            kind: 'paneforge-session',
             projectPath: projectNorm,
             sessionId: 'pty-conflict'
           }
@@ -322,7 +322,7 @@ describe('attachCcPanesAttribution', () => {
   );
 
   test('does not treat legacy conflict reason text as a typed conflict', () => {
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'reason-only-thread',
@@ -332,7 +332,7 @@ describe('attachCcPanesAttribution', () => {
         relationReasons: ['primary target conflicts with project'],
         evidence: []
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-reason-only',
           projectPath: project,
@@ -353,7 +353,7 @@ describe('attachCcPanesAttribution', () => {
   });
 
   test('allows ownership uplift for an exact snapshot candidate path', () => {
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'exact-snapshot-thread',
@@ -361,7 +361,7 @@ describe('attachCcPanesAttribution', () => {
         projectRelation: 'unrelated',
         relationConfidence: 0
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-exact-candidate',
           projectPath: project,
@@ -384,7 +384,7 @@ describe('attachCcPanesAttribution', () => {
   test('keeps an initially owned session when snapshot evidence is only descendant', () => {
     const descendantProject = `${project}\\packages\\tool`;
     const descendantProjectNorm = `${projectNorm}/packages/tool`;
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'descendant-snapshot-thread',
@@ -394,7 +394,7 @@ describe('attachCcPanesAttribution', () => {
         relationReasons: ['existing exact ownership'],
         evidence: []
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-descendant-candidate',
           projectPath: descendantProject,
@@ -413,7 +413,7 @@ describe('attachCcPanesAttribution', () => {
       projectOwner: project,
       relationReasons: [
         'existing exact ownership',
-        'matched compatible-project CC-Panes launch'
+        'matched compatible-project PaneForge launch'
       ]
     });
   });
@@ -421,7 +421,7 @@ describe('attachCcPanesAttribution', () => {
   test('keeps supporting confidence monotonic for descendant snapshot evidence', () => {
     const descendantProject = `${project}\\packages\\tool`;
     const descendantProjectNorm = `${projectNorm}/packages/tool`;
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'supporting-confidence-thread',
@@ -431,7 +431,7 @@ describe('attachCcPanesAttribution', () => {
         relationReasons: ['existing high-confidence support'],
         evidence: []
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-supporting-confidence',
           projectPath: descendantProject,
@@ -454,7 +454,7 @@ describe('attachCcPanesAttribution', () => {
   test('promotes an unrelated session with descendant snapshot evidence to supporting', () => {
     const descendantProject = `${project}\\packages\\tool`;
     const descendantProjectNorm = `${projectNorm}/packages/tool`;
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'unrelated-descendant-snapshot-thread',
@@ -464,7 +464,7 @@ describe('attachCcPanesAttribution', () => {
         relationReasons: ['no project ownership evidence'],
         evidence: []
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-unrelated-descendant',
           projectPath: descendantProject,
@@ -483,16 +483,16 @@ describe('attachCcPanesAttribution', () => {
       projectOwner: project,
       relationReasons: [
         'no project ownership evidence',
-        'matched compatible-project CC-Panes launch'
+        'matched compatible-project PaneForge launch'
       ]
     });
   });
 
   test('forces supporting sessions with exact and foreign snapshot evidence to unrelated/0', () => {
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({ threadId: 'mixed-project-thread' })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [
           {
             launchId: 'launch-exact',
@@ -543,31 +543,31 @@ describe('attachCcPanesAttribution', () => {
       relationConfidence: 0,
       projectOwner: null,
       relationReasons: expect.arrayContaining([
-        'matched exact-project CC-Panes launch',
-        'matched foreign-project CC-Panes launch',
-        'matched exact-project CC-Panes Session',
-        'matched foreign-project CC-Panes Session',
+        'matched exact-project PaneForge launch',
+        'matched foreign-project PaneForge launch',
+        'matched exact-project PaneForge Session',
+        'matched foreign-project PaneForge Session',
         'typed project conflict: snapshot.launch.projectPathNorm=d:/other',
         'typed project conflict: snapshot.session.projectPathNorm=d:/other'
       ]),
       evidence: expect.arrayContaining([
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: projectNorm,
           launchId: 'launch-exact'
         },
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: 'd:/other',
           launchId: 'launch-foreign'
         },
         {
-          kind: 'ccpanes-session',
+          kind: 'paneforge-session',
           projectPath: projectNorm,
           sessionId: 'pty-exact'
         },
         {
-          kind: 'ccpanes-session',
+          kind: 'paneforge-session',
           projectPath: 'd:/other',
           sessionId: 'pty-foreign'
         }
@@ -577,10 +577,10 @@ describe('attachCcPanesAttribution', () => {
 
   test('forces foreign-only snapshot references to unrelated/0', () => {
     const base = codexSession({ threadId: 'foreign-only-thread' });
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [base],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-foreign-only',
           projectPath: 'D:\\Other',
@@ -611,19 +611,19 @@ describe('attachCcPanesAttribution', () => {
       relationReasons: expect.arrayContaining([
         'exact runtime cwd',
         'no strong ownership evidence',
-        'matched foreign-project CC-Panes launch',
-        'matched foreign-project CC-Panes Session',
+        'matched foreign-project PaneForge launch',
+        'matched foreign-project PaneForge Session',
         'typed project conflict: snapshot.launch.projectPathNorm=d:/other',
         'typed project conflict: snapshot.session.projectPathNorm=d:/other'
       ]),
       evidence: expect.arrayContaining([
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: 'd:/other',
           launchId: 'launch-foreign-only'
         },
         {
-          kind: 'ccpanes-session',
+          kind: 'paneforge-session',
           projectPath: 'd:/other',
           sessionId: 'pty-foreign-only'
         }
@@ -632,7 +632,7 @@ describe('attachCcPanesAttribution', () => {
   });
 
   test('forces an owned session with a foreign snapshot reference to unrelated/0', () => {
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'owned-foreign-thread',
@@ -640,7 +640,7 @@ describe('attachCcPanesAttribution', () => {
         relationConfidence: 1,
         relationReasons: ['existing ownership']
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-owned-foreign',
           projectPath: 'D:\\Other',
@@ -659,11 +659,11 @@ describe('attachCcPanesAttribution', () => {
       projectOwner: null,
       relationReasons: [
         'existing ownership',
-        'matched foreign-project CC-Panes launch',
+        'matched foreign-project PaneForge launch',
         'typed project conflict: snapshot.launch.projectPathNorm=d:/other'
       ],
       evidence: expect.arrayContaining([{
-        kind: 'ccpanes-launch',
+        kind: 'paneforge-launch',
         projectPath: 'd:/other',
         launchId: 'launch-owned-foreign'
       }])
@@ -684,10 +684,10 @@ describe('attachCcPanesAttribution', () => {
       relationReasons: ['no project ownership evidence'],
       evidence: []
     });
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [base],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-cwd-unrelated',
           projectPath: project,
@@ -716,8 +716,8 @@ describe('attachCcPanesAttribution', () => {
       projectOwner: project,
       relationReasons: [
         'no project ownership evidence',
-        'matched exact-project CC-Panes launch',
-        'matched exact-project CC-Panes Session'
+        'matched exact-project PaneForge launch',
+        'matched exact-project PaneForge Session'
       ]
     });
   });
@@ -747,10 +747,10 @@ describe('attachCcPanesAttribution', () => {
     });
 
     const exactInput = [base];
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: exactInput,
-      ccpanes: exact
+      paneforge: exact
     });
 
     expect(attached).not.toBe(exactInput);
@@ -761,18 +761,18 @@ describe('attachCcPanesAttribution', () => {
       relationReasons: [
         'exact runtime cwd',
         'no strong ownership evidence',
-        'matched exact-project CC-Panes launch',
-        'matched exact-project CC-Panes Session'
+        'matched exact-project PaneForge launch',
+        'matched exact-project PaneForge Session'
       ],
       evidence: [
         { kind: 'cwd', relation: 'exact' },
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: projectNorm,
           launchId: 'launch-1'
         },
         {
-          kind: 'ccpanes-session',
+          kind: 'paneforge-session',
           projectPath: projectNorm,
           sessionId: 'pty-1'
         }
@@ -789,7 +789,7 @@ describe('attachCcPanesAttribution', () => {
         { kind: 'cwd', relation: 'exact' },
         { kind: 'cwd', relation: 'exact' },
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: projectNorm,
           launchId: 'launch-1'
         }
@@ -820,10 +820,10 @@ describe('attachCcPanesAttribution', () => {
     const beforeSnapshot = structuredClone(exact);
 
     const exactInput = [base];
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: exactInput,
-      ccpanes: exact
+      paneforge: exact
     });
 
     expect(base).toEqual(beforeSession);
@@ -832,28 +832,28 @@ describe('attachCcPanesAttribution', () => {
     expect(attached[0]).not.toBe(base);
     expect(attached[0].relationReasons).toEqual([
       'exact runtime cwd',
-      'matched exact-project CC-Panes launch',
-      'matched exact-project CC-Panes Session'
+      'matched exact-project PaneForge launch',
+      'matched exact-project PaneForge Session'
     ]);
     expect(attached[0].evidence).toEqual([
       { kind: 'cwd', relation: 'exact' },
       {
-        kind: 'ccpanes-launch',
+        kind: 'paneforge-launch',
         projectPath: projectNorm,
         launchId: 'launch-1'
       },
       {
-        kind: 'ccpanes-session',
+        kind: 'paneforge-session',
         projectPath: projectNorm,
         sessionId: 'pty-1'
       }
     ]);
 
     const withoutSnapshotInput = [base];
-    const withoutSnapshot = attachCcPanesAttribution({
+    const withoutSnapshot = attachPaneForgeAttribution({
       project,
       sessions: withoutSnapshotInput,
-      ccpanes: null
+      paneforge: null
     });
     expect(withoutSnapshot).not.toBe(withoutSnapshotInput);
     expect(withoutSnapshot[0]).toMatchObject({
@@ -863,14 +863,14 @@ describe('attachCcPanesAttribution', () => {
   });
 
   test('preserves a normalized-equivalent projectOwner without a snapshot', () => {
-    const attached = attachCcPanesAttribution({
+    const attached = attachPaneForgeAttribution({
       project,
       sessions: [codexSession({
         threadId: 'preserved-owner-thread',
         projectRelation: 'supporting',
         projectOwner: 'd:/repo'
       })],
-      ccpanes: null
+      paneforge: null
     });
 
     expect(attached[0]).toMatchObject({
@@ -883,14 +883,14 @@ describe('attachCcPanesAttribution', () => {
   test('rejects a Project A owner when attaching without a Project B snapshot', () => {
     let caught: unknown;
     try {
-      attachCcPanesAttribution({
+      attachPaneForgeAttribution({
         project: 'D:\\Project B',
         sessions: [codexSession({
           threadId: 'attach-owner-mismatch',
           projectRelation: 'supporting',
           projectOwner: 'D:\\Project A'
         })],
-        ccpanes: null
+        paneforge: null
       });
     } catch (error) {
       caught = error;
@@ -925,13 +925,13 @@ describe('attachCcPanesAttribution', () => {
   ]>)('rejects %s before attaching without a snapshot', (reason, overrides) => {
     let caught: unknown;
     try {
-      attachCcPanesAttribution({
+      attachPaneForgeAttribution({
         project,
         sessions: [codexSession({
           threadId: `attach-${reason}`,
           ...overrides
         })],
-        ccpanes: null
+        paneforge: null
       });
     } catch (error) {
       caught = error;
@@ -974,7 +974,7 @@ describe('buildSessionFederation', () => {
         graph = buildSessionFederation({
           ...invalidInput(secret),
           codexSessions: [],
-          ccpanes: null
+          paneforge: null
         });
       } catch (error) {
         caught = error;
@@ -998,7 +998,7 @@ describe('buildSessionFederation', () => {
       generatedAt: '2026-08-15T17:00:00+08:00',
       project,
       codexSessions: [],
-      ccpanes: null
+      paneforge: null
     });
 
     expect(graph.generatedAt).toBe(generatedAt);
@@ -1009,8 +1009,8 @@ describe('buildSessionFederation', () => {
     const delegatedId = `B${'b'.repeat(511)}`;
     const resumedId = `C${'c'.repeat(511)}`;
     const observedId = `D${'d'.repeat(511)}`;
-    const validatedSnapshot = validateCcPanesSessionSnapshot({
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    const validatedSnapshot = validatePaneForgeSessionSnapshot({
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: snapshotGeneratedAt,
       launches: [{
         launchId: 'launch-owner-limit',
@@ -1037,7 +1037,7 @@ describe('buildSessionFederation', () => {
         threadId: concreteId,
         delegatedFromThreadId: delegatedId
       })],
-      ccpanes: validatedSnapshot
+      paneforge: validatedSnapshot
     });
 
     expect(graph.nodes
@@ -1053,16 +1053,16 @@ describe('buildSessionFederation', () => {
         generatedAt,
         project,
         codexSessions: [codexSession({ threadId: 'thread invalid' })],
-        ccpanes: null
+        paneforge: null
       })
     ],
     [
-      'ccpanes.launches[0].resumeSessionId',
+      'paneforge.launches[0].resumeSessionId',
       () => buildSessionFederation({
         generatedAt,
         project,
         codexSessions: [],
-        ccpanes: snapshot({
+        paneforge: snapshot({
           launches: [{
             launchId: 'launch-invalid-thread',
             projectPath: project,
@@ -1076,12 +1076,12 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].observedCodexThreadId',
+      'paneforge.sessions[0].observedCodexThreadId',
       () => buildSessionFederation({
         generatedAt,
         project,
         codexSessions: [],
-        ccpanes: snapshot({
+        paneforge: snapshot({
           sessions: [{
             sessionId: 'session-invalid-thread',
             launchId: null,
@@ -1128,7 +1128,7 @@ describe('buildSessionFederation', () => {
           projectRelation: 'owned',
           projectOwner: 'D:\\Project A'
         })],
-        ccpanes: null
+        paneforge: null
       });
     } catch (error) {
       caught = error;
@@ -1170,7 +1170,7 @@ describe('buildSessionFederation', () => {
           threadId: `builder-${reason}`,
           ...overrides
         })],
-        ccpanes: null
+        paneforge: null
       });
     } catch (error) {
       caught = error;
@@ -1186,7 +1186,7 @@ describe('buildSessionFederation', () => {
 
   test.each([
     [
-      'ccpanes.launches[0].launchId',
+      'paneforge.launches[0].launchId',
       'unsafe-identity',
       (secret: string) => snapshot({
         launches: [{
@@ -1201,7 +1201,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.launches[0].resumeSessionId',
+      'paneforge.launches[0].resumeSessionId',
       'unsafe-identity',
       (secret: string) => snapshot({
         launches: [{
@@ -1216,7 +1216,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.launches[0].projectPathNorm',
+      'paneforge.launches[0].projectPathNorm',
       'unsafe-path',
       (secret: string) => snapshot({
         launches: [{
@@ -1231,7 +1231,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].sessionId',
+      'paneforge.sessions[0].sessionId',
       'unsafe-identity',
       (secret: string) => snapshot({
         sessions: [{
@@ -1247,7 +1247,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].launchId',
+      'paneforge.sessions[0].launchId',
       'unsafe-identity',
       (secret: string) => snapshot({
         sessions: [{
@@ -1263,7 +1263,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].taskId',
+      'paneforge.sessions[0].taskId',
       'unsafe-identity',
       (secret: string) => snapshot({
         sessions: [{
@@ -1279,7 +1279,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].observedCodexThreadId',
+      'paneforge.sessions[0].observedCodexThreadId',
       'unsafe-identity',
       (secret: string) => snapshot({
         sessions: [{
@@ -1295,7 +1295,7 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].projectPathNorm',
+      'paneforge.sessions[0].projectPathNorm',
       'unsafe-path',
       (secret: string) => snapshot({
         sessions: [{
@@ -1313,7 +1313,7 @@ describe('buildSessionFederation', () => {
   ] satisfies Array<[
     string,
     'unsafe-identity' | 'unsafe-path',
-    (secret: string) => CcPanesSessionSnapshot
+    (secret: string) => PaneForgeSessionSnapshot
   ]>)('rejects unsafe snapshot graph field %s', (field, reason, unsafeSnapshot) => {
     const secret = `AKIA${'S'.repeat(16)}`;
     let caught: unknown;
@@ -1323,7 +1323,7 @@ describe('buildSessionFederation', () => {
         generatedAt,
         project,
         codexSessions: [],
-        ccpanes: unsafeSnapshot(secret)
+        paneforge: unsafeSnapshot(secret)
       });
     } catch (error) {
       caught = error;
@@ -1342,9 +1342,9 @@ describe('buildSessionFederation', () => {
 
   test.each([
     [
-      'ccpanes.launches[0].projectPath',
+      'paneforge.launches[0].projectPath',
       (secret: string) => ({
-        schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+        schemaVersion: 'hooks.paneforge-session-snapshot/v1',
         generatedAt: snapshotGeneratedAt,
         launches: [{
           launchId: 'validated-launch',
@@ -1358,9 +1358,9 @@ describe('buildSessionFederation', () => {
       })
     ],
     [
-      'ccpanes.sessions[0].projectPath',
+      'paneforge.sessions[0].projectPath',
       (secret: string) => ({
-        schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+        schemaVersion: 'hooks.paneforge-session-snapshot/v1',
         generatedAt: snapshotGeneratedAt,
         launches: [],
         sessions: [{
@@ -1378,7 +1378,7 @@ describe('buildSessionFederation', () => {
     'rejects validated raw snapshot secret at %s',
     (field, rawSnapshot) => {
       const secret = `AKIA${'R'.repeat(16)}`;
-      const validated = validateCcPanesSessionSnapshot(rawSnapshot(secret));
+      const validated = validatePaneForgeSessionSnapshot(rawSnapshot(secret));
       let caught: unknown;
       let graph: ReturnType<typeof buildSessionFederation> | undefined;
       try {
@@ -1386,7 +1386,7 @@ describe('buildSessionFederation', () => {
           generatedAt,
           project,
           codexSessions: [],
-          ccpanes: validated
+          paneforge: validated
         });
       } catch (error) {
         caught = error;
@@ -1417,7 +1417,7 @@ describe('buildSessionFederation', () => {
         updatedAt: `note ${secret}`,
         delegatedFromThreadId: 'display-parent'
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'display-launch',
           projectPath: project,
@@ -1445,10 +1445,10 @@ describe('buildSessionFederation', () => {
       node.type === 'codex-thread' && node.externalId === 'display-thread'
     );
     const launch = graph.nodes.find((node) =>
-      node.type === 'ccpanes-launch' && node.externalId === 'display-launch'
+      node.type === 'paneforge-launch' && node.externalId === 'display-launch'
     );
     const runtime = graph.nodes.find((node) =>
-      node.type === 'ccpanes-session' && node.externalId === 'display-session'
+      node.type === 'paneforge-session' && node.externalId === 'display-session'
     );
     expect(thread?.attributes.cwdNorm).toBeNull();
     expect(launch?.attributes.workspaceName).toBe('workspace [REDACTED]');
@@ -1479,18 +1479,18 @@ describe('buildSessionFederation', () => {
         title: null,
         observedCodexThreadId: 'c'
       }
-    ] satisfies CcPanesSessionSnapshot['sessions'];
+    ] satisfies PaneForgeSessionSnapshot['sessions'];
     const forward = buildSessionFederation({
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({ sessions })
+      paneforge: snapshot({ sessions })
     });
     const reversed = buildSessionFederation({
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({ sessions: [...sessions].reverse() })
+      paneforge: snapshot({ sessions: [...sessions].reverse() })
     });
 
     expect(forward.edges.filter((edge) => edge.type === 'hosts')).toHaveLength(2);
@@ -1499,14 +1499,14 @@ describe('buildSessionFederation', () => {
     expect(new Set(forward.edges.map((edge) => edge.id)).size)
       .toBe(forward.edges.length);
     expect(forward.nodes.map((node) => node.id)).toEqual([
-      'ccpanes-session:a',
-      'ccpanes-session:a-%3Ecodex-thread%3Ab',
+      'paneforge-session:a',
+      'paneforge-session:a-%3Ecodex-thread%3Ab',
       'codex-thread:b%3Acodex-thread%3Ac',
       'codex-thread:c'
     ]);
     expect(forward.edges.map((edge) => edge.id)).toEqual([
-      'hosts:ccpanes-session:a-%253Ecodex-thread%253Ab->codex-thread:c',
-      'hosts:ccpanes-session:a->codex-thread:b%253Acodex-thread%253Ac'
+      'hosts:paneforge-session:a-%253Ecodex-thread%253Ab->codex-thread:c',
+      'hosts:paneforge-session:a->codex-thread:b%253Acodex-thread%253Ac'
     ]);
     expect(reversed).toEqual(forward);
   });
@@ -1521,7 +1521,7 @@ describe('buildSessionFederation', () => {
         relationConfidence: 1,
         relationReasons: ['matched task binding']
       })],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [{
           launchId: 'launch-1',
           projectPath: project,
@@ -1551,9 +1551,9 @@ describe('buildSessionFederation', () => {
       diagnostics: []
     });
     expect(graph.nodes.map((node) => node.id)).toEqual([
-      'ccpanes-launch:launch-1',
-      'ccpanes-session:pty-1',
-      'ccpanes-task:task-1',
+      'paneforge-launch:launch-1',
+      'paneforge-session:pty-1',
+      'paneforge-task:task-1',
       'codex-thread:thread-old'
     ]);
     expect(graph.nodes.find((node) => node.id === 'codex-thread:thread-old'))
@@ -1569,10 +1569,10 @@ describe('buildSessionFederation', () => {
       });
     expect(graph.edges).toEqual([
       {
-        id: 'belongs-to-task:ccpanes-session:pty-1->ccpanes-task:task-1',
+        id: 'belongs-to-task:paneforge-session:pty-1->paneforge-task:task-1',
         type: 'belongs-to-task',
-        from: 'ccpanes-session:pty-1',
-        to: 'ccpanes-task:task-1',
+        from: 'paneforge-session:pty-1',
+        to: 'paneforge-task:task-1',
         confidence: 1,
         evidence: [{
           kind: 'snapshot-field',
@@ -1582,9 +1582,9 @@ describe('buildSessionFederation', () => {
         observedAt: snapshotGeneratedAt
       },
       {
-        id: 'hosts:ccpanes-session:pty-1->codex-thread:thread-old',
+        id: 'hosts:paneforge-session:pty-1->codex-thread:thread-old',
         type: 'hosts',
-        from: 'ccpanes-session:pty-1',
+        from: 'paneforge-session:pty-1',
         to: 'codex-thread:thread-old',
         confidence: 1,
         evidence: [{
@@ -1595,21 +1595,21 @@ describe('buildSessionFederation', () => {
         observedAt: snapshotGeneratedAt
       },
       {
-        id: 'launched:ccpanes-launch:launch-1->ccpanes-session:pty-1',
+        id: 'launched:paneforge-launch:launch-1->paneforge-session:pty-1',
         type: 'launched',
-        from: 'ccpanes-launch:launch-1',
-        to: 'ccpanes-session:pty-1',
+        from: 'paneforge-launch:launch-1',
+        to: 'paneforge-session:pty-1',
         confidence: 1,
         evidence: [{
-          kind: 'ccpanes-runtime-link',
+          kind: 'paneforge-runtime-link',
           sessionId: 'pty-1'
         }],
         observedAt: snapshotGeneratedAt
       },
       {
-        id: 'resumed-from:ccpanes-launch:launch-1->codex-thread:thread-old',
+        id: 'resumed-from:paneforge-launch:launch-1->codex-thread:thread-old',
         type: 'resumed-from',
-        from: 'ccpanes-launch:launch-1',
+        from: 'paneforge-launch:launch-1',
         to: 'codex-thread:thread-old',
         confidence: 1,
         evidence: [{
@@ -1627,7 +1627,7 @@ describe('buildSessionFederation', () => {
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [
           {
             launchId: 'launch-controller',
@@ -1690,7 +1690,7 @@ describe('buildSessionFederation', () => {
       to: 'codex-thread:original-thread',
       confidence: 0.9,
       evidence: [
-        { kind: 'ccpanes-runtime-link', sessionId: 'pty-controller' },
+        { kind: 'paneforge-runtime-link', sessionId: 'pty-controller' },
         {
           kind: 'snapshot-field',
           field: 'launch.resumeSessionId',
@@ -1718,7 +1718,7 @@ describe('buildSessionFederation', () => {
         generatedAt,
         project,
         codexSessions: [],
-        ccpanes: controllerCapacitySnapshot(10_001)
+        paneforge: controllerCapacitySnapshot(10_001)
       });
     } catch (error) {
       caught = error;
@@ -1747,7 +1747,7 @@ describe('buildSessionFederation', () => {
           worktreeRootRaw: project
         }
       })],
-      ccpanes: snapshot()
+      paneforge: snapshot()
     });
 
     expect(graph.nodes.find((node) => node.id === 'codex-thread:parent-thread'))
@@ -1771,10 +1771,10 @@ describe('buildSessionFederation', () => {
         observedAt: '2026-08-15T08:00:00.000Z'
       },
       {
-        id: 'belongs-to-task:codex-thread:child-thread->ccpanes-task:task-1',
+        id: 'belongs-to-task:codex-thread:child-thread->paneforge-task:task-1',
         type: 'belongs-to-task',
         from: 'codex-thread:child-thread',
-        to: 'ccpanes-task:task-1',
+        to: 'paneforge-task:task-1',
         confidence: 1,
         evidence: [{
           kind: 'task-binding',
@@ -1812,12 +1812,12 @@ describe('buildSessionFederation', () => {
           }
         ]
       })],
-      ccpanes: snapshot()
+      paneforge: snapshot()
     });
 
     expect(JSON.stringify(graph)).not.toContain(secret);
     expect(graph.nodes.some((node) =>
-      node.id.includes('parent-') || node.type === 'ccpanes-task'
+      node.id.includes('parent-') || node.type === 'paneforge-task'
     )).toBe(false);
     expect(graph.edges.some((edge) =>
       edge.type === 'delegated-from' || edge.type === 'belongs-to-task'
@@ -1829,18 +1829,18 @@ describe('buildSessionFederation', () => {
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: null
-    }).diagnostics).toEqual([{ kind: 'ccpanes-snapshot-missing' }]);
+      paneforge: null
+    }).diagnostics).toEqual([{ kind: 'paneforge-snapshot-missing' }]);
 
     expect(buildSessionFederation({
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         generatedAt: '2026-08-13T08:00:00.000Z'
       })
     }).diagnostics).toEqual([{
-      kind: 'ccpanes-snapshot-stale',
+      kind: 'paneforge-snapshot-stale',
       ageMs: 176_400_000,
       maxAgeMs: 86_400_000
     }]);
@@ -1849,7 +1849,7 @@ describe('buildSessionFederation', () => {
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot()
+      paneforge: snapshot()
     }).diagnostics).toEqual([]);
   });
 
@@ -1858,11 +1858,11 @@ describe('buildSessionFederation', () => {
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         generatedAt: '2026-08-15T09:05:00.001Z'
       })
     }).diagnostics).toEqual([{
-      kind: 'ccpanes-snapshot-future',
+      kind: 'paneforge-snapshot-future',
       futureByMs: 300_001,
       maxFutureSkewMs: 300_000
     }]);
@@ -1874,7 +1874,7 @@ describe('buildSessionFederation', () => {
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         generatedAt: staleObservedAt,
         launches: [{
           launchId: 'launch-stale',
@@ -1947,7 +1947,7 @@ describe('buildSessionFederation', () => {
         resumeSessionId: null,
         launchedAt: '2026-08-15T08:31:00.000Z'
       }
-    ] satisfies CcPanesSessionSnapshot['launches'];
+    ] satisfies PaneForgeSessionSnapshot['launches'];
     const runtimeSessions = [
       {
         sessionId: 'pty-1',
@@ -1969,19 +1969,19 @@ describe('buildSessionFederation', () => {
         title: null,
         observedCodexThreadId: 'child-thread'
       }
-    ] satisfies CcPanesSessionSnapshot['sessions'];
+    ] satisfies PaneForgeSessionSnapshot['sessions'];
 
     const forward = buildSessionFederation({
       generatedAt,
       project,
       codexSessions: [child, parent],
-      ccpanes: snapshot({ launches, sessions: runtimeSessions })
+      paneforge: snapshot({ launches, sessions: runtimeSessions })
     });
     const reversed = buildSessionFederation({
       generatedAt,
       project,
       codexSessions: [parent, child],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         launches: [...launches].reverse(),
         sessions: [...runtimeSessions].reverse()
       })
@@ -1997,12 +1997,12 @@ describe('buildSessionFederation', () => {
       });
     expect(forward.nodes.find((node) => node.id === 'codex-thread:parent-thread')
       ?.attributes).not.toHaveProperty('inferred');
-    expect(forward.nodes.find((node) => node.id === 'ccpanes-task:task-1')
+    expect(forward.nodes.find((node) => node.id === 'paneforge-task:task-1')
       ?.attributes).not.toHaveProperty('inferred');
 
     const taskEdge = forward.edges.find((edge) =>
       edge.id ===
-        'belongs-to-task:codex-thread:child-thread->ccpanes-task:task-1'
+        'belongs-to-task:codex-thread:child-thread->paneforge-task:task-1'
     );
     expect(taskEdge).toMatchObject({
       confidence: 1,
@@ -2022,8 +2022,8 @@ describe('buildSessionFederation', () => {
       confidence: 0.9,
       observedAt: snapshotGeneratedAt,
       evidence: [
-        { kind: 'ccpanes-runtime-link', sessionId: 'pty-1' },
-        { kind: 'ccpanes-runtime-link', sessionId: 'pty-2' },
+        { kind: 'paneforge-runtime-link', sessionId: 'pty-1' },
+        { kind: 'paneforge-runtime-link', sessionId: 'pty-2' },
         {
           kind: 'snapshot-field',
           field: 'launch.resumeSessionId',
@@ -2056,11 +2056,11 @@ describe('buildSessionFederation', () => {
           cwdNorm: 'd:/other'
         })
       ],
-      ccpanes: snapshot()
+      paneforge: snapshot()
     })).toThrowError('duplicate codex threadId: duplicate-thread');
   });
 
-  test('rejects duplicate CC-Panes launch identities independent of input order', () => {
+  test('rejects duplicate PaneForge launch identities independent of input order', () => {
     const duplicateLaunches = [
       {
         launchId: 'duplicate-launch',
@@ -2080,7 +2080,7 @@ describe('buildSessionFederation', () => {
         resumeSessionId: 'thread-2',
         launchedAt: '2026-08-15T08:31:00.000Z'
       }
-    ] satisfies CcPanesSessionSnapshot['launches'];
+    ] satisfies PaneForgeSessionSnapshot['launches'];
 
     for (const launches of [
       duplicateLaunches,
@@ -2090,12 +2090,12 @@ describe('buildSessionFederation', () => {
         generatedAt,
         project,
         codexSessions: [],
-        ccpanes: snapshot({ launches })
-      })).toThrowError('duplicate CC-Panes launchId: duplicate-launch');
+        paneforge: snapshot({ launches })
+      })).toThrowError('duplicate PaneForge launchId: duplicate-launch');
     }
   });
 
-  test('rejects duplicate CC-Panes runtime Session identities', () => {
+  test('rejects duplicate PaneForge runtime Session identities', () => {
     const duplicateRuntime = {
       sessionId: 'duplicate-session',
       launchId: null,
@@ -2105,18 +2105,18 @@ describe('buildSessionFederation', () => {
       status: 'active',
       title: null,
       observedCodexThreadId: null
-    } satisfies CcPanesSessionSnapshot['sessions'][number];
+    } satisfies PaneForgeSessionSnapshot['sessions'][number];
 
     expect(() => buildSessionFederation({
       generatedAt,
       project,
       codexSessions: [],
-      ccpanes: snapshot({
+      paneforge: snapshot({
         sessions: [
           duplicateRuntime,
           { ...duplicateRuntime, status: 'idle' }
         ]
       })
-    })).toThrowError('duplicate CC-Panes sessionId: duplicate-session');
+    })).toThrowError('duplicate PaneForge sessionId: duplicate-session');
   });
 });

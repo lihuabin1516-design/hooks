@@ -7,7 +7,7 @@ import { createProductionToolkit } from '../src/production-toolkit.js';
 let tempRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-production-toolkit-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-production-toolkit-'));
 });
 
 afterEach(async () => {
@@ -33,7 +33,7 @@ describe('createProductionToolkit', () => {
       now: '2026-08-07T00:00:00.000Z'
     });
 
-    expect(manifest.schema).toBe('ccpanes.production-toolkit-manifest.v1');
+    expect(manifest.schema).toBe('paneforge.production-toolkit-manifest.v1');
     expect(manifest.mode).toBe('reviewable-production-toolkit');
     expect(manifest.files.map((file) => file.kind).sort()).toEqual([
       'bootstrap-project',

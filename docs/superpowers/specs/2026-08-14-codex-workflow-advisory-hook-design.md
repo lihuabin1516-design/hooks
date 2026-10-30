@@ -3,22 +3,22 @@
 ## Goal
 
 Make the production-grade implementation standard available to Codex App on
-each relevant prompt without replacing the existing skills-hub or CC-Panes
+each relevant prompt without replacing the existing skills-hub or PaneForge
 prompt lifecycle hooks and without turning advisory guidance into permission or
 completion authority.
 
 ## Context
 
-The repository owns `ccpanes.workflow-profile.v1` and
-`ccpanes.implementation-standard.v1`. Codex currently loads user hooks from
-`{user-home}\.codex\hooks.json`, while the installed CC-Panes hook commands
+The repository owns `paneforge.workflow-profile.v1` and
+`paneforge.implementation-standard.v1`. Codex currently loads user hooks from
+`{user-home}\.codex\hooks.json`, while the installed PaneForge hook commands
 execute the live runtime at
-`{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js`.
+`{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js`.
 
 The existing `UserPromptSubmit` chain contains:
 
 1. `skills-hub-hook.exe` for cold skill routing.
-2. `cc-panes-cli-hook.exe prompt-before` for CC-Panes lifecycle intake.
+2. `paneforge-cli-hook.exe prompt-before` for PaneForge lifecycle intake.
 
 Neither command consumes the repository workflow profile directly. Repository
 availability and Codex runtime consumption are therefore separate states.
@@ -34,7 +34,7 @@ route has a non-null implementation standard.
 The order remains:
 
 1. skills-hub routing
-2. CC-Panes prompt lifecycle intake
+2. PaneForge prompt lifecycle intake
 3. workflow advisory
 
 No existing hook is replaced or repurposed.
@@ -48,7 +48,7 @@ Owns:
 - validation and normalization of the Codex `UserPromptSubmit` input shape
 - deterministic advisory context formatting
 - privacy-preserving audit records
-- the `ccpanes.workflow-advisory-audit.v1` record schema
+- the `paneforge.workflow-advisory-audit.v1` record schema
 
 Does not own:
 
@@ -138,7 +138,7 @@ block the prompt.
 
 ## Resource Bounds
 
-- Hook timeout: 10 seconds. The advisory command is bounded and local-only; the larger budget prevents false timeouts when multiple CC-Panes sessions start hooks concurrently.
+- Hook timeout: 10 seconds. The advisory command is bounded and local-only; the larger budget prevents false timeouts when multiple PaneForge sessions start hooks concurrently.
 - `additionalContextLimit`: 1800 characters.
 - The formatter enforces a stricter internal maximum of 1600 characters.
 - Input prompt classification uses the existing bounded in-process classifier;
@@ -167,7 +167,7 @@ Required evidence:
 Rejected because skill routing and engineering workflow advice have different
 owners and failure domains.
 
-### Modify `cc-panes-cli-hook.exe prompt-before`
+### Modify `paneforge-cli-hook.exe prompt-before`
 
 Rejected because it crosses into another repository and hides the workflow
 profile dependency behind an external executable.

@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 27 — Project Policy CLI Plan
+# PaneForge Hooks Phase 27 — Project Policy CLI Plan
 
 日期：2026-08-07<br>
 目标仓库：`{workspace-root}\tool\repos\hooks`<br>
@@ -6,7 +6,7 @@
 
 ## Change Contract
 
-Intent: 给 Phase 25 的 `.ccpanes-task/policy.json` 增加稳定命令式管理入口，降低手写 JSON 的使用成本。  
+Intent: 给 Phase 25 的 `.paneforge-task/policy.json` 增加稳定命令式管理入口，降低手写 JSON 的使用成本。  
 Authorized Mutation:
 - 修改 hooks 仓库源码、测试、模板、README、smoke。
 - commit 并 push 到远端 `main`。
@@ -23,11 +23,11 @@ In Scope:
 - smoke 覆盖构建后的真实 policy 管理命令。
 Out of Scope:
 - 不做自然语言解析器。
-- 不写用户级 Codex / CC-Panes 配置。
+- 不写用户级 Codex / PaneForge 配置。
 - 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 Expected Behavior:
-- `policy-add` 原子创建或更新 `<project>/.ccpanes-task/policy.json`。
+- `policy-add` 原子创建或更新 `<project>/.paneforge-task/policy.json`。
 - 默认拒绝重复 rule id；显式 `--replace` 才替换。
 - `policy-disable` 保留 rule 但关闭 `enabled`。
 - `policy-clear` 保留全部 rules 但关闭 `enabled`，便于审计。

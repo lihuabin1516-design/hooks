@@ -10,7 +10,7 @@ let repoRoot: string;
 let liveRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-live-consistency-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-live-consistency-'));
   repoRoot = path.join(tempRoot, 'repo');
   liveRoot = path.join(tempRoot, 'live');
   await fs.mkdir(repoRoot, { recursive: true });
@@ -42,14 +42,14 @@ describe('verifyLiveConsistency', () => {
     await writeBoth('package.json', '{"name":"fixture"}\n');
     await writeBoth('src/cli.ts', 'export const cli = true;\n');
     await writeBoth('tests/cli.test.ts', 'export const testFixture = true;\n');
-    await writeBoth('templates/AGENTS.ccpanes-hooks.md', '# template\n');
+    await writeBoth('templates/AGENTS.paneforge-hooks.md', '# template\n');
     await writeBoth('scripts/smoke.mjs', 'console.log("smoke");\n');
     await writeBoth('dist/src/cli.js', 'export const cli = true;\n');
     gitInitAndTrackAll();
 
     const report = await verifyLiveConsistency({ repoRoot, liveRoot, now: '2026-08-08T00:00:00.000Z' });
 
-    expect(report.schema).toBe('ccpanes.live-consistency.verify.v1');
+    expect(report.schema).toBe('paneforge.live-consistency.verify.v1');
     expect(report.mode).toBe('read-only');
     expect(report.passed).toBe(true);
     expect(report.failures).toEqual([]);

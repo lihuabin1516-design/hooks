@@ -8,7 +8,7 @@ describe('implementation standard', () => {
   test('defines production-grade solution economy without removing production capabilities', () => {
     const result = createImplementationStandard();
 
-    expect(result.schema).toBe('ccpanes.implementation-standard.v1');
+    expect(result.schema).toBe('paneforge.implementation-standard.v1');
     expect(result.level).toBe('production-grade');
     expect(result.optimizationTarget).toBe('unnecessary-complexity');
     expect(result.nonNegotiables).toEqual(expect.arrayContaining([
@@ -50,7 +50,7 @@ describe('implementation standard', () => {
     const result = createImplementationStandard();
 
     expect(result.sourceModel).toMatchObject({
-      name: 'ccpanes.production-grade-solution-economy.v1',
+      name: 'paneforge.production-grade-solution-economy.v1',
       adaptedFrom: 'https://github.com/DietrichGebert/ponytail.git',
       referenceHead: '2ed6c52c9d7e5e56942508591085fd45dea277d3'
     });
@@ -63,7 +63,7 @@ describe('implementation standard', () => {
       'reduced verification obligations'
     ]));
     expect(result.boundaries).toContain(
-      'current-task.json, .ccpanes-task/policy.json, hook gates, and acceptance evidence retain their existing authority'
+      'current-task.json, .paneforge-task/policy.json, hook gates, and acceptance evidence retain their existing authority'
     );
   });
 

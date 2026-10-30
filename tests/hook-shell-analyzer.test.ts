@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { analyzeShellCommand } from '../src/hook-shell-analyzer.js';
 
-const cwd = 'D:/cc-pane/project-alpha';
+const cwd = 'D:/paneforge/project-alpha';
 
 describe('analyzeShellCommand', () => {
   test('treats common verification commands as non-write shell calls', () => {
@@ -25,7 +25,7 @@ describe('analyzeShellCommand', () => {
     expect(analyzeShellCommand({ command: 'git status > status.txt', cwd })).toEqual([
       {
         tool: 'shell',
-        targetPath: 'D:/cc-pane/project-alpha/status.txt',
+        targetPath: 'D:/paneforge/project-alpha/status.txt',
         writes: true,
         command: 'git status > status.txt'
       }
@@ -62,7 +62,7 @@ describe('analyzeShellCommand', () => {
 
   test('extracts redirection target relative to cwd', () => {
     expect(analyzeShellCommand({ command: 'echo hello > src/out.txt', cwd })).toEqual([
-      { tool: 'shell', targetPath: 'D:/cc-pane/project-alpha/src/out.txt', writes: true, command: 'echo hello > src/out.txt' }
+      { tool: 'shell', targetPath: 'D:/paneforge/project-alpha/src/out.txt', writes: true, command: 'echo hello > src/out.txt' }
     ]);
   });
 

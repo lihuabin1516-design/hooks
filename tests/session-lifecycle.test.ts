@@ -13,8 +13,8 @@ import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
 import type { RuntimeIdentity } from '../src/runtime-identity.js';
 
 const runtimeIdentity: RuntimeIdentity = {
-  schema: 'ccpanes.runtime-identity.v1',
-  packageName: 'ccpanes-hooks-tooling',
+  schema: 'paneforge.runtime-identity.v1',
+  packageName: 'paneforge-hooks-tooling',
   packageVersion: '0.1.0',
   gitCommit: 'runtime123',
   gitDirty: false,
@@ -25,9 +25,9 @@ const runtimeIdentity: RuntimeIdentity = {
 
 function task(root: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -44,14 +44,14 @@ function task(root: string): CurrentTask {
 
 function bindingCheck(): TaskBindingCheck {
   return {
-    schema: 'ccpanes.task-binding-check.v1',
+    schema: 'paneforge.task-binding-check.v1',
     status: 'project-root-mismatch',
     reason: 'declared_project_path_or_main_repo_root_does_not_match_git_topology',
     cwd: 'D:/hooks-linked',
     gitRoot: 'D:/hooks-linked',
     gitCommonDir: 'D:/hooks-main/.git',
     canonicalProjectRoot: 'D:/hooks-main',
-    taskPath: 'D:/hooks-linked/.ccpanes-task/current-task.json',
+    taskPath: 'D:/hooks-linked/.paneforge-task/current-task.json',
     taskFileRoot: 'D:/hooks-linked',
     declaredProjectPath: 'D:/hooks-linked',
     declaredWorktreeRoot: 'D:/hooks-linked',
@@ -61,7 +61,7 @@ function bindingCheck(): TaskBindingCheck {
 }
 
 function writeTranscript(lines: unknown[]): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ccpanes-stop-transcript-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'paneforge-stop-transcript-'));
   const file = path.join(dir, 'transcript.jsonl');
   fs.writeFileSync(file, `${lines.map((line) => JSON.stringify(line)).join('\n')}\n`, 'utf8');
   return file;
@@ -72,13 +72,13 @@ describe('SessionStart lifecycle output', () => {
     const root = 'D:/workspace/project-alpha';
     const output = createSessionStartHookOutput({
       task: task(root),
-      taskPath: path.join(root, '.ccpanes-task', 'current-task.json'),
+      taskPath: path.join(root, '.paneforge-task', 'current-task.json'),
       auditRoot: 'D:/workspace/audits',
       runtimeIdentity
     });
 
     expect(output.hookSpecificOutput.hookEventName).toBe('SessionStart');
-    expect(output.hookSpecificOutput.additionalContext).toContain('ccpanes-task-probe');
+    expect(output.hookSpecificOutput.additionalContext).toContain('paneforge-task-probe');
     expect(output.hookSpecificOutput.additionalContext).toContain('taskId: task-alpha');
     expect(output.hookSpecificOutput.additionalContext).toContain('phase: verify');
     expect(output.hookSpecificOutput.additionalContext).toContain('current-task.json');
@@ -107,7 +107,7 @@ describe('Stop lifecycle output', () => {
     const root = 'D:/workspace/project-alpha';
     const output = createStopCheckHookOutput({
       task: task(root),
-      taskPath: path.join(root, '.ccpanes-task', 'current-task.json'),
+      taskPath: path.join(root, '.paneforge-task', 'current-task.json'),
       auditRoot: 'D:/workspace/audits'
     });
 
@@ -130,7 +130,7 @@ describe('Stop lifecycle output', () => {
     const stopAnalysis = analyzeStopCheckEvent({ transcript_path: transcriptPath });
     const output = createStopCheckHookOutput({
       task: task(root),
-      taskPath: path.join(root, '.ccpanes-task', 'current-task.json'),
+      taskPath: path.join(root, '.paneforge-task', 'current-task.json'),
       auditRoot: 'D:/workspace/audits',
       stopAnalysis
     });
@@ -157,7 +157,7 @@ describe('Stop lifecycle output', () => {
     const stopAnalysis = analyzeStopCheckEvent({ transcript_path: transcriptPath });
     const output = createStopCheckHookOutput({
       task: task('D:/workspace/project-alpha'),
-      taskPath: 'D:/workspace/project-alpha/.ccpanes-task/current-task.json',
+      taskPath: 'D:/workspace/project-alpha/.paneforge-task/current-task.json',
       stopAnalysis
     });
 
@@ -171,7 +171,7 @@ describe('Stop lifecycle output', () => {
     const stopAnalysis = analyzeStopCheckEvent({ transcript_path: path.join(os.tmpdir(), 'missing-transcript.jsonl') });
     const output = createStopCheckHookOutput({
       task: task('D:/workspace/project-alpha'),
-      taskPath: 'D:/workspace/project-alpha/.ccpanes-task/current-task.json',
+      taskPath: 'D:/workspace/project-alpha/.paneforge-task/current-task.json',
       stopAnalysis
     });
 

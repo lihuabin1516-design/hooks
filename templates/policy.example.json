@@ -1,5 +1,5 @@
 {
-  "schema": "ccpanes.project-policy.v1",
+  "schema": "paneforge.project-policy.v1",
   "rules": [
     {
       "id": "block-generated-edits",

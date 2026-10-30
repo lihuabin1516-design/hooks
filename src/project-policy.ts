@@ -20,7 +20,7 @@ export interface ProjectPolicyRule {
 }
 
 export interface ProjectPolicy {
-  schema: 'ccpanes.project-policy.v1';
+  schema: 'paneforge.project-policy.v1';
   rules: ProjectPolicyRule[];
 }
 
@@ -108,21 +108,21 @@ function validateRule(value: unknown, index: number): ProjectPolicyRule {
 
 export function validateProjectPolicy(value: unknown): ProjectPolicy {
   const record = asRecord(value, 'project policy');
-  if (record.schema !== 'ccpanes.project-policy.v1') throw new ProjectPolicyError('schema must be ccpanes.project-policy.v1');
+  if (record.schema !== 'paneforge.project-policy.v1') throw new ProjectPolicyError('schema must be paneforge.project-policy.v1');
   if (!Array.isArray(record.rules)) throw new ProjectPolicyError('rules must be an array');
   return {
-    schema: 'ccpanes.project-policy.v1',
+    schema: 'paneforge.project-policy.v1',
     rules: record.rules.map((rule, index) => validateRule(rule, index))
   };
 }
 
 export function projectPolicyPath(worktreeRoot: string): string {
-  return path.join(worktreeRoot, '.ccpanes-task', 'policy.json');
+  return path.join(worktreeRoot, '.paneforge-task', 'policy.json');
 }
 
 export function emptyProjectPolicy(): ProjectPolicy {
   return {
-    schema: 'ccpanes.project-policy.v1',
+    schema: 'paneforge.project-policy.v1',
     rules: []
   };
 }
@@ -153,7 +153,7 @@ export async function readProjectPolicyOrEmpty(worktreeRoot: string): Promise<Pr
 
 export async function writeProjectPolicyAtomic(worktreeRoot: string, policy: ProjectPolicy): Promise<void> {
   const validated = validateProjectPolicy(policy);
-  const dir = path.join(worktreeRoot, '.ccpanes-task');
+  const dir = path.join(worktreeRoot, '.paneforge-task');
   const finalPath = projectPolicyPath(worktreeRoot);
   if (!isPathInside(worktreeRoot, finalPath)) {
     throw new ProjectPolicyError('policy path must stay inside worktree root');
@@ -193,7 +193,7 @@ export function addProjectPolicyRule(policy: ProjectPolicy, rule: ProjectPolicyR
   } else {
     rules[existingIndex] = nextRule;
   }
-  return validateProjectPolicy({ schema: 'ccpanes.project-policy.v1', rules });
+  return validateProjectPolicy({ schema: 'paneforge.project-policy.v1', rules });
 }
 
 export function disableProjectPolicyRule(policy: ProjectPolicy, id: string): ProjectPolicy {
@@ -205,13 +205,13 @@ export function disableProjectPolicyRule(policy: ProjectPolicy, id: string): Pro
   if (!validated.rules.some((rule) => rule.id === id)) {
     throw new ProjectPolicyError(`rule not found: ${id}`);
   }
-  return validateProjectPolicy({ schema: 'ccpanes.project-policy.v1', rules });
+  return validateProjectPolicy({ schema: 'paneforge.project-policy.v1', rules });
 }
 
 export function clearProjectPolicyRules(policy: ProjectPolicy): ProjectPolicy {
   const validated = validateProjectPolicy(policy);
   return validateProjectPolicy({
-    schema: 'ccpanes.project-policy.v1',
+    schema: 'paneforge.project-policy.v1',
     rules: validated.rules.map((rule) => ({ ...rule, enabled: false }))
   });
 }

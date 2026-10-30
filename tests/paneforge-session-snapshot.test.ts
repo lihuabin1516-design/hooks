@@ -1,17 +1,17 @@
 import { describe, expect, test } from 'vitest';
 import {
-  CCPANES_SESSION_SNAPSHOT_LIMITS,
-  inspectCcPanesSnapshotFreshness,
-  validateCcPanesSessionSnapshot
-} from '../src/ccpanes-session-snapshot.js';
+  PANEFORGE_SESSION_SNAPSHOT_LIMITS,
+  inspectPaneForgeSnapshotFreshness,
+  validatePaneForgeSessionSnapshot
+} from '../src/paneforge-session-snapshot.js';
 
 function validSnapshot() {
   return {
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: '2026-08-15T10:46:58.097+02:00',
     launches: [{
       launchId: ' launch-1 ',
-      projectPath: ' D:\\CC-Pane\\Tool\\Repos\\Hooks\\ ',
+      projectPath: ' D:\\PaneForge\\Tool\\Repos\\Hooks\\ ',
       workspaceName: ' hooks ',
       cliTool: ' codex ',
       resumeSessionId: ' thread-old ',
@@ -21,7 +21,7 @@ function validSnapshot() {
       sessionId: ' pty-1 ',
       launchId: ' launch-1 ',
       taskId: ' task-1 ',
-      projectPath: ' /mnt/d/CC-Pane/Tool/Repos/Hooks ',
+      projectPath: ' /mnt/d/PaneForge/Tool/Repos/Hooks ',
       status: ' active ',
       title: ' hooks resume ',
       observedCodexThreadId: ' thread-old '
@@ -30,10 +30,10 @@ function validSnapshot() {
 }
 
 function expectInvalid(value: unknown, field: string): void {
-  const expectedMessage = `invalid CC-Panes snapshot: ${field}`;
+  const expectedMessage = `invalid PaneForge snapshot: ${field}`;
   let error: unknown;
   try {
-    validateCcPanesSessionSnapshot(value);
+    validatePaneForgeSessionSnapshot(value);
   } catch (caught) {
     error = caught;
   }
@@ -45,9 +45,9 @@ function windowsPathWithLength(length: number): string {
   return `C:\\${'a'.repeat(length - 3)}`;
 }
 
-describe('validateCcPanesSessionSnapshot', () => {
+describe('validatePaneForgeSessionSnapshot', () => {
   test('exports the literal frozen snapshot limits contract', () => {
-    expect(CCPANES_SESSION_SNAPSHOT_LIMITS).toEqual({
+    expect(PANEFORGE_SESSION_SNAPSHOT_LIMITS).toEqual({
       launches: 10_000,
       sessions: 10_000,
       identityReferenceId: 256,
@@ -61,17 +61,17 @@ describe('validateCcPanesSessionSnapshot', () => {
       timestampRaw: 99,
       timestampFractionalSeconds: 9
     });
-    expect(Object.isFrozen(CCPANES_SESSION_SNAPSHOT_LIMITS)).toBe(true);
+    expect(Object.isFrozen(PANEFORGE_SESSION_SNAPSHOT_LIMITS)).toBe(true);
   });
 
   test('normalizes a valid snapshot at the trust boundary', () => {
-    expect(validateCcPanesSessionSnapshot(validSnapshot())).toEqual({
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    expect(validatePaneForgeSessionSnapshot(validSnapshot())).toEqual({
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: '2026-08-15T08:46:58.097Z',
       launches: [{
         launchId: 'launch-1',
-        projectPath: 'D:\\CC-Pane\\Tool\\Repos\\Hooks\\',
-        projectPathNorm: 'd:/cc-pane/tool/repos/hooks',
+        projectPath: 'D:\\PaneForge\\Tool\\Repos\\Hooks\\',
+        projectPathNorm: 'd:/paneforge/tool/repos/hooks',
         workspaceName: 'hooks',
         cliTool: 'codex',
         resumeSessionId: 'thread-old',
@@ -81,8 +81,8 @@ describe('validateCcPanesSessionSnapshot', () => {
         sessionId: 'pty-1',
         launchId: 'launch-1',
         taskId: 'task-1',
-        projectPath: '/mnt/d/CC-Pane/Tool/Repos/Hooks',
-        projectPathNorm: 'd:/cc-pane/tool/repos/hooks',
+        projectPath: '/mnt/d/PaneForge/Tool/Repos/Hooks',
+        projectPathNorm: 'd:/paneforge/tool/repos/hooks',
         status: 'active',
         title: 'hooks resume',
         observedCodexThreadId: 'thread-old'
@@ -99,7 +99,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       status: 'idle'
     } as typeof value.sessions[0];
 
-    expect(validateCcPanesSessionSnapshot(value)).toMatchObject({
+    expect(validatePaneForgeSessionSnapshot(value)).toMatchObject({
       launches: [{
         workspaceName: null,
         resumeSessionId: null
@@ -126,7 +126,7 @@ describe('validateCcPanesSessionSnapshot', () => {
   test('requires the exact v1 schema', () => {
     expectInvalid({
       ...validSnapshot(),
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v2'
+      schemaVersion: 'hooks.paneforge-session-snapshot/v2'
     }, 'schemaVersion');
   });
 
@@ -213,11 +213,11 @@ describe('validateCcPanesSessionSnapshot', () => {
 
   test('measures identity limits in UTF-16 code units', () => {
     const exact = '😀'.repeat(
-      CCPANES_SESSION_SNAPSHOT_LIMITS.identityReferenceId / 2
+      PANEFORGE_SESSION_SNAPSHOT_LIMITS.identityReferenceId / 2
     );
     const accepted = validSnapshot();
     accepted.launches[0].launchId = exact;
-    expect(validateCcPanesSessionSnapshot(accepted).launches[0].launchId)
+    expect(validatePaneForgeSessionSnapshot(accepted).launches[0].launchId)
       .toBe(exact);
 
     const rejected = validSnapshot();
@@ -231,7 +231,7 @@ describe('validateCcPanesSessionSnapshot', () => {
     value.launches[0].launchId = `  ${exact}  `;
     value.sessions[0].sessionId = `  ${exact}  `;
 
-    expect(validateCcPanesSessionSnapshot(value)).toMatchObject({
+    expect(validatePaneForgeSessionSnapshot(value)).toMatchObject({
       launches: [{ launchId: exact }],
       sessions: [{ sessionId: exact }]
     });
@@ -243,7 +243,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.launches[0].resumeSessionId = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.launches[0].resumeSessionId
     ],
     [
@@ -251,7 +251,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].observedCodexThreadId = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].observedCodexThreadId
     ]
   ] as const)(
@@ -260,20 +260,20 @@ describe('validateCcPanesSessionSnapshot', () => {
       const exact = `a${'b'.repeat(511)}`;
       const accepted = validSnapshot();
       assign(accepted, `  ${exact}  `);
-      expect(select(validateCcPanesSessionSnapshot(accepted))).toBe(exact);
+      expect(select(validatePaneForgeSessionSnapshot(accepted))).toBe(exact);
 
       const overlong = `a${'b'.repeat(512)}`;
       const rejected = validSnapshot();
       assign(rejected, overlong);
       let error: unknown;
       try {
-        validateCcPanesSessionSnapshot(rejected);
+        validatePaneForgeSessionSnapshot(rejected);
       } catch (caught) {
         error = caught;
       }
       expect(error).toBeInstanceOf(Error);
       expect((error as Error).message)
-        .toBe(`invalid CC-Panes snapshot: ${field}`);
+        .toBe(`invalid PaneForge snapshot: ${field}`);
       expect((error as Error).message).not.toContain(overlong);
       expect(JSON.stringify(error)).not.toContain(overlong);
     }
@@ -285,7 +285,7 @@ describe('validateCcPanesSessionSnapshot', () => {
     accepted.launches[0].launchId =
       `${' '.repeat(512)}${exact}${' '.repeat(512)}`;
     expect(accepted.launches[0].launchId.length).toBe(256 + 1024);
-    expect(validateCcPanesSessionSnapshot(accepted).launches[0].launchId)
+    expect(validatePaneForgeSessionSnapshot(accepted).launches[0].launchId)
       .toBe(exact);
 
     const rejected = validSnapshot();
@@ -374,7 +374,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.launches[0].launchId = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.launches[0].launchId
     ],
     [
@@ -382,7 +382,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].sessionId = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].sessionId
     ],
     [
@@ -390,7 +390,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].launchId = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].launchId
     ],
     [
@@ -398,16 +398,16 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].taskId = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].taskId
     ]
   ] as const)(
     'accepts the exact identity/reference limit and rejects +1 at %s',
     (field, assign, select) => {
-      const exact = 'x'.repeat(CCPANES_SESSION_SNAPSHOT_LIMITS.identityReferenceId);
+      const exact = 'x'.repeat(PANEFORGE_SESSION_SNAPSHOT_LIMITS.identityReferenceId);
       const accepted = validSnapshot();
       assign(accepted, exact);
-      expect(select(validateCcPanesSessionSnapshot(accepted))).toBe(exact);
+      expect(select(validatePaneForgeSessionSnapshot(accepted))).toBe(exact);
 
       const rejected = validSnapshot();
       assign(rejected, `${exact}x`);
@@ -418,38 +418,38 @@ describe('validateCcPanesSessionSnapshot', () => {
   test.each([
     [
       'launches[0].workspaceName',
-      CCPANES_SESSION_SNAPSHOT_LIMITS.workspaceName,
+      PANEFORGE_SESSION_SNAPSHOT_LIMITS.workspaceName,
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.launches[0].workspaceName = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.launches[0].workspaceName
     ],
     [
       'launches[0].cliTool',
-      CCPANES_SESSION_SNAPSHOT_LIMITS.cliTool,
+      PANEFORGE_SESSION_SNAPSHOT_LIMITS.cliTool,
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.launches[0].cliTool = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.launches[0].cliTool
     ],
     [
       'sessions[0].status',
-      CCPANES_SESSION_SNAPSHOT_LIMITS.status,
+      PANEFORGE_SESSION_SNAPSHOT_LIMITS.status,
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].status = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].status
     ],
     [
       'sessions[0].title',
-      CCPANES_SESSION_SNAPSHOT_LIMITS.title,
+      PANEFORGE_SESSION_SNAPSHOT_LIMITS.title,
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].title = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].title
     ]
   ] as const)(
@@ -458,7 +458,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       const exact = 'x'.repeat(limit);
       const accepted = validSnapshot();
       assign(accepted, exact);
-      expect(select(validateCcPanesSessionSnapshot(accepted))).toBe(exact);
+      expect(select(validatePaneForgeSessionSnapshot(accepted))).toBe(exact);
 
       const rejected = validSnapshot();
       assign(rejected, `${exact}x`);
@@ -472,7 +472,7 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.launches[0].projectPath = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.launches[0].projectPath
     ],
     [
@@ -480,18 +480,18 @@ describe('validateCcPanesSessionSnapshot', () => {
       (value: ReturnType<typeof validSnapshot>, text: string) => {
         value.sessions[0].projectPath = text;
       },
-      (value: ReturnType<typeof validateCcPanesSessionSnapshot>) =>
+      (value: ReturnType<typeof validatePaneForgeSessionSnapshot>) =>
         value.sessions[0].projectPath
     ]
   ] as const)(
     'accepts the exact project path limit and rejects +1 at %s',
     (field, assign, select) => {
       const exact = windowsPathWithLength(
-        CCPANES_SESSION_SNAPSHOT_LIMITS.projectPath
+        PANEFORGE_SESSION_SNAPSHOT_LIMITS.projectPath
       );
       const accepted = validSnapshot();
       assign(accepted, exact);
-      expect(select(validateCcPanesSessionSnapshot(accepted))).toBe(exact);
+      expect(select(validatePaneForgeSessionSnapshot(accepted))).toBe(exact);
 
       const rejected = validSnapshot();
       assign(rejected, `${exact}a`);
@@ -504,7 +504,7 @@ describe('validateCcPanesSessionSnapshot', () => {
     value.launches[0].projectPath =
       `C:\\${'segment\\..\\'.repeat(410)}repo`;
     expect(value.launches[0].projectPath.length)
-      .toBeGreaterThan(CCPANES_SESSION_SNAPSHOT_LIMITS.projectPath);
+      .toBeGreaterThan(PANEFORGE_SESSION_SNAPSHOT_LIMITS.projectPath);
     expectInvalid(value, 'launches[0].projectPath');
   });
 
@@ -543,7 +543,7 @@ describe('validateCcPanesSessionSnapshot', () => {
     const accepted = validSnapshot();
     accepted.generatedAt = '2026-08-15T08:46:58.123456789+00:00';
     expect(accepted.generatedAt.length).toBe(35);
-    expect(validateCcPanesSessionSnapshot(accepted).generatedAt)
+    expect(validatePaneForgeSessionSnapshot(accepted).generatedAt)
       .toBe('2026-08-15T08:46:58.123Z');
 
     const rejected = validSnapshot();
@@ -559,7 +559,7 @@ describe('validateCcPanesSessionSnapshot', () => {
 
     const value = validSnapshot();
     value.generatedAt = raw;
-    expect(validateCcPanesSessionSnapshot(value).generatedAt)
+    expect(validatePaneForgeSessionSnapshot(value).generatedAt)
       .toBe('2026-08-15T08:46:58.123Z');
 
     const rejected = validSnapshot();
@@ -597,10 +597,10 @@ describe('validateCcPanesSessionSnapshot', () => {
     value.generatedAt = timestamp;
     value.launches[0].launchedAt = timestamp;
 
-    const normalized = validateCcPanesSessionSnapshot(value);
+    const normalized = validatePaneForgeSessionSnapshot(value);
     expect(normalized.generatedAt).toBe(timestamp);
     expect(normalized.launches[0].launchedAt).toBe(timestamp);
-    expect(inspectCcPanesSnapshotFreshness(timestamp, timestamp, 0)).toEqual({
+    expect(inspectPaneForgeSnapshotFreshness(timestamp, timestamp, 0)).toEqual({
       state: 'fresh',
       ageMs: 0,
       maxAgeMs: 0
@@ -609,20 +609,20 @@ describe('validateCcPanesSessionSnapshot', () => {
     const replay = validSnapshot();
     replay.generatedAt = normalized.generatedAt;
     replay.launches[0].launchedAt = normalized.launches[0].launchedAt;
-    expect(validateCcPanesSessionSnapshot(replay).generatedAt).toBe(timestamp);
+    expect(validatePaneForgeSessionSnapshot(replay).generatedAt).toBe(timestamp);
   });
 
   test('accepts a valid Gregorian leap day', () => {
     const value = validSnapshot();
     value.generatedAt = '2000-02-29T12:00:00.000Z';
-    expect(validateCcPanesSessionSnapshot(value).generatedAt)
+    expect(validatePaneForgeSessionSnapshot(value).generatedAt)
       .toBe('2000-02-29T12:00:00.000Z');
   });
 
   test('canonicalizes a normal offset across a year boundary', () => {
     const value = validSnapshot();
     value.generatedAt = '2026-01-01T00:30:00.000+01:00';
-    expect(validateCcPanesSessionSnapshot(value).generatedAt)
+    expect(validatePaneForgeSessionSnapshot(value).generatedAt)
       .toBe('2025-12-31T23:30:00.000Z');
   });
 
@@ -650,13 +650,13 @@ describe('validateCcPanesSessionSnapshot', () => {
     const value = validSnapshot();
     const entry = value.launches[0];
     value.launches = Array.from(
-      { length: CCPANES_SESSION_SNAPSHOT_LIMITS.launches },
+      { length: PANEFORGE_SESSION_SNAPSHOT_LIMITS.launches },
       (_, index) => ({ ...entry, launchId: `launch-${index}` })
     );
     value.sessions = [];
 
-    expect(validateCcPanesSessionSnapshot(value).launches)
-      .toHaveLength(CCPANES_SESSION_SNAPSHOT_LIMITS.launches);
+    expect(validatePaneForgeSessionSnapshot(value).launches)
+      .toHaveLength(PANEFORGE_SESSION_SNAPSHOT_LIMITS.launches);
   });
 
   test('rejects launches capacity +1 before entry normalization', () => {
@@ -664,7 +664,7 @@ describe('validateCcPanesSessionSnapshot', () => {
     const entry = value.launches[0];
     let entryAccessed = false;
     value.launches = Array.from(
-      { length: CCPANES_SESSION_SNAPSHOT_LIMITS.launches + 1 },
+      { length: PANEFORGE_SESSION_SNAPSHOT_LIMITS.launches + 1 },
       (_, index) => ({ ...entry, launchId: `launch-${index}` })
     );
     value.launches[0] = new Proxy(entry, {
@@ -686,12 +686,12 @@ describe('validateCcPanesSessionSnapshot', () => {
     const entry = value.sessions[0];
     value.launches = [];
     value.sessions = Array.from(
-      { length: CCPANES_SESSION_SNAPSHOT_LIMITS.sessions },
+      { length: PANEFORGE_SESSION_SNAPSHOT_LIMITS.sessions },
       (_, index) => ({ ...entry, sessionId: `session-${index}` })
     );
 
-    expect(validateCcPanesSessionSnapshot(value).sessions)
-      .toHaveLength(CCPANES_SESSION_SNAPSHOT_LIMITS.sessions);
+    expect(validatePaneForgeSessionSnapshot(value).sessions)
+      .toHaveLength(PANEFORGE_SESSION_SNAPSHOT_LIMITS.sessions);
   });
 
   test('rejects sessions capacity +1 before entry normalization', () => {
@@ -699,7 +699,7 @@ describe('validateCcPanesSessionSnapshot', () => {
     const entry = value.sessions[0];
     let entryAccessed = false;
     value.sessions = Array.from(
-      { length: CCPANES_SESSION_SNAPSHOT_LIMITS.sessions + 1 },
+      { length: PANEFORGE_SESSION_SNAPSHOT_LIMITS.sessions + 1 },
       (_, index) => ({ ...entry, sessionId: `session-${index}` })
     );
     value.sessions[0] = new Proxy(entry, {
@@ -717,7 +717,7 @@ describe('validateCcPanesSessionSnapshot', () => {
   });
 });
 
-describe('inspectCcPanesSnapshotFreshness', () => {
+describe('inspectPaneForgeSnapshotFreshness', () => {
   test.each([
     ['generatedAt', `${' '.repeat(100_000)}2026-08-15T08:00:00.000Z`, '2026-08-15T09:00:00.000Z'],
     ['now', '2026-08-15T08:00:00.000Z', `${' '.repeat(100_000)}2026-08-15T09:00:00.000Z`],
@@ -727,12 +727,12 @@ describe('inspectCcPanesSnapshotFreshness', () => {
     generatedAt,
     now
   ) => {
-    expect(() => inspectCcPanesSnapshotFreshness(generatedAt, now))
+    expect(() => inspectPaneForgeSnapshotFreshness(generatedAt, now))
       .toThrow(field);
   });
 
   test('reports a fresh snapshot', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-15T08:00:00.000Z',
       '2026-08-15T09:00:00.000Z'
     )).toEqual({
@@ -743,7 +743,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
   });
 
   test('keeps the exact max-age boundary fresh', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-14T09:00:00.000Z',
       '2026-08-15T09:00:00.000Z'
     )).toEqual({
@@ -754,7 +754,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
   });
 
   test('keeps zero age fresh when maxAgeMs is zero', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-15T09:00:00.000Z',
       '2026-08-15T09:00:00.000Z',
       0
@@ -766,7 +766,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
   });
 
   test('reports stale snapshots as typed diagnostics', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-13T08:00:00.000Z',
       '2026-08-15T09:00:00.000Z',
       24 * 60 * 60 * 1_000
@@ -778,7 +778,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
   });
 
   test('keeps snapshots within the default future clock skew fresh', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-15T09:05:00.000Z',
       '2026-08-15T09:00:00.000Z',
       1
@@ -790,7 +790,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
   });
 
   test('reports snapshots beyond future clock skew as typed future state', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-15T09:05:00.001Z',
       '2026-08-15T09:00:00.000Z',
       1
@@ -804,7 +804,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
   });
 
   test('honors a custom future clock skew boundary', () => {
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-15T09:01:00.000Z',
       '2026-08-15T09:00:00.000Z',
       1,
@@ -815,7 +815,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
       maxAgeMs: 1
     });
 
-    expect(inspectCcPanesSnapshotFreshness(
+    expect(inspectPaneForgeSnapshotFreshness(
       '2026-08-15T09:01:00.001Z',
       '2026-08-15T09:00:00.000Z',
       1,
@@ -836,7 +836,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
     ['now', '2026-08-15T08:00:00.000Z', 'not-a-date'],
     ['now', '2026-08-15T08:00:00.000Z', '2026-08-15T09:00:00.000']
   ])('rejects invalid %s timestamp input', (field, generatedAt, now) => {
-    expect(() => inspectCcPanesSnapshotFreshness(generatedAt, now)).toThrow(field);
+    expect(() => inspectPaneForgeSnapshotFreshness(generatedAt, now)).toThrow(field);
   });
 
   test.each([
@@ -844,7 +844,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
     Number.POSITIVE_INFINITY,
     -1
   ])('rejects invalid maxAgeMs=%s', (maxAgeMs) => {
-    expect(() => inspectCcPanesSnapshotFreshness(
+    expect(() => inspectPaneForgeSnapshotFreshness(
       '2026-08-15T08:00:00.000Z',
       '2026-08-15T09:00:00.000Z',
       maxAgeMs
@@ -856,7 +856,7 @@ describe('inspectCcPanesSnapshotFreshness', () => {
     Number.POSITIVE_INFINITY,
     -1
   ])('rejects invalid maxFutureSkewMs=%s', (maxFutureSkewMs) => {
-    expect(() => inspectCcPanesSnapshotFreshness(
+    expect(() => inspectPaneForgeSnapshotFreshness(
       '2026-08-15T08:00:00.000Z',
       '2026-08-15T09:00:00.000Z',
       1,

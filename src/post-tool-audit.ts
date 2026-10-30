@@ -6,7 +6,7 @@ import { compareRuntimeIdentityToTaskHead, getRuntimeIdentity, type RuntimeIdent
 const MAX_SUMMARY_CHARS = 1200;
 
 export interface PostToolUseAuditRecord {
-  schema: 'ccpanes.post-tool-use-audit.v1';
+  schema: 'paneforge.post-tool-use-audit.v1';
   taskId: string;
   workspace: string;
   worktreeRoot: string;
@@ -51,7 +51,7 @@ export function summarizeHookValue(value: unknown): unknown {
 export function createPostToolUseAuditRecord(task: CurrentTask, event: unknown, runtimeIdentity = getRuntimeIdentity()): PostToolUseAuditRecord {
   const record = asRecord(event);
   return {
-    schema: 'ccpanes.post-tool-use-audit.v1',
+    schema: 'paneforge.post-tool-use-audit.v1',
     taskId: task.taskId,
     workspace: task.workspace,
     worktreeRoot: task.worktreeRoot,

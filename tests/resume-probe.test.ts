@@ -4,11 +4,11 @@ import type { CurrentTask, GitState } from '../src/types.js';
 
 function task(overrides: Partial<CurrentTask> = {}): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
-    projectPath: 'D:/cc-pane/project-alpha',
-    worktreeRoot: 'D:/cc-pane/project-alpha',
+    workspace: 'paneforge',
+    projectPath: 'D:/paneforge/project-alpha',
+    worktreeRoot: 'D:/paneforge/project-alpha',
     mainRepoRoot: null,
     branch: 'feature/task-alpha',
     head: 'abc123',
@@ -23,7 +23,7 @@ function task(overrides: Partial<CurrentTask> = {}): CurrentTask {
 }
 
 const cleanGit: GitState = {
-  root: 'D:/cc-pane/project-alpha',
+  root: 'D:/paneforge/project-alpha',
   branch: 'feature/task-alpha',
   head: 'abc123',
   dirty: false,
@@ -51,8 +51,8 @@ describe('probeResume', () => {
   });
 
   test('returns ask_user for multiple candidates', () => {
-    const first = task({ taskId: 'task-alpha', worktreeRoot: 'D:/cc-pane/project-alpha' });
-    const second = task({ taskId: 'task-beta', worktreeRoot: 'D:/cc-pane/project-beta', owner: { leaderSessionId: null, paneId: null, layoutId: null } });
+    const first = task({ taskId: 'task-alpha', worktreeRoot: 'D:/paneforge/project-alpha' });
+    const second = task({ taskId: 'task-beta', worktreeRoot: 'D:/paneforge/project-beta', owner: { leaderSessionId: null, paneId: null, layoutId: null } });
     const result = probeResume({
       utterance: '接着做',
       currentSessionId: 'leader-1',

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { canonicalizeCcPanesTimezoneTimestamp } from './ccpanes-session-snapshot.js';
+import { canonicalizePaneForgeTimezoneTimestamp } from './paneforge-session-snapshot.js';
 import { isCodexThreadId } from './codex-session-identity.js';
 import {
   redactCodexSessionArtifactValue,
@@ -268,7 +268,7 @@ const MAX_CANDIDATES = 512;
 const MAX_ACTIONS = 512;
 const MAX_NAME_CODE_POINTS = 120;
 const DEFAULT_TITLE = 'Codex CLI thread';
-const NAME_PREFIX = '[CC-Panes] ';
+const NAME_PREFIX = '[PaneForge] ';
 const EXPLICIT_REASON =
   'explicitly selected active project CLI thread is readable but hidden';
 const LIVE_REASON =
@@ -566,7 +566,7 @@ function safeWritableName(value: unknown, field: string): string {
 }
 
 function canonicalTimestamp(value: unknown, field: string): string {
-  const canonical = canonicalizeCcPanesTimezoneTimestamp(value);
+  const canonical = canonicalizePaneForgeTimezoneTimestamp(value);
   if (!canonical) return invalid(field, 'unsafe-timestamp');
   return canonical;
 }

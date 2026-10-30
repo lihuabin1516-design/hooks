@@ -13,7 +13,7 @@ task.
 when its file owner, declared active worktree, current Git root and canonical
 project relationship all match.
 
-**Tech Stack:** Node.js 22+, TypeScript ESM, Vitest, Git CLI, existing CC-Panes
+**Tech Stack:** Node.js 22+, TypeScript ESM, Vitest, Git CLI, existing PaneForge
 hook schemas.
 
 ---
@@ -26,7 +26,7 @@ Intent:
   explicit and machine-verifiable.
 Authorized Mutation:
   Tracked files inside {workspace-root}\.worktrees\hooks-phase51-task-binding plus its
-  ignored .ccpanes-task/current-task.json.
+  ignored .paneforge-task/current-task.json.
 In Scope:
   task schema semantics, Git topology reader, task factory/resolver, CLI command,
   hook/lifecycle mismatch behavior, tests, smoke and directly governing docs.
@@ -36,7 +36,7 @@ Out of Scope:
 No-Touch:
   {workspace-root}\.worktrees\paneforge-foundation existing changes;
   {workspace-root}\tool\repos\hooks main worktree tracked files;
-  {user-home}\.codex and {user-home}\.cc-panes.
+  {user-home}\.codex and {user-home}\.paneforge.
 Current Evidence:
   Canonical repo is {workspace-root}\tool\repos\hooks.
   Active linked worktree is {workspace-root}\.worktrees\hooks-phase51-task-binding.
@@ -72,7 +72,7 @@ Active task worktree:
 
 Task binding:
   {workspace-root}\.worktrees\hooks-phase51-task-binding
-    \.ccpanes-task\current-task.json
+    \.paneforge-task\current-task.json
 
 Required current-task values:
   projectPath  = {workspace-root}\tool\repos\hooks
@@ -84,7 +84,7 @@ Required current-task values:
 
 ```text
 .gitignore
-  Ignore project-local .ccpanes-task runtime state.
+  Ignore project-local .paneforge-task runtime state.
 
 src/types.ts
   Own GitTopology, TaskBindingStatus and TaskBindingCheck public types.
@@ -142,7 +142,7 @@ README.md / HANDOFF.md / PROJECT-DIRECTORY.md
 - [ ] **Step 1: Add the root-scoped rule**
 
 ```gitignore
-/.ccpanes-task/
+/.paneforge-task/
 ```
 
 - [ ] **Step 2: Verify the rule**
@@ -150,13 +150,13 @@ README.md / HANDOFF.md / PROJECT-DIRECTORY.md
 Run:
 
 ```powershell
-git check-ignore -v .ccpanes-task/current-task.json
+git check-ignore -v .paneforge-task/current-task.json
 git diff -- .gitignore
 ```
 
 Expected:
 
-- `git check-ignore` identifies `/.ccpanes-task/`;
+- `git check-ignore` identifies `/.paneforge-task/`;
 - no unrelated ignore rules change.
 
 ## Task 2: Define topology and binding contracts with failing tests
@@ -329,7 +329,7 @@ export type TaskBindingStatus =
   | 'project-root-mismatch';
 
 export interface TaskBindingCheck {
-  schema: 'ccpanes.task-binding-check.v1';
+  schema: 'paneforge.task-binding-check.v1';
   status: TaskBindingStatus;
   reason: string;
   cwd: string;
@@ -478,9 +478,9 @@ export function createCurrentTask(input: CreateCurrentTaskInput): CurrentTask {
   const now = input.now ?? new Date().toISOString();
 
   return validateCurrentTask({
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: input.taskId,
-    workspace: input.workspace ?? 'cc-pane',
+    workspace: input.workspace ?? 'paneforge',
     projectPath,
     worktreeRoot,
     mainRepoRoot: topology?.mainRepoRoot ?? null,
@@ -495,7 +495,7 @@ export function createCurrentTask(input: CreateCurrentTaskInput): CurrentTask {
     createdAt: now,
     updatedAt: now,
     source: input.source ?? 'manual-import',
-    notes: input.notes ?? 'task binding written by CC-Panes hooks'
+    notes: input.notes ?? 'task binding written by PaneForge hooks'
   });
 }
 ```
@@ -634,7 +634,7 @@ expect(written.mainRepoRoot).toBe(mainRoot);
 expect(written.worktreeRoot).toBe(linkedRoot);
 expect(written.branch).toBe('phase51-linked');
 expect(written.head).toBe(git(['rev-parse', 'HEAD'], linkedRoot));
-expect(written.notes).toBe('task binding written by CC-Panes hooks');
+expect(written.notes).toBe('task binding written by PaneForge hooks');
 expect(written.notes).not.toContain('synthetic fixture');
 ```
 
@@ -861,7 +861,7 @@ Matched linked-worktree assertion:
 
 ```ts
 expect(parsed).toMatchObject({
-  schema: 'ccpanes.task-binding-check.v1',
+  schema: 'paneforge.task-binding-check.v1',
   status: 'matched',
   gitRoot: linkedRoot,
   canonicalProjectRoot: mainRoot,
@@ -1014,14 +1014,14 @@ Expected subset:
 
 ```json
 {
-  "schema": "ccpanes.task-binding-check.v1",
+  "schema": "paneforge.task-binding-check.v1",
   "status": "matched",
-  "gitRoot": "D:\\cc-pane\\.worktrees\\hooks-phase51-task-binding",
-  "canonicalProjectRoot": "D:\\cc-pane\\tool\\repos\\hooks",
-  "taskFileRoot": "D:\\cc-pane\\.worktrees\\hooks-phase51-task-binding",
-  "declaredProjectPath": "D:\\cc-pane\\tool\\repos\\hooks",
-  "declaredWorktreeRoot": "D:\\cc-pane\\.worktrees\\hooks-phase51-task-binding",
-  "declaredMainRepoRoot": "D:\\cc-pane\\tool\\repos\\hooks",
+  "gitRoot": "D:\\paneforge\\.worktrees\\hooks-phase51-task-binding",
+  "canonicalProjectRoot": "D:\\paneforge\\tool\\repos\\hooks",
+  "taskFileRoot": "D:\\paneforge\\.worktrees\\hooks-phase51-task-binding",
+  "declaredProjectPath": "D:\\paneforge\\tool\\repos\\hooks",
+  "declaredWorktreeRoot": "D:\\paneforge\\.worktrees\\hooks-phase51-task-binding",
+  "declaredMainRepoRoot": "D:\\paneforge\\tool\\repos\\hooks",
   "taskId": "hooks-phase51-task-binding-isolation"
 }
 ```
@@ -1036,7 +1036,7 @@ git diff
 ```
 
 Expected: only Phase51 files inside the linked worktree. The ignored
-`.ccpanes-task/current-task.json` is verified separately by hash and live probe.
+`.paneforge-task/current-task.json` is verified separately by hash and live probe.
 
 - [ ] **Step 4: Verify the canonical main worktree remains clean**
 

@@ -12,7 +12,7 @@ async function sha256File(filePath: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-write-preview-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-write-preview-'));
 });
 
 afterEach(async () => {
@@ -30,20 +30,20 @@ describe('createHookWritePreview', () => {
     await fs.mkdir(path.dirname(patchPath), { recursive: true });
     await fs.writeFile(patchPath, '[hooks]\npreview = "node hook-runner.js"\n', 'utf8');
     await fs.writeFile(applyPlanPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-apply-plan.v1',
+      schema: 'paneforge.hook-apply-plan.v1',
       targetConfigPaths: [configPath],
       artifacts: [{ kind: 'patch', path: patchPath, sha256: 'PATCH_SHA256' }]
     }, null, 2)}\n`, 'utf8');
     const approvalCheckPath = path.join(tempRoot, 'approval-check.json');
     await fs.writeFile(approvalCheckPath, `${JSON.stringify({
-      schema: 'ccpanes.hook-approval-check.v1',
+      schema: 'paneforge.hook-approval-check.v1',
       passed: true,
       applyPlanPath
     }, null, 2)}\n`, 'utf8');
 
     const preview = await createHookWritePreview({ approvalCheckPath, outDir, now: '2026-08-06T00:00:18.000Z' });
 
-    expect(preview.schema).toBe('ccpanes.hook-write-preview.v1');
+    expect(preview.schema).toBe('paneforge.hook-write-preview.v1');
     expect(preview.mode).toBe('dry-run-write-preview');
     expect(preview.approvalCheckPassed).toBe(true);
     expect(preview.entries).toHaveLength(1);
@@ -51,7 +51,7 @@ describe('createHookWritePreview', () => {
     await expect(fs.stat(path.join(outDir, 'write-preview.json'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'backup-manifest.json'))).resolves.toBeTruthy();
     await expect(fs.stat(preview.entries[0].diffPreviewPath)).resolves.toBeTruthy();
-    await expect(fs.readFile(preview.entries[0].afterPreviewPath, 'utf8')).resolves.toContain('# ccpanes-hook-preview:begin');
+    await expect(fs.readFile(preview.entries[0].afterPreviewPath, 'utf8')).resolves.toContain('# paneforge-hook-preview:begin');
     await expect(fs.readFile(preview.entries[0].diffPreviewPath, 'utf8')).resolves.toContain('+[hooks]');
     for (const artifact of preview.artifacts) {
       await expect(sha256File(artifact.path)).resolves.toBe(artifact.sha256);

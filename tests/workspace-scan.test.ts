@@ -29,9 +29,9 @@ async function initGitRepo(root: string): Promise<void> {
 
 function task(root: string, taskId: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId,
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -47,7 +47,7 @@ function task(root: string, taskId: string): CurrentTask {
 }
 
 beforeEach(async () => {
-  workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-workspace-'));
+  workspaceRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-workspace-'));
 });
 
 afterEach(async () => {
@@ -79,8 +79,8 @@ describe('scanWorkspaceTasks', () => {
     const good = path.join(workspaceRoot, 'good');
     const bad = path.join(workspaceRoot, 'bad');
     await writeCurrentTaskAtomic(good, task(good, 'task-good'));
-    await fs.mkdir(path.join(bad, '.ccpanes-task'), { recursive: true });
-    await fs.writeFile(path.join(bad, '.ccpanes-task', 'current-task.json'), JSON.stringify({ schema: 'wrong' }), 'utf8');
+    await fs.mkdir(path.join(bad, '.paneforge-task'), { recursive: true });
+    await fs.writeFile(path.join(bad, '.paneforge-task', 'current-task.json'), JSON.stringify({ schema: 'wrong' }), 'utf8');
 
     const result = await scanWorkspaceTasks(workspaceRoot);
 

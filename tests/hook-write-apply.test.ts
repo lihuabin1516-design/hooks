@@ -23,12 +23,12 @@ async function writeFixturePreview(configPath: string, before: string, after: st
   await fs.writeFile(afterPath, after, 'utf8');
   await fs.writeFile(diffPath, `--- ${configPath}\n+++ ${configPath}.preview\n@@\n`, 'utf8');
   await fs.writeFile(approvalCheckPath, `${JSON.stringify({
-    schema: 'ccpanes.hook-approval-check.v1',
+    schema: 'paneforge.hook-approval-check.v1',
     passed: true,
     applyPlanPath: path.join(fixtureDir, 'apply-plan.json')
   }, null, 2)}\n`, 'utf8');
   await fs.writeFile(writePreviewPath, `${JSON.stringify({
-    schema: 'ccpanes.hook-write-preview.v1',
+    schema: 'paneforge.hook-write-preview.v1',
     mode: 'dry-run-write-preview',
     createdAt: '2026-08-06T00:00:00.000Z',
     approvalCheckPath,
@@ -47,7 +47,7 @@ async function writeFixturePreview(configPath: string, before: string, after: st
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-write-apply-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-write-apply-'));
 });
 
 afterEach(async () => {
@@ -60,7 +60,7 @@ describe('createHookWriteApply', () => {
     const configPath = path.join(configRoot, 'config.toml');
     const outDir = path.join(tempRoot, 'apply-report');
     const before = 'original = true\n';
-    const after = 'original = true\n\n# ccpanes-hook-preview:begin\n[hooks]\npreview = "node hook-runner.js"\n# ccpanes-hook-preview:end\n';
+    const after = 'original = true\n\n# paneforge-hook-preview:begin\n[hooks]\npreview = "node hook-runner.js"\n# paneforge-hook-preview:end\n';
     await fs.mkdir(configRoot, { recursive: true });
     await fs.writeFile(configPath, before, 'utf8');
     const fixture = await writeFixturePreview(configPath, before, after);
@@ -73,7 +73,7 @@ describe('createHookWriteApply', () => {
       now: '2026-08-06T00:00:01.000Z'
     });
 
-    expect(report.schema).toBe('ccpanes.hook-write-apply.v1');
+    expect(report.schema).toBe('paneforge.hook-write-apply.v1');
     expect(report.mode).toBe('guarded-apply');
     expect(report.passed).toBe(true);
     expect(report.entries).toHaveLength(1);

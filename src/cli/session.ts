@@ -2,11 +2,11 @@ import fs from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { validateCcPanesSessionSnapshot } from '../ccpanes-session-snapshot.js';
+import { validatePaneForgeSessionSnapshot } from '../paneforge-session-snapshot.js';
 import { buildCodexSessionIndex, writeCodexSessionJson } from '../codex-session-index.js';
 import { validateCodexSessionIndexArtifact } from '../codex-session-index-artifact.js';
 import { generateCodexHandoff } from '../codex-session-handoff.js';
-import { buildSessionFederation, assertCodexSessionFederationProject, attachCcPanesAttribution } from '../session-federation.js';
+import { buildSessionFederation, assertCodexSessionFederationProject, attachPaneForgeAttribution } from '../session-federation.js';
 import { probeResume } from '../resume-probe.js';
 import { resolveCodexSessions, renderCodexSessionResolution, validateCodexSessionResolutionArtifact } from '../codex-session-resolver.js';
 import { createRetentionManifest, validateCodexSessionRetentionManifest } from '../codex-session-handoff.js';
@@ -55,11 +55,11 @@ export async function handleSessionCommands(
     const stateDb = parsed.stateDb ?? path.join(codexRoot, 'state_5.sqlite');
     const threadHistoryDb = parsed.threadHistoryDb ?? path.join(codexRoot, 'thread_history_1.sqlite');
     const taskContext = parsed.taskContextPath ??
-      (project && fs.existsSync(path.join(project, '.ccpanes-task', 'current-task.json'))
-        ? path.join(project, '.ccpanes-task', 'current-task.json')
+      (project && fs.existsSync(path.join(project, '.paneforge-task', 'current-task.json'))
+        ? path.join(project, '.paneforge-task', 'current-task.json')
         : null);
     const snapshot = parsed.snapshotPath
-      ? validateCcPanesSessionSnapshot(
+      ? validatePaneForgeSessionSnapshot(
           JSON.parse(await readFile(path.resolve(parsed.snapshotPath), 'utf8'))
         )
       : null;
@@ -71,10 +71,10 @@ export async function handleSessionCommands(
       project
     });
     const enrichedSessions = project
-      ? attachCcPanesAttribution({
+      ? attachPaneForgeAttribution({
           project,
           sessions: index.sessions,
-          ccpanes: snapshot
+          paneforge: snapshot
         })
       : index.sessions;
     const enrichedIndex = validateCodexSessionIndexArtifact({
@@ -112,7 +112,7 @@ export async function handleSessionCommands(
       const federation = buildSessionFederation({
         project,
         codexSessions: projectedSessions,
-        ccpanes: snapshot
+        paneforge: snapshot
       });
       const outPath = parsed.outPath ??
         path.join(process.cwd(), 'live', 'session-federation.json');
@@ -130,7 +130,7 @@ export async function handleSessionCommands(
     const threadHistoryDb = parsed.threadHistoryDb ?? path.join(codexRoot, 'thread_history_1.sqlite');
     const defaultTaskContextPath = path.join(
       project,
-      '.ccpanes-task',
+      '.paneforge-task',
       'current-task.json'
     );
     const taskContextPath = parsed.taskContextPath ??

@@ -4,7 +4,7 @@ import type { Dirent } from 'node:fs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {
-  CCPANES_RUNTIME_PROFILE,
+  PANEFORGE_RUNTIME_PROFILE,
   DEFAULT_LIVE_CONSISTENCY_ROOT_FILES,
   DEFAULT_LIVE_CONSISTENCY_SOURCE_PREFIXES
 } from './runtime-profile.js';
@@ -46,7 +46,7 @@ export interface LiveConsistencySummary {
 }
 
 export interface LiveConsistencyReport {
-  schema: 'ccpanes.live-consistency.verify.v1';
+  schema: 'paneforge.live-consistency.verify.v1';
   mode: 'read-only';
   checkedAt: string;
   repoRoot: string;
@@ -210,8 +210,8 @@ function summarize(files: LiveConsistencyFileResult[]): Omit<LiveConsistencySumm
 }
 
 export async function verifyLiveConsistency(input: VerifyLiveConsistencyInput = {}): Promise<LiveConsistencyReport> {
-  const repoRoot = input.repoRoot ?? CCPANES_RUNTIME_PROFILE.repoRoot;
-  const liveRoot = input.liveRoot ?? CCPANES_RUNTIME_PROFILE.liveRoot;
+  const repoRoot = input.repoRoot ?? PANEFORGE_RUNTIME_PROFILE.repoRoot;
+  const liveRoot = input.liveRoot ?? PANEFORGE_RUNTIME_PROFILE.liveRoot;
   const sourcePrefixes = input.sourcePrefixes ?? DEFAULT_LIVE_CONSISTENCY_SOURCE_PREFIXES;
   const rootFiles = input.rootFiles ?? DEFAULT_LIVE_CONSISTENCY_ROOT_FILES;
   const distPrefix = normalizeRelPath(input.distPrefix ?? 'dist/');
@@ -249,7 +249,7 @@ export async function verifyLiveConsistency(input: VerifyLiveConsistencyInput = 
   };
 
   return {
-    schema: 'ccpanes.live-consistency.verify.v1',
+    schema: 'paneforge.live-consistency.verify.v1',
     mode: 'read-only',
     checkedAt: input.now ?? new Date().toISOString(),
     repoRoot,

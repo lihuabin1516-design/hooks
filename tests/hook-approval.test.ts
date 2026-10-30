@@ -14,9 +14,9 @@ let tempRoot: string;
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: path.join(tempRoot, 'project-alpha'),
     worktreeRoot: path.join(tempRoot, 'project-alpha'),
     mainRepoRoot: null,
@@ -36,7 +36,7 @@ async function sha256File(filePath: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-approval-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-approval-'));
 });
 
 afterEach(async () => {
@@ -58,7 +58,7 @@ describe('checkHookApproval', () => {
     execFileSync('git', ['init'], { cwd: repoPath, stdio: 'ignore' });
     const manifest = await createHookPackage({
       task: task(),
-      prototypeRoot: 'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      prototypeRoot: 'D:/paneforge/tool/experiments/paneforge-task-probe',
       target: 'both',
       upstreamHookPath: upstreamHook,
       outDir: packageDir,
@@ -78,7 +78,7 @@ describe('checkHookApproval', () => {
     const report = await checkHookApproval({
       applyPlanPath,
       approval: {
-        schema: 'ccpanes.hook-approval.v1',
+        schema: 'paneforge.hook-approval.v1',
         approved: true,
         applyPlanSha256: await sha256File(applyPlanPath),
         releaseGateSha256: await sha256File(releaseGatePath),
@@ -94,7 +94,7 @@ describe('checkHookApproval', () => {
       now: '2026-08-06T00:30:00.000Z'
     });
 
-    expect(report.schema).toBe('ccpanes.hook-approval-check.v1');
+    expect(report.schema).toBe('paneforge.hook-approval-check.v1');
     expect(report.mode).toBe('approval-preflight');
     expect(report.passed).toBe(true);
     expect(report.failures).toEqual([]);

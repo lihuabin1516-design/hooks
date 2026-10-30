@@ -12,7 +12,7 @@ import {
 let tempRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-runtime-identity-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-runtime-identity-'));
 });
 
 afterEach(async () => {
@@ -21,8 +21,8 @@ afterEach(async () => {
 
 function identity(): RuntimeIdentity {
   return {
-    schema: 'ccpanes.runtime-identity.v1',
-    packageName: 'ccpanes-hooks-tooling',
+    schema: 'paneforge.runtime-identity.v1',
+    packageName: 'paneforge-hooks-tooling',
     packageVersion: '0.1.0',
     gitCommit: 'abc123',
     gitDirty: false,

@@ -12,7 +12,7 @@
 ## Context
 
 `resolveCurrentTaskFromCwd()` 当前从事件 `cwd` 一直向文件系统根目录搜索
-`.ccpanes-task/current-task.json`，找到第一个合法 JSON 后立即选为当前任务。
+`.paneforge-task/current-task.json`，找到第一个合法 JSON 后立即选为当前任务。
 它只校验字段类型，没有核验 task 文件、当前 Git checkout 和 canonical 项目的
 拓扑关系。
 
@@ -20,16 +20,16 @@
 
 - 当前 Hooks 项目应归属 `{workspace-root}\tool\repos\hooks`；
 - 当时 Hooks cwd 下没有项目级 task binding；
-- 父级 `{workspace-root}\.ccpanes-task\current-task.json` 指向 PaneForge task；
+- 父级 `{workspace-root}\.paneforge-task\current-task.json` 指向 PaneForge task；
 - 父级 binding 的 `worktreeRoot={workspace-root}`，范围过宽；
 - ancestor search 因而把 PaneForge task 注入 Hooks 对话。
 
 现场已拆分为两个独立任务边界：
 
 - Hooks task binding 位于
-  `{workspace-root}\.worktrees\hooks-phase51-task-binding\.ccpanes-task\current-task.json`；
+  `{workspace-root}\.worktrees\hooks-phase51-task-binding\.paneforge-task\current-task.json`；
 - PaneForge task binding 位于
-  `{workspace-root}\.worktrees\paneforge-foundation\.ccpanes-task\current-task.json`；
+  `{workspace-root}\.worktrees\paneforge-foundation\.paneforge-task\current-task.json`；
 - workspace root 的 broad synthetic binding 已归档；
 - PaneForge 原有 fusion 改动原地保留，未复制、重置、暂存、提交或推送。
 
@@ -42,7 +42,7 @@ worktree。这样会把“项目是谁”与“本轮在哪里写”混为一谈
 Trigger: task scope authority and hook control-plane resolution
 Affected boundary: cwd -> Git topology -> current-task resolver -> hook/session consumers
 Canonical owner: src/current-task.ts
-Providers: src/git-state.ts, .ccpanes-task/current-task.json
+Providers: src/git-state.ts, .paneforge-task/current-task.json
 Consumers: hook-enforce, permission-enforce, post-enforce, session-start,
            stop-check, plan-lifecycle-intake
 Changed contract: task binding distinguishes canonical project ownership from
@@ -76,7 +76,7 @@ Review depth: Full
 task 文件必须位于：
 
 ```text
-<worktreeRoot>/.ccpanes-task/current-task.json
+<worktreeRoot>/.paneforge-task/current-task.json
 ```
 
 因此：
@@ -128,7 +128,7 @@ mainRepoRoot == null
 
 ### 4. 解析结果使用显式状态
 
-新增 `ccpanes.task-binding-check.v1`：
+新增 `paneforge.task-binding-check.v1`：
 
 ```ts
 type TaskBindingStatus =
@@ -141,7 +141,7 @@ type TaskBindingStatus =
   | 'project-root-mismatch';
 
 interface TaskBindingCheck {
-  schema: 'ccpanes.task-binding-check.v1';
+  schema: 'paneforge.task-binding-check.v1';
   status: TaskBindingStatus;
   reason: string;
   cwd: string;
@@ -236,7 +236,7 @@ task_binding_bootstrap_write
 - 不再默认写入 `notes=synthetic fixture task`；
 - 未知 owner 字段保持 `null`，不伪造 session/pane/layout。
 - 底层原子 writer 必须拒绝写入目录与 `task.worktreeRoot` 不一致的调用。
-- `.ccpanes-task` 与 `current-task.json` 必须是 worktree 内的真实目录/文件，
+- `.paneforge-task` 与 `current-task.json` 必须是 worktree 内的真实目录/文件，
   不接受 symlink/junction；原子 rename 前复核目录的 realpath 和文件身份。
 
 workspace resume 扫描也必须经过同一 binding authority：只有
@@ -246,7 +246,7 @@ candidate；存在直接 task 文件或 `.git` marker 的项目都要经过 reso
 
 ### 8. 本地 task 状态不进入源码历史
 
-`.ccpanes-task/` 是本机控制面状态，必须通过仓库本地 exclude 或项目
+`.paneforge-task/` 是本机控制面状态，必须通过仓库本地 exclude 或项目
 `.gitignore` 排除。Task binding 不进入 commit。
 
 ## Ownership model
@@ -294,7 +294,7 @@ Does Not Own: task selection semantics
 Inputs: hook event and TaskBindingCheck
 Outputs: no-op, allow, deny, lifecycle context or audit
 Providers: current-task, hook-event-adapter, hook-runner
-Consumers: Codex / CC-Panes hook host
+Consumers: Codex / PaneForge hook host
 State: ephemeral decision plus worktree-scoped audit output
 Authority: blocks writes when binding authority is ambiguous
 Failure Domain: false allow or wrong audit routing

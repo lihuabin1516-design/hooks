@@ -13,7 +13,7 @@ export interface TaskRiskDimensions {
 }
 
 export interface TaskRiskResult {
-  schema: 'ccpanes.task-risk.v1';
+  schema: 'paneforge.task-risk.v1';
   tier: TaskRiskTier;
   reason: string;
   signals: string[];
@@ -35,7 +35,7 @@ const codeObjectPattern = /\b(src|test|tests|lib|package|packages|component|hook
 const productionPattern = /\b(prod|production|deploy|release|publish|ship|rollout|cutover)\b|生产|上线|部署|发布|发版|投产|切流/u;
 const migrationPattern = /\b(migrate|migration|schema|database|db|ddl|backfill)\b|迁移|数据库|数据表|表结构|回填|重建/u;
 const securityPattern = /\b(auth|permission|credential|secret|token|certificate|security|vulnerability|oauth|acl|rbac)\b|认证|授权|权限|凭据|密钥|令牌|证书|安全|漏洞/u;
-const userConfigPattern = /\.codex|\.claude|\.cc-panes|hooks\.json|config\.toml|providers\.json|launch-profiles\.json|用户配置|全局配置/u;
+const userConfigPattern = /\.codex|\.claude|\.paneforge|hooks\.json|config\.toml|providers\.json|launch-profiles\.json|用户配置|全局配置/u;
 const externalSideEffectPattern = /\b(git\s+push|npm\s+publish|pnpm\s+publish|yarn\s+npm\s+publish|terraform\s+apply|kubectl\s+apply|gh\s+pr\s+merge)\b|远端写入|推送|发布包/u;
 const destructivePattern = /\b(reset\s+--hard|git\s+clean|drop|delete|remove|destroy|destructive|irreversible|breaking)\b|删除|移除|破坏|不可逆|清空|重置/u;
 const interfacePattern = /\b(api|interface|contract|endpoint|protocol|schema|public)\b|接口|契约|协议|端点|公开/u;
@@ -125,7 +125,7 @@ export function classifyTaskRisk(input: ClassifyTaskRiskInput): TaskRiskResult {
   }
 
   return {
-    schema: 'ccpanes.task-risk.v1',
+    schema: 'paneforge.task-risk.v1',
     tier,
     reason,
     signals,

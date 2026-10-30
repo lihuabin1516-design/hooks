@@ -16,7 +16,7 @@ This project is agent-agnostic: if a runtime can surface hook-like events or inv
 | Node.js 22+ | required | All repository scripts assume this baseline. |
 | Windows | primary validated | GitHub Actions runs `windows-latest`. |
 | Codex App | supported | First-class hook path and audit outputs. |
-| CC-Panes | compatible | Same core contract, with a host-specific integration path. |
+| PaneForge | compatible | Same core contract, with a host-specific integration path. |
 | Cursor | candidate | Tracked in the host adapter registry. |
 | Gemini CLI | candidate | Tracked in the host adapter registry. |
 | Kimi CLI | candidate | Tracked in the host adapter registry. |
@@ -45,5 +45,5 @@ node dist/src/cli.js verify-live-consistency --repo-root <repo-root> --live-root
 ## Notes
 
 - The repo is designed around the generic hook contract, not a single UI.
-- CC-Panes compatibility is real, but it is one host path among several.
+- PaneForge compatibility is real, but it is one host path among several.
 - If a runtime is missing from the matrix, treat it as candidate until you have fixtures and verification evidence.

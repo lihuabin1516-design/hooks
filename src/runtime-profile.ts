@@ -4,29 +4,29 @@ export interface ReferenceRepoProfile {
 }
 
 export interface RuntimeProfile {
-  name: 'ccpanes-local';
+  name: 'paneforge-local';
   repoRoot: string;
   liveRoot: string;
   auditRoot: string;
   hooksJsonPath: string;
   configTomlPath: string;
   skillsHubHookPath: string;
-  ccPanesCodexHookPath: string;
+  paneforgeCodexHookPath: string;
   referenceRepos: ReferenceRepoProfile[];
 }
 
-export const CCPANES_RUNTIME_PROFILE: RuntimeProfile = {
-  name: 'ccpanes-local',
-  repoRoot: 'D:\\cc-pane\\tool\\repos\\hooks',
-  liveRoot: 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe',
-  auditRoot: 'D:\\cc-pane\\tool\\experiments\\ccpanes-task-probe\\live\\dynamic-audits',
+export const PANEFORGE_RUNTIME_PROFILE: RuntimeProfile = {
+  name: 'paneforge-local',
+  repoRoot: 'D:\\paneforge\\tool\\repos\\hooks',
+  liveRoot: 'D:\\paneforge\\tool\\experiments\\paneforge-task-probe',
+  auditRoot: 'D:\\paneforge\\tool\\experiments\\paneforge-task-probe\\live\\dynamic-audits',
   hooksJsonPath: 'C:\\Users\\AI001\\.codex\\hooks.json',
   configTomlPath: 'C:\\Users\\AI001\\.codex\\config.toml',
   skillsHubHookPath: 'C:\\Users\\AI001\\skills-hub\\bin\\skills-hub-hook.exe',
-  ccPanesCodexHookPath: 'D:\\cc-pane\\cc-pane-main\\src-tauri\\binaries\\cc-panes-cli-hook.exe',
+  paneforgeCodexHookPath: 'D:\\paneforge\\paneforge-main\\src-tauri\\binaries\\paneforge-cli-hook.exe',
   referenceRepos: [
-    { name: 'comet', path: 'D:\\cc-pane\\tool\\repos\\comet' },
-    { name: 'fastctx', path: 'D:\\cc-pane\\tool\\repos\\fastctx' },
+    { name: 'comet', path: 'D:\\paneforge\\tool\\repos\\comet' },
+    { name: 'fastctx', path: 'D:\\paneforge\\tool\\repos\\fastctx' },
     { name: 'skills-hub', path: 'C:\\Users\\AI001\\skills-hub' }
   ]
 };

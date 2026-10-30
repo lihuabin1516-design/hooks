@@ -32,13 +32,13 @@ git -C {workspace-root}\tool\repos\hooks ls-remote origin refs/heads/main
 ## live 运行副本
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe
+{workspace-root}\tool\experiments\paneforge-task-probe
 ```
 
 Codex 全局 hooks 当前使用该路径下的构建产物：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js
+{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js
 ```
 
 同步原则：repo 完成验证并 push 后，备份 live 对应目录，再复制 `src`、`dist`、`templates`、`tests`、`scripts`、`examples`、`docs` 和根配置/文档文件到 live，随后在 live 跑完整验收。
@@ -50,8 +50,8 @@ Codex 全局 hooks 当前使用该路径下的构建产物：
 ```powershell
 node dist/src/cli.js create-production-toolkit `
   --out-dir <toolkit-dir> `
-  --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe `
-  --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits `
+  --prototype-root {workspace-root}\tool\experiments\paneforge-task-probe `
+  --audit-root {workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits `
   --hooks-json {user-home}\.codex\hooks.json `
   --config {user-home}\.codex\config.toml `
   --expected-upstream-hook {user-home}\skills-hub\bin\skills-hub-hook.exe `
@@ -65,7 +65,7 @@ node dist/src/cli.js create-production-toolkit `
 ```text
 {user-home}\.codex\hooks.json
 {user-home}\.codex\config.toml
-{user-home}\.cc-panes\config.toml
+{user-home}\.paneforge\config.toml
 {user-home}\skills-hub\bin\skills-hub-hook.exe
 {user-home}\.fastctx\bin\fastctx.exe
 ```
@@ -73,13 +73,13 @@ node dist/src/cli.js create-production-toolkit `
 推荐核验命令：
 
 ```powershell
-Get-Item {user-home}\.codex\hooks.json,{user-home}\.codex\config.toml,{user-home}\.cc-panes\config.toml,{user-home}\skills-hub\bin\skills-hub-hook.exe,{user-home}\.fastctx\bin\fastctx.exe |
+Get-Item {user-home}\.codex\hooks.json,{user-home}\.codex\config.toml,{user-home}\.paneforge\config.toml,{user-home}\skills-hub\bin\skills-hub-hook.exe,{user-home}\.fastctx\bin\fastctx.exe |
   Select-Object FullName,Length
 
 Get-FileHash -Algorithm SHA256 `
   {user-home}\.codex\hooks.json,`
   {user-home}\.codex\config.toml,`
-  {user-home}\.cc-panes\config.toml,`
+  {user-home}\.paneforge\config.toml,`
   {user-home}\skills-hub\bin\skills-hub-hook.exe,`
   {user-home}\.fastctx\bin\fastctx.exe
 ```

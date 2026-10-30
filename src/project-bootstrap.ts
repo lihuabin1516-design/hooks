@@ -16,7 +16,7 @@ export interface ProjectBootstrapInput {
 }
 
 export interface ProjectBootstrapResult {
-  schema: 'ccpanes.project-bootstrap-result.v1';
+  schema: 'paneforge.project-bootstrap-result.v1';
   projectRoot: string;
   taskId: string;
   phase: TaskPhase;
@@ -40,7 +40,7 @@ export interface ProjectBootstrapResult {
 }
 
 function bootstrapReportPath(projectRoot: string): string {
-  return path.join(projectRoot, '.ccpanes-task', 'bootstrap-report.json');
+  return path.join(projectRoot, '.paneforge-task', 'bootstrap-report.json');
 }
 async function ensurePolicyJson(projectRoot: string): Promise<{ changed: boolean; policy: ProjectPolicy }> {
   const existing = await readProjectPolicy(projectRoot);
@@ -67,7 +67,7 @@ export async function bootstrapProject(input: ProjectBootstrapInput): Promise<Pr
     taskId: input.taskId,
     phase: input.phase,
     workspace: input.workspace,
-    notes: input.notes ?? 'project bootstrapped by CC-Panes hooks',
+    notes: input.notes ?? 'project bootstrapped by PaneForge hooks',
     now: input.now
   });
   const projectRoot = task.worktreeRoot;
@@ -79,7 +79,7 @@ export async function bootstrapProject(input: ProjectBootstrapInput): Promise<Pr
   const policyJson = await ensurePolicyJson(projectRoot);
 
   const withoutReportPath: Omit<ProjectBootstrapResult, 'reportPath'> = {
-    schema: 'ccpanes.project-bootstrap-result.v1',
+    schema: 'paneforge.project-bootstrap-result.v1',
     projectRoot,
     taskId: input.taskId,
     phase: input.phase,

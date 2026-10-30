@@ -1,9 +1,9 @@
 {
-  "schema": "ccpanes.hook-dry-run-batch.v1",
+  "schema": "paneforge.hook-dry-run-batch.v1",
   "task": {
-    "schema": "ccpanes.task-selection.v1",
+    "schema": "paneforge.task-selection.v1",
     "taskId": "example-task",
-    "workspace": "cc-pane",
+    "workspace": "paneforge",
     "projectPath": "./examples/example-task",
     "worktreeRoot": "./examples/example-task",
     "mainRepoRoot": null,

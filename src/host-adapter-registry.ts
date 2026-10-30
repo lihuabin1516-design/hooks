@@ -1,4 +1,4 @@
-export type HostAdapterId = 'codex' | 'ccpanes' | 'cursor' | 'gemini' | 'kimi' | 'opencode';
+export type HostAdapterId = 'codex' | 'paneforge' | 'cursor' | 'gemini' | 'kimi' | 'opencode';
 
 export type HostAdapterStatus = 'supported' | 'preview' | 'candidate';
 
@@ -30,10 +30,10 @@ export interface HostAdapter {
 }
 
 export interface HostAdapterRegistry {
-  schema: 'ccpanes.host-adapter-registry.v1';
+  schema: 'paneforge.host-adapter-registry.v1';
   defaultHost: HostAdapterId;
   sourceModel: {
-    name: 'ccpanes.vibe-inspired-host-adapters.v1';
+    name: 'paneforge.vibe-inspired-host-adapters.v1';
     adaptedFrom: string[];
     adoptedIdeas: string[];
     rejectedIdeas: string[];
@@ -43,7 +43,7 @@ export interface HostAdapterRegistry {
 
 const sharedBoundaries = [
   'current-task.json remains the task scope authority',
-  '.ccpanes-task/policy.json remains the executable allow/block authority',
+  '.paneforge-task/policy.json remains the executable allow/block authority',
   'workflow profile and host registry are advisory unless consumed by hook-enforce or permission-enforce',
   'real user-config writes require a production approval package and rollback evidence'
 ];
@@ -57,13 +57,13 @@ const localVerification: HostAdapterVerification[] = [
 ];
 
 const registry: HostAdapterRegistry = {
-  schema: 'ccpanes.host-adapter-registry.v1',
+  schema: 'paneforge.host-adapter-registry.v1',
   defaultHost: 'codex',
   sourceModel: {
-    name: 'ccpanes.vibe-inspired-host-adapters.v1',
+    name: 'paneforge.vibe-inspired-host-adapters.v1',
     adaptedFrom: [
       'https://github.com/foryourhealth111-pixel/Vibe-Skills/tree/main/adapters',
-      'D:/cc-pane/tool/repos/hooks/docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md'
+      'D:/paneforge/tool/repos/hooks/docs/PANEFORGE-HOOK-HOST-ADAPTER-MATRIX.md'
     ],
     adoptedIdeas: [
       'one shared hook kernel with thin host-specific adapters',
@@ -82,7 +82,7 @@ const registry: HostAdapterRegistry = {
       id: 'codex',
       label: 'Codex',
       status: 'supported',
-      integration: 'Global Codex hooks point at live dist/src/cli.js; UserPromptSubmit chains skills-hub routing, CC-Panes lifecycle intake, and the workflow advisory.',
+      integration: 'Global Codex hooks point at live dist/src/cli.js; UserPromptSubmit chains skills-hub routing, PaneForge lifecycle intake, and the workflow advisory.',
       surfaces: [
         { kind: 'hard-gate', name: 'PreToolUse', owner: 'hook-enforce', status: 'supported' },
         { kind: 'hard-gate', name: 'PermissionRequest', owner: 'permission-enforce', status: 'supported' },
@@ -91,7 +91,7 @@ const registry: HostAdapterRegistry = {
         { kind: 'advisory', name: 'SessionStart', owner: 'session-start', status: 'supported' },
         { kind: 'advisory', name: 'Stop', owner: 'stop-check', status: 'supported' }
       ],
-      stateRoots: ['<project>/.ccpanes-task', 'D:/cc-pane/tool/experiments/ccpanes-task-probe/live/dynamic-audits/<task>'],
+      stateRoots: ['<project>/.paneforge-task', 'D:/paneforge/tool/experiments/paneforge-task-probe/live/dynamic-audits/<task>'],
       auditArtifacts: [
         'hook-enforce-audit.json',
         'permission-enforce-audit.json',
@@ -102,26 +102,26 @@ const registry: HostAdapterRegistry = {
         ...localVerification,
         {
           name: 'installed-hooks',
-          command: 'node dist/src/cli.js verify-installed-hooks --hooks-json C:\\\\Users\\\\AI001\\\\.codex\\\\hooks.json --prototype-root D:\\\\cc-pane\\\\tool\\\\experiments\\\\ccpanes-task-probe --audit-root D:\\\\cc-pane\\\\tool\\\\experiments\\\\ccpanes-task-probe\\\\live\\\\dynamic-audits --config C:\\\\Users\\\\AI001\\\\.codex\\\\config.toml',
+          command: 'node dist/src/cli.js verify-installed-hooks --hooks-json C:\\\\Users\\\\AI001\\\\.codex\\\\hooks.json --prototype-root D:\\\\paneforge\\\\tool\\\\experiments\\\\paneforge-task-probe --audit-root D:\\\\paneforge\\\\tool\\\\experiments\\\\paneforge-task-probe\\\\live\\\\dynamic-audits --config C:\\\\Users\\\\AI001\\\\.codex\\\\config.toml',
           requiredBeforeRealConfig: true
         }
       ],
       boundaries: [...sharedBoundaries, 'do not execute skills-hub-hook.exe during ordinary repo maintenance']
     },
     {
-      id: 'ccpanes',
-      label: 'Claude / CC-Panes',
+      id: 'paneforge',
+      label: 'Claude / PaneForge',
       status: 'preview',
-      integration: 'CC-Panes owns the outer lifecycle; this tool should first run as a dry-run substep before any real hook configuration write.',
+      integration: 'PaneForge owns the outer lifecycle; this tool should first run as a dry-run substep before any real hook configuration write.',
       surfaces: [
         { kind: 'hard-gate', name: 'tool-before dry-run', owner: 'hook-runner', status: 'preview' },
         { kind: 'advisory', name: 'lifecycle context', owner: 'session-start', status: 'supported' },
         { kind: 'advisory', name: 'stop reminder', owner: 'stop-check', status: 'supported' }
       ],
-      stateRoots: ['<project>/.ccpanes-task', '<cc-panes-profile>/task audit dir'],
+      stateRoots: ['<project>/.paneforge-task', '<paneforge-profile>/task audit dir'],
       auditArtifacts: ['plan-intake audit JSON', 'hook-runner dry-run JSON'],
       verification: localVerification,
-      boundaries: [...sharedBoundaries, 'collect real CC-Panes event fixtures before enabling hard writes']
+      boundaries: [...sharedBoundaries, 'collect real PaneForge event fixtures before enabling hard writes']
     },
     {
       id: 'cursor',
@@ -132,7 +132,7 @@ const registry: HostAdapterRegistry = {
         { kind: 'advisory', name: 'risk tier', owner: 'classify-task-risk', status: 'supported' },
         { kind: 'advisory', name: 'workflow profile', owner: 'classify-workflow', status: 'supported' }
       ],
-      stateRoots: ['<project>/.ccpanes-task'],
+      stateRoots: ['<project>/.paneforge-task'],
       auditArtifacts: ['future cursor hook dry-run JSON'],
       verification: localVerification,
       boundaries: [...sharedBoundaries, 'add synthetic Cursor event fixtures before real adapter enablement']
@@ -141,12 +141,12 @@ const registry: HostAdapterRegistry = {
       id: 'gemini',
       label: 'Gemini CLI',
       status: 'candidate',
-      integration: 'Launch may be managed by CC-Panes; native hook surface remains to be confirmed.',
+      integration: 'Launch may be managed by PaneForge; native hook surface remains to be confirmed.',
       surfaces: [
         { kind: 'advisory', name: 'risk tier', owner: 'classify-task-risk', status: 'supported' },
         { kind: 'advisory', name: 'workflow profile', owner: 'classify-workflow', status: 'supported' }
       ],
-      stateRoots: ['<project>/.ccpanes-task'],
+      stateRoots: ['<project>/.paneforge-task'],
       auditArtifacts: ['future gemini launch-profile dry-run JSON'],
       verification: localVerification,
       boundaries: [...sharedBoundaries, 'confirm Gemini event payloads before hard-gate mapping']
@@ -160,7 +160,7 @@ const registry: HostAdapterRegistry = {
         { kind: 'advisory', name: 'risk tier', owner: 'classify-task-risk', status: 'supported' },
         { kind: 'advisory', name: 'workflow profile', owner: 'classify-workflow', status: 'supported' }
       ],
-      stateRoots: ['<project>/.ccpanes-task'],
+      stateRoots: ['<project>/.paneforge-task'],
       auditArtifacts: ['future kimi event fixture JSON'],
       verification: localVerification,
       boundaries: [...sharedBoundaries, 'collect real Kimi event fixtures before adapter enablement']
@@ -174,7 +174,7 @@ const registry: HostAdapterRegistry = {
         { kind: 'advisory', name: 'risk tier', owner: 'classify-task-risk', status: 'supported' },
         { kind: 'advisory', name: 'workflow profile', owner: 'classify-workflow', status: 'supported' }
       ],
-      stateRoots: ['<project>/.ccpanes-task'],
+      stateRoots: ['<project>/.paneforge-task'],
       auditArtifacts: ['future opencode plugin fixture JSON'],
       verification: localVerification,
       boundaries: [...sharedBoundaries, 'collect OpenCode plugin payload fixtures before adapter enablement']
@@ -196,7 +196,7 @@ export function getHostAdapter(id: string): HostAdapter | null {
 }
 
 export function validateHostAdapterRegistry(input: HostAdapterRegistry): HostAdapterRegistry {
-  if (input.schema !== 'ccpanes.host-adapter-registry.v1') {
+  if (input.schema !== 'paneforge.host-adapter-registry.v1') {
     throw new Error(`invalid host adapter registry schema: ${input.schema}`);
   }
   const ids = new Set<HostAdapterId>();

@@ -15,13 +15,13 @@ import {
   type ResolveOptions
 } from '../src/codex-session-resolver.js';
 
-const project = 'D:\\cc-pane\\tool\\repos\\hooks';
-const projectNorm = 'd:/cc-pane/tool/repos/hooks';
+const project = 'D:\\paneforge\\tool\\repos\\hooks';
+const projectNorm = 'd:/paneforge/tool/repos/hooks';
 
 const evidenceFixture = [
   { kind: 'task-binding', projectPath: projectNorm, taskId: 'task-1' },
-  { kind: 'ccpanes-launch', projectPath: projectNorm, launchId: 'launch-1' },
-  { kind: 'ccpanes-session', projectPath: projectNorm, sessionId: 'session-1' },
+  { kind: 'paneforge-launch', projectPath: projectNorm, launchId: 'launch-1' },
+  { kind: 'paneforge-session', projectPath: projectNorm, sessionId: 'session-1' },
   { kind: 'cwd', relation: 'descendant' },
   { kind: 'primary-target', target: projectNorm },
   { kind: 'prompt-mention', target: projectNorm },
@@ -48,16 +48,16 @@ function input(overrides: Partial<AttributionInput>): AttributionInput {
     primaryTargetNorm: null,
     promptMentionsProject: false,
     taskBinding: null,
-    ccpanesLaunch: null,
+    paneforgeLaunch: null,
     ...overrides
   };
 }
 
 describe('classifyRuntimeScope', () => {
   test.each([
-    ['d:/cc-pane/tool/repos/hooks', 'exact'],
-    ['d:/cc-pane/tool/repos/hooks/src', 'descendant'],
-    ['d:/cc-pane', 'ancestor'],
+    ['d:/paneforge/tool/repos/hooks', 'exact'],
+    ['d:/paneforge/tool/repos/hooks/src', 'descendant'],
+    ['d:/paneforge', 'ancestor'],
     ['c:/other', 'unrelated'],
     [null, 'unknown']
   ] as const)('classifies %s as %s', (cwdNorm, expected) => {
@@ -100,7 +100,7 @@ describe('promptMentionsProjectPath', () => {
 describe('classifyProjectRelation', () => {
   test('keeps an ancestor cwd ambient instead of project-owned', () => {
     expect(classifyProjectRelation(input({
-      cwdNorm: 'd:/cc-pane'
+      cwdNorm: 'd:/paneforge'
     }))).toMatchObject({
       runtimeScope: 'ancestor',
       projectRelation: 'ambient',
@@ -173,10 +173,10 @@ describe('classifyProjectRelation', () => {
     });
   });
 
-  test('uses an exact matched CC-Panes launch as ownership evidence', () => {
+  test('uses an exact matched PaneForge launch as ownership evidence', () => {
     expect(classifyProjectRelation(input({
       cwdNorm: 'c:/other',
-      ccpanesLaunch: {
+      paneforgeLaunch: {
         launchId: 'launch-1',
         projectPathNorm: projectNorm
       }
@@ -184,9 +184,9 @@ describe('classifyProjectRelation', () => {
       runtimeScope: 'unrelated',
       projectRelation: 'owned',
       relationConfidence: 1,
-      reasons: ['matched CC-Panes launch'],
+      reasons: ['matched PaneForge launch'],
       evidence: [{
-        kind: 'ccpanes-launch',
+        kind: 'paneforge-launch',
         projectPath: projectNorm,
         launchId: 'launch-1'
       }]
@@ -199,14 +199,14 @@ describe('classifyProjectRelation', () => {
         taskId: 'hooks-task',
         projectPathNorm: projectNorm
       },
-      ccpanesLaunch: {
+      paneforgeLaunch: {
         launchId: 'launch-1',
         projectPathNorm: projectNorm
       }
     }))).toMatchObject({
       projectRelation: 'owned',
       relationConfidence: 1,
-      reasons: ['matched task binding', 'matched CC-Panes launch'],
+      reasons: ['matched task binding', 'matched PaneForge launch'],
       evidence: [
         {
           kind: 'task-binding',
@@ -214,7 +214,7 @@ describe('classifyProjectRelation', () => {
           taskId: 'hooks-task'
         },
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: projectNorm,
           launchId: 'launch-1'
         }
@@ -247,13 +247,13 @@ describe('classifyProjectRelation', () => {
     });
   });
 
-  test('lets a conflicting task binding override an exact CC-Panes launch', () => {
+  test('lets a conflicting task binding override an exact PaneForge launch', () => {
     expect(classifyProjectRelation(input({
       taskBinding: {
         taskId: 'other-task',
         projectPathNorm: 'd:/other/project'
       },
-      ccpanesLaunch: {
+      paneforgeLaunch: {
         launchId: 'hooks-launch',
         projectPathNorm: projectNorm
       }
@@ -261,7 +261,7 @@ describe('classifyProjectRelation', () => {
       projectRelation: 'unrelated',
       relationConfidence: 0,
       reasons: expect.arrayContaining([
-        'matched CC-Panes launch',
+        'matched PaneForge launch',
         'task binding conflicts with project'
       ]),
       evidence: [
@@ -271,7 +271,7 @@ describe('classifyProjectRelation', () => {
           taskId: 'other-task'
         },
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: projectNorm,
           launchId: 'hooks-launch'
         }
@@ -286,7 +286,7 @@ describe('classifyProjectRelation', () => {
         taskId: 'other-task',
         projectPathNorm: 'd:/other/task-project'
       },
-      ccpanesLaunch: {
+      paneforgeLaunch: {
         launchId: 'other-launch',
         projectPathNorm: 'd:/other/launch-project'
       }
@@ -296,7 +296,7 @@ describe('classifyProjectRelation', () => {
       relationConfidence: 0,
       reasons: [
         'task binding conflicts with project',
-        'CC-Panes launch conflicts with project'
+        'PaneForge launch conflicts with project'
       ],
       evidence: [
         { kind: 'cwd', relation: 'exact' },
@@ -306,7 +306,7 @@ describe('classifyProjectRelation', () => {
           taskId: 'other-task'
         },
         {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: 'd:/other/launch-project',
           launchId: 'other-launch'
         }

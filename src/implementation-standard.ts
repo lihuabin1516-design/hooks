@@ -1,5 +1,5 @@
 export interface ImplementationStandardSourceModel {
-  name: 'ccpanes.production-grade-solution-economy.v1';
+  name: 'paneforge.production-grade-solution-economy.v1';
   adaptedFrom: string;
   referenceHead: string;
   adoptedIdeas: string[];
@@ -7,7 +7,7 @@ export interface ImplementationStandardSourceModel {
 }
 
 export interface ImplementationStandard {
-  schema: 'ccpanes.implementation-standard.v1';
+  schema: 'paneforge.implementation-standard.v1';
   level: 'production-grade';
   optimizationTarget: 'unnecessary-complexity';
   principles: string[];
@@ -21,7 +21,7 @@ const PONYTAIL_REPOSITORY = 'https://github.com/DietrichGebert/ponytail.git';
 const PONYTAIL_REFERENCE_HEAD = '2ed6c52c9d7e5e56942508591085fd45dea277d3';
 
 const standard: ImplementationStandard = {
-  schema: 'ccpanes.implementation-standard.v1',
+  schema: 'paneforge.implementation-standard.v1',
   level: 'production-grade',
   optimizationTarget: 'unnecessary-complexity',
   principles: [
@@ -55,10 +55,10 @@ const standard: ImplementationStandard = {
     'implementation economy is advisory and never grants or denies tool execution',
     'production capabilities are necessary cost and are outside the removal target',
     'line count, token count, cost, and duration are secondary to production correctness',
-    'current-task.json, .ccpanes-task/policy.json, hook gates, and acceptance evidence retain their existing authority'
+    'current-task.json, .paneforge-task/policy.json, hook gates, and acceptance evidence retain their existing authority'
   ],
   sourceModel: {
-    name: 'ccpanes.production-grade-solution-economy.v1',
+    name: 'paneforge.production-grade-solution-economy.v1',
     adaptedFrom: PONYTAIL_REPOSITORY,
     referenceHead: PONYTAIL_REFERENCE_HEAD,
     adoptedIdeas: [
@@ -103,7 +103,7 @@ function cloneStandard(input: ImplementationStandard): ImplementationStandard {
 }
 
 export function validateImplementationStandard(input: ImplementationStandard): ImplementationStandard {
-  if (input.schema !== 'ccpanes.implementation-standard.v1') {
+  if (input.schema !== 'paneforge.implementation-standard.v1') {
     throw new Error(`invalid implementation standard schema: ${input.schema}`);
   }
   if (input.level !== 'production-grade') {
@@ -112,7 +112,7 @@ export function validateImplementationStandard(input: ImplementationStandard): I
   if (input.optimizationTarget !== 'unnecessary-complexity') {
     throw new Error(`invalid implementation standard optimization target: ${input.optimizationTarget}`);
   }
-  if (input.sourceModel.name !== 'ccpanes.production-grade-solution-economy.v1') {
+  if (input.sourceModel.name !== 'paneforge.production-grade-solution-economy.v1') {
     throw new Error(`invalid implementation standard source model: ${input.sourceModel.name}`);
   }
   if (input.sourceModel.adaptedFrom !== PONYTAIL_REPOSITORY) {

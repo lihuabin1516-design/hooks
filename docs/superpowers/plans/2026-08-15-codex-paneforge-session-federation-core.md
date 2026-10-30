@@ -1,10 +1,10 @@
-# Codex + CC-Panes Session Federation Core Implementation Plan
+# Codex + PaneForge Session Federation Core Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace cwd-only session counting with evidence-based attribution and build a typed graph linking Codex threads to imported CC-Panes launch, Session, and Task facts.
+**Goal:** Replace cwd-only session counting with evidence-based attribution and build a typed graph linking Codex threads to imported PaneForge launch, Session, and Task facts.
 
-**Architecture:** Preserve Codex and CC-Panes as separate authorities. Extend the existing Codex reader with explicit runtime/storage metadata, validate CC-Panes snapshots at the boundary, classify project relations through a pure resolver, and build a derived federation graph with typed evidence and confidence. Keep v1 commands readable during migration while new artifacts use versioned schemas.
+**Architecture:** Preserve Codex and PaneForge as separate authorities. Extend the existing Codex reader with explicit runtime/storage metadata, validate PaneForge snapshots at the boundary, classify project relations through a pure resolver, and build a derived federation graph with typed evidence and confidence. Keep v1 commands readable during migration while new artifacts use versioned schemas.
 
 **Tech Stack:** Node.js 22 standard library, TypeScript, `node:sqlite` read-only access, Vitest, atomic JSON file writes.
 
@@ -21,13 +21,13 @@
 - Create `src/codex-session-attribution.ts`
   - own runtime-scope and project-relation classification;
   - own default filters and relation summaries.
-- Create `src/ccpanes-session-snapshot.ts`
-  - validate `hooks.ccpanes-session-snapshot/v1`;
-  - normalize CC-Panes paths without discovering credentials;
+- Create `src/paneforge-session-snapshot.ts`
+  - validate `hooks.paneforge-session-snapshot/v1`;
+  - normalize PaneForge paths without discovering credentials;
   - report typed freshness diagnostics and reject duplicate identity keys.
 - Create `src/session-federation.ts`
-  - attach exact-project CC-Panes evidence to matching Codex threads;
-  - build graph nodes/edges from Codex index and CC-Panes snapshot;
+  - attach exact-project PaneForge evidence to matching Codex threads;
+  - build graph nodes/edges from Codex index and PaneForge snapshot;
   - preserve explicit launch-to-Session and controller relationships.
 - Modify `src/codex-session-resolver.ts`
   - consume the v2 attribution owner;
@@ -38,7 +38,7 @@
   - wire v2 scan/resolve/graph flags and atomic outputs.
 - Create `tests/codex-session-attribution.test.ts`
   - reproduce and close the over-counting bug.
-- Create `tests/ccpanes-session-snapshot.test.ts`
+- Create `tests/paneforge-session-snapshot.test.ts`
   - validate trust-boundary behavior.
 - Create `tests/session-federation.test.ts`
   - verify deterministic graph construction.
@@ -57,7 +57,7 @@
 - Create: `tests/codex-session-attribution.test.ts`
 - Create: `src/codex-session-attribution.ts`
 - Modify: `tests/codex-session-bridge.test.ts`
-- Modify: `docs/superpowers/specs/2026-08-15-codex-ccpanes-session-federation-design.md`
+- Modify: `docs/superpowers/specs/2026-08-15-codex-paneforge-session-federation-design.md`
 
 - [ ] **Step 1: Write failing tests for path namespaces and observed over-count**
 
@@ -73,14 +73,14 @@ import {
 
 function input(overrides: Partial<AttributionInput>): AttributionInput {
   return {
-    project: 'D:\\cc-pane\\tool\\repos\\hooks',
+    project: 'D:\\paneforge\\tool\\repos\\hooks',
     cwdNorm: null,
     storageState: 'active',
     threadSource: 'user',
     primaryTargetNorm: null,
     promptMentionsProject: false,
     taskBinding: null,
-    ccpanesLaunch: null,
+    paneforgeLaunch: null,
     ...overrides
   };
 }
@@ -88,7 +88,7 @@ function input(overrides: Partial<AttributionInput>): AttributionInput {
 describe('classifyProjectRelation', () => {
   test('keeps an ancestor cwd ambient instead of project-owned', () => {
     expect(classifyProjectRelation(input({
-      cwdNorm: 'd:/cc-pane'
+      cwdNorm: 'd:/paneforge'
     }))).toMatchObject({
       runtimeScope: 'ancestor',
       projectRelation: 'ambient',
@@ -110,8 +110,8 @@ describe('classifyProjectRelation', () => {
 
   test('treats exact cwd as unrelated when primary target conflicts', () => {
     expect(classifyProjectRelation(input({
-      cwdNorm: 'd:/cc-pane/tool/repos/hooks',
-      primaryTargetNorm: 'd:/codex-cc-pane'
+      cwdNorm: 'd:/paneforge/tool/repos/hooks',
+      primaryTargetNorm: 'd:/codex-paneforge'
     }))).toMatchObject({
       runtimeScope: 'exact',
       projectRelation: 'unrelated',
@@ -121,17 +121,17 @@ describe('classifyProjectRelation', () => {
 
   test('uses an exact matched task binding as ownership evidence', () => {
     expect(classifyProjectRelation(input({
-      cwdNorm: 'd:/cc-pane/tool/repos/hooks',
+      cwdNorm: 'd:/paneforge/tool/repos/hooks',
       taskBinding: {
         taskId: 'hooks-task',
-        projectPathNorm: 'd:/cc-pane/tool/repos/hooks'
+        projectPathNorm: 'd:/paneforge/tool/repos/hooks'
       }
     }))).toMatchObject({
       projectRelation: 'owned',
       relationConfidence: 1,
       evidence: expect.arrayContaining([{
         kind: 'task-binding',
-        projectPath: 'd:/cc-pane/tool/repos/hooks',
+        projectPath: 'd:/paneforge/tool/repos/hooks',
         taskId: 'hooks-task'
       }])
     });
@@ -142,7 +142,7 @@ describe('classifyProjectRelation', () => {
       primaryTargetNorm: 'd:/other/project',
       taskBinding: {
         taskId: 'hooks-task',
-        projectPathNorm: 'd:/cc-pane/tool/repos/hooks'
+        projectPathNorm: 'd:/paneforge/tool/repos/hooks'
       }
     }))).toMatchObject({
       projectRelation: 'unrelated',
@@ -233,8 +233,8 @@ export type AppVisibility = 'listed' | 'readable-hidden' | 'unknown';
 
 export type SessionEvidence =
   | { kind: 'task-binding'; projectPath: string; taskId: string }
-  | { kind: 'ccpanes-launch'; projectPath: string; launchId: string }
-  | { kind: 'ccpanes-session'; projectPath: string; sessionId: string }
+  | { kind: 'paneforge-launch'; projectPath: string; launchId: string }
+  | { kind: 'paneforge-session'; projectPath: string; sessionId: string }
   | { kind: 'cwd'; relation: 'exact' | 'descendant' | 'ancestor' }
   | { kind: 'primary-target'; target: string }
   | { kind: 'prompt-mention'; target: string }
@@ -251,7 +251,7 @@ export interface AttributionInput {
     taskId: string;
     projectPathNorm: string;
   } | null;
-  ccpanesLaunch: {
+  paneforgeLaunch: {
     launchId: string;
     projectPathNorm: string;
   } | null;
@@ -324,11 +324,11 @@ export function classifyProjectRelation(
       taskId: input.taskBinding.taskId
     });
   }
-  if (input.ccpanesLaunch) {
+  if (input.paneforgeLaunch) {
     evidence.push({
-      kind: 'ccpanes-launch',
-      projectPath: input.ccpanesLaunch.projectPathNorm,
-      launchId: input.ccpanesLaunch.launchId
+      kind: 'paneforge-launch',
+      projectPath: input.paneforgeLaunch.projectPathNorm,
+      launchId: input.paneforgeLaunch.launchId
     });
   }
 
@@ -352,12 +352,12 @@ export function classifyProjectRelation(
   );
   const launchRelation = classifyExplicitPath(
     projectNorm,
-    input.ccpanesLaunch?.projectPathNorm ?? null
+    input.paneforgeLaunch?.projectPathNorm ?? null
   );
   const ownershipReasons: string[] = [];
   if (taskRelation === 'exact') ownershipReasons.push('matched task binding');
   if (launchRelation === 'exact') {
-    ownershipReasons.push('matched CC-Panes launch');
+    ownershipReasons.push('matched PaneForge launch');
   }
   const conflictReasons: string[] = [];
   if (primaryTargetRelation === 'conflict') {
@@ -367,7 +367,7 @@ export function classifyProjectRelation(
     conflictReasons.push('task binding conflicts with project');
   }
   if (launchRelation === 'conflict') {
-    conflictReasons.push('CC-Panes launch conflicts with project');
+    conflictReasons.push('PaneForge launch conflicts with project');
   }
   if (conflictReasons.length > 0) {
     return {
@@ -513,7 +513,7 @@ test('extracts task binding, delegation, storage, and primary-target evidence', 
       type: 'session_meta',
       payload: {
         id: 'thread-1',
-        cwd: 'D:\\cc-pane\\tool\\repos\\hooks',
+        cwd: 'D:\\paneforge\\tool\\repos\\hooks',
         originator: 'Codex Desktop',
         source: 'vscode',
         thread_source: 'user'
@@ -528,10 +528,10 @@ test('extracts task binding, delegation, storage, and primary-target evidence', 
         content: [{
           type: 'input_text',
           text: [
-            'ccpanes-task-probe lifecycle context',
+            'paneforge-task-probe lifecycle context',
             'taskId: hooks-task',
-            'projectPath: D:\\cc-pane\\tool\\repos\\hooks',
-            'worktreeRoot: D:\\cc-pane\\tool\\repos\\hooks'
+            'projectPath: D:\\paneforge\\tool\\repos\\hooks',
+            'worktreeRoot: D:\\paneforge\\tool\\repos\\hooks'
           ].join('\\n')
         }]
       }
@@ -544,7 +544,7 @@ test('extracts task binding, delegation, storage, and primary-target evidence', 
         role: 'user',
         content: [{
           type: 'input_text',
-          text: '<codex_delegation><source_thread_id>parent-1</source_thread_id><input>Audit D:\\codex-cc-pane</input></codex_delegation>'
+          text: '<codex_delegation><source_thread_id>parent-1</source_thread_id><input>Audit D:\\codex-paneforge</input></codex_delegation>'
         }]
       }
     })
@@ -554,11 +554,11 @@ test('extracts task binding, delegation, storage, and primary-target evidence', 
 
   expect(parsed.taskBinding).toEqual({
     taskId: 'hooks-task',
-    projectPathRaw: 'D:\\cc-pane\\tool\\repos\\hooks',
-    worktreeRootRaw: 'D:\\cc-pane\\tool\\repos\\hooks'
+    projectPathRaw: 'D:\\paneforge\\tool\\repos\\hooks',
+    worktreeRootRaw: 'D:\\paneforge\\tool\\repos\\hooks'
   });
   expect(parsed.delegatedFromThreadId).toBe('parent-1');
-  expect(parsed.primaryTargetRaw).toBe('D:\\codex-cc-pane');
+  expect(parsed.primaryTargetRaw).toBe('D:\\codex-paneforge');
 });
 ```
 
@@ -635,7 +635,7 @@ Add bounded parsers:
 
 ```ts
 function parseTaskBinding(text: string): ParsedTaskBindingEvidence | null {
-  if (!text.includes('ccpanes-task-probe lifecycle context')) return null;
+  if (!text.includes('paneforge-task-probe lifecycle context')) return null;
   const value = (key: string) =>
     new RegExp(`(?:^|\\\\n)${key}:\\\\s*([^\\\\r\\\\n]+)`).exec(text)?.[1]?.trim() ?? null;
   const taskId = value('taskId');
@@ -659,7 +659,7 @@ function parsePrimaryTarget(text: string): string | null {
 ```
 
 Initialize new parsed fields to `null`. Inspect developer message text only for
-the bounded `ccpanes-task-probe lifecycle context` block. Inspect user message
+the bounded `paneforge-task-probe lifecycle context` block. Inspect user message
 text for delegation and primary-target evidence. Do not feed lifecycle
 `projectPath` lines into `parsePrimaryTarget`, otherwise the lifecycle project
 would mask a conflicting external target from the actual user request. Retain
@@ -702,7 +702,7 @@ const attribution = classifyProjectRelation({
         projectPathNorm: normalizeCodexPath(taskBinding.projectPathRaw)
       }
     : null,
-  ccpanesLaunch: null
+  paneforgeLaunch: null
 });
 ```
 
@@ -732,29 +732,29 @@ git status --short
 
 Expected: no whitespace errors; no stage/commit.
 
-### Task 3: Validate CC-Panes Snapshots at the Trust Boundary
+### Task 3: Validate PaneForge Snapshots at the Trust Boundary
 
 **Files:**
-- Create: `src/ccpanes-session-snapshot.ts`
-- Create: `tests/ccpanes-session-snapshot.test.ts`
+- Create: `src/paneforge-session-snapshot.ts`
+- Create: `tests/paneforge-session-snapshot.test.ts`
 
 - [ ] **Step 1: Write failing schema-validation tests**
 
-Create `tests/ccpanes-session-snapshot.test.ts`:
+Create `tests/paneforge-session-snapshot.test.ts`:
 
 ```ts
 import { describe, expect, test } from 'vitest';
 import {
-  inspectCcPanesSnapshotFreshness,
-  validateCcPanesSessionSnapshot
-} from '../src/ccpanes-session-snapshot.js';
+  inspectPaneForgeSnapshotFreshness,
+  validatePaneForgeSessionSnapshot
+} from '../src/paneforge-session-snapshot.js';
 
 const valid = {
-  schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+  schemaVersion: 'hooks.paneforge-session-snapshot/v1',
   generatedAt: '2026-08-15T08:46:58.097Z',
   launches: [{
     launchId: 'launch-1',
-    projectPath: 'D:\\cc-pane\\tool\\repos\\hooks',
+    projectPath: 'D:\\paneforge\\tool\\repos\\hooks',
     workspaceName: 'hooks',
     cliTool: 'codex',
     resumeSessionId: 'thread-old',
@@ -764,24 +764,24 @@ const valid = {
     sessionId: 'pty-1',
     launchId: 'launch-1',
     taskId: 'task-1',
-    projectPath: 'D:\\cc-pane\\tool\\repos\\hooks',
+    projectPath: 'D:\\paneforge\\tool\\repos\\hooks',
     status: 'active',
     title: 'hooks resume',
     observedCodexThreadId: 'thread-old'
   }]
 };
 
-test('normalizes a valid CC-Panes snapshot', () => {
-  expect(validateCcPanesSessionSnapshot(valid)).toMatchObject({
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+test('normalizes a valid PaneForge snapshot', () => {
+  expect(validatePaneForgeSessionSnapshot(valid)).toMatchObject({
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     launches: [{
       launchId: 'launch-1',
-      projectPathNorm: 'd:/cc-pane/tool/repos/hooks'
+      projectPathNorm: 'd:/paneforge/tool/repos/hooks'
     }],
     sessions: [{
       sessionId: 'pty-1',
       launchId: 'launch-1',
-      projectPathNorm: 'd:/cc-pane/tool/repos/hooks'
+      projectPathNorm: 'd:/paneforge/tool/repos/hooks'
     }]
   });
 });
@@ -793,15 +793,15 @@ describe('invalid snapshots', () => {
     [{ ...valid, launches: [{ ...valid.launches[0], launchId: '' }] }, 'launchId'],
     [{ ...valid, sessions: [{ ...valid.sessions[0], sessionId: '' }] }, 'sessionId']
   ])('rejects %j', (value, field) => {
-    expect(() => validateCcPanesSessionSnapshot(value)).toThrow(field);
+    expect(() => validatePaneForgeSessionSnapshot(value)).toThrow(field);
   });
 
   test('rejects duplicate launch and Session identities', () => {
-    expect(() => validateCcPanesSessionSnapshot({
+    expect(() => validatePaneForgeSessionSnapshot({
       ...valid,
       launches: [valid.launches[0], valid.launches[0]]
     })).toThrow('duplicate launchId');
-    expect(() => validateCcPanesSessionSnapshot({
+    expect(() => validatePaneForgeSessionSnapshot({
       ...valid,
       sessions: [valid.sessions[0], valid.sessions[0]]
     })).toThrow('duplicate sessionId');
@@ -809,7 +809,7 @@ describe('invalid snapshots', () => {
 });
 
 test('reports stale snapshots as typed diagnostics', () => {
-  expect(inspectCcPanesSnapshotFreshness(
+  expect(inspectPaneForgeSnapshotFreshness(
     '2026-08-13T08:00:00.000Z',
     '2026-08-15T09:00:00.000Z',
     24 * 60 * 60 * 1_000
@@ -826,19 +826,19 @@ test('reports stale snapshots as typed diagnostics', () => {
 Run:
 
 ```powershell
-npx vitest run tests/ccpanes-session-snapshot.test.ts
+npx vitest run tests/paneforge-session-snapshot.test.ts
 ```
 
 Expected: FAIL because the module does not exist.
 
 - [ ] **Step 3: Implement strict validation without a dependency**
 
-Create `src/ccpanes-session-snapshot.ts`:
+Create `src/paneforge-session-snapshot.ts`:
 
 ```ts
 import { normalizeCodexPath } from './codex-session-index.js';
 
-export interface CcPanesLaunchSnapshot {
+export interface PaneForgeLaunchSnapshot {
   launchId: string;
   projectPath: string;
   projectPathNorm: string;
@@ -848,7 +848,7 @@ export interface CcPanesLaunchSnapshot {
   launchedAt: string;
 }
 
-export interface CcPanesRuntimeSessionSnapshot {
+export interface PaneForgeRuntimeSessionSnapshot {
   sessionId: string;
   launchId: string | null;
   taskId: string | null;
@@ -859,14 +859,14 @@ export interface CcPanesRuntimeSessionSnapshot {
   observedCodexThreadId: string | null;
 }
 
-export interface CcPanesSessionSnapshot {
-  schemaVersion: 'hooks.ccpanes-session-snapshot/v1';
+export interface PaneForgeSessionSnapshot {
+  schemaVersion: 'hooks.paneforge-session-snapshot/v1';
   generatedAt: string;
-  launches: CcPanesLaunchSnapshot[];
-  sessions: CcPanesRuntimeSessionSnapshot[];
+  launches: PaneForgeLaunchSnapshot[];
+  sessions: PaneForgeRuntimeSessionSnapshot[];
 }
 
-export interface CcPanesSnapshotFreshness {
+export interface PaneForgeSnapshotFreshness {
   state: 'fresh' | 'stale';
   ageMs: number;
   maxAgeMs: number;
@@ -874,14 +874,14 @@ export interface CcPanesSnapshotFreshness {
 
 function record(value: unknown, field: string): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
-    throw new Error(`invalid CC-Panes snapshot: ${field}`);
+    throw new Error(`invalid PaneForge snapshot: ${field}`);
   }
   return value as Record<string, unknown>;
 }
 
 function requiredString(value: unknown, field: string): string {
   if (typeof value !== 'string' || !value.trim()) {
-    throw new Error(`invalid CC-Panes snapshot: ${field}`);
+    throw new Error(`invalid PaneForge snapshot: ${field}`);
   }
   return value.trim();
 }
@@ -894,27 +894,27 @@ function optionalString(value: unknown, field: string): string | null {
 function iso(value: unknown, field: string): string {
   const text = requiredString(value, field);
   if (Number.isNaN(Date.parse(text))) {
-    throw new Error(`invalid CC-Panes snapshot: ${field}`);
+    throw new Error(`invalid PaneForge snapshot: ${field}`);
   }
   return new Date(text).toISOString();
 }
 
-export function validateCcPanesSessionSnapshot(
+export function validatePaneForgeSessionSnapshot(
   value: unknown
-): CcPanesSessionSnapshot {
+): PaneForgeSessionSnapshot {
   const root = record(value, 'root');
-  if (root.schemaVersion !== 'hooks.ccpanes-session-snapshot/v1') {
-    throw new Error('invalid CC-Panes snapshot: schemaVersion');
+  if (root.schemaVersion !== 'hooks.paneforge-session-snapshot/v1') {
+    throw new Error('invalid PaneForge snapshot: schemaVersion');
   }
   if (!Array.isArray(root.launches)) {
-    throw new Error('invalid CC-Panes snapshot: launches');
+    throw new Error('invalid PaneForge snapshot: launches');
   }
   if (!Array.isArray(root.sessions)) {
-    throw new Error('invalid CC-Panes snapshot: sessions');
+    throw new Error('invalid PaneForge snapshot: sessions');
   }
 
-  const normalized: CcPanesSessionSnapshot = {
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+  const normalized: PaneForgeSessionSnapshot = {
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: iso(root.generatedAt, 'generatedAt'),
     launches: root.launches.map((entry, index) => {
       const item = record(entry, `launches[${index}]`);
@@ -962,19 +962,19 @@ export function validateCcPanesSessionSnapshot(
   const duplicate = (values: string[]) =>
     values.find((value, index) => values.indexOf(value) !== index);
   if (duplicate(normalized.launches.map((entry) => entry.launchId))) {
-    throw new Error('invalid CC-Panes snapshot: duplicate launchId');
+    throw new Error('invalid PaneForge snapshot: duplicate launchId');
   }
   if (duplicate(normalized.sessions.map((entry) => entry.sessionId))) {
-    throw new Error('invalid CC-Panes snapshot: duplicate sessionId');
+    throw new Error('invalid PaneForge snapshot: duplicate sessionId');
   }
   return normalized;
 }
 
-export function inspectCcPanesSnapshotFreshness(
+export function inspectPaneForgeSnapshotFreshness(
   generatedAt: string,
   now = new Date().toISOString(),
   maxAgeMs = 24 * 60 * 60 * 1_000
-): CcPanesSnapshotFreshness {
+): PaneForgeSnapshotFreshness {
   const ageMs = Math.max(0, Date.parse(now) - Date.parse(generatedAt));
   return {
     state: ageMs > maxAgeMs ? 'stale' : 'fresh',
@@ -989,7 +989,7 @@ export function inspectCcPanesSnapshotFreshness(
 Run:
 
 ```powershell
-npx vitest run tests/ccpanes-session-snapshot.test.ts
+npx vitest run tests/paneforge-session-snapshot.test.ts
 ```
 
 Expected: PASS.
@@ -1011,24 +1011,24 @@ Create `tests/session-federation.test.ts`:
 ```ts
 import { expect, test } from 'vitest';
 import {
-  attachCcPanesAttribution,
+  attachPaneForgeAttribution,
   buildSessionFederation
 } from '../src/session-federation.js';
 import type { CodexSessionRecord } from '../src/codex-session-index.js';
-import type { CcPanesSessionSnapshot } from '../src/ccpanes-session-snapshot.js';
+import type { PaneForgeSessionSnapshot } from '../src/paneforge-session-snapshot.js';
 
 test('links Codex, launch, PTY Session, and Task nodes deterministically', () => {
   const graph = buildSessionFederation({
     generatedAt: '2026-08-15T09:00:00.000Z',
-    project: 'D:\\cc-pane\\tool\\repos\\hooks',
+    project: 'D:\\paneforge\\tool\\repos\\hooks',
     codexSessions: [{
       threadId: 'thread-old',
       source: 'codex-app',
       threadSource: 'user',
       originator: 'Codex Desktop',
-      cwdRaw: 'D:\\cc-pane\\tool\\repos\\hooks',
-      cwdNorm: 'd:/cc-pane/tool/repos/hooks',
-      projectOwner: 'D:\\cc-pane\\tool\\repos\\hooks',
+      cwdRaw: 'D:\\paneforge\\tool\\repos\\hooks',
+      cwdNorm: 'd:/paneforge/tool/repos/hooks',
+      projectOwner: 'D:\\paneforge\\tool\\repos\\hooks',
       scopeMatch: 'exact',
       confidence: 1,
       rolloutPath: 'C:\\rollout.jsonl',
@@ -1044,26 +1044,26 @@ test('links Codex, launch, PTY Session, and Task nodes deterministically', () =>
       relationReasons: ['matched task binding'],
       evidence: [{
         kind: 'task-binding',
-        projectPath: 'd:/cc-pane/tool/repos/hooks',
+        projectPath: 'd:/paneforge/tool/repos/hooks',
         taskId: 'task-1'
       }],
       appVisibility: 'unknown',
       taskBinding: {
         taskId: 'task-1',
-        projectPathRaw: 'D:\\cc-pane\\tool\\repos\\hooks',
-        worktreeRootRaw: 'D:\\cc-pane\\tool\\repos\\hooks'
+        projectPathRaw: 'D:\\paneforge\\tool\\repos\\hooks',
+        worktreeRootRaw: 'D:\\paneforge\\tool\\repos\\hooks'
       },
       delegatedFromThreadId: null,
       primaryTargetRaw: null,
       primaryTargetNorm: null
     }],
-    ccpanes: {
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    paneforge: {
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: '2026-08-15T08:59:00.000Z',
       launches: [{
         launchId: 'launch-1',
-        projectPath: 'D:\\cc-pane\\tool\\repos\\hooks',
-        projectPathNorm: 'd:/cc-pane/tool/repos/hooks',
+        projectPath: 'D:\\paneforge\\tool\\repos\\hooks',
+        projectPathNorm: 'd:/paneforge/tool/repos/hooks',
         workspaceName: 'hooks',
         cliTool: 'codex',
         resumeSessionId: 'thread-old',
@@ -1073,8 +1073,8 @@ test('links Codex, launch, PTY Session, and Task nodes deterministically', () =>
         sessionId: 'pty-1',
         launchId: 'launch-1',
         taskId: 'task-1',
-        projectPath: 'D:\\cc-pane\\tool\\repos\\hooks',
-        projectPathNorm: 'd:/cc-pane/tool/repos/hooks',
+        projectPath: 'D:\\paneforge\\tool\\repos\\hooks',
+        projectPathNorm: 'd:/paneforge/tool/repos/hooks',
         status: 'active',
         title: 'hooks resume',
         observedCodexThreadId: 'thread-old'
@@ -1084,31 +1084,31 @@ test('links Codex, launch, PTY Session, and Task nodes deterministically', () =>
 
   expect(graph.schemaVersion).toBe('hooks.session-federation/v1');
   expect(graph.nodes.map((node) => node.id)).toEqual([
-    'ccpanes-launch:launch-1',
-    'ccpanes-session:pty-1',
-    'ccpanes-task:task-1',
+    'paneforge-launch:launch-1',
+    'paneforge-session:pty-1',
+    'paneforge-task:task-1',
     'codex-thread:thread-old'
   ]);
   expect(graph.edges).toEqual(expect.arrayContaining([
     expect.objectContaining({
       type: 'resumed-from',
-      from: 'ccpanes-launch:launch-1',
+      from: 'paneforge-launch:launch-1',
       to: 'codex-thread:thread-old'
     }),
     expect.objectContaining({
       type: 'hosts',
-      from: 'ccpanes-session:pty-1',
+      from: 'paneforge-session:pty-1',
       to: 'codex-thread:thread-old'
     }),
     expect.objectContaining({
       type: 'launched',
-      from: 'ccpanes-launch:launch-1',
-      to: 'ccpanes-session:pty-1'
+      from: 'paneforge-launch:launch-1',
+      to: 'paneforge-session:pty-1'
     }),
     expect.objectContaining({
       type: 'belongs-to-task',
-      from: 'ccpanes-session:pty-1',
-      to: 'ccpanes-task:task-1'
+      from: 'paneforge-session:pty-1',
+      to: 'paneforge-task:task-1'
     })
   ]));
 });
@@ -1143,7 +1143,7 @@ test('uses exact-project launch and Session IDs as ownership evidence', () => {
     primaryTargetNorm: null
   } satisfies CodexSessionRecord;
   const snapshot = {
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: '2026-08-15T08:59:00.000Z',
     launches: [{
       launchId: 'launch-1',
@@ -1164,17 +1164,17 @@ test('uses exact-project launch and Session IDs as ownership evidence', () => {
       title: 'hooks resume',
       observedCodexThreadId: 'controller-thread'
     }]
-  } satisfies CcPanesSessionSnapshot;
+  } satisfies PaneForgeSessionSnapshot;
 
-  expect(attachCcPanesAttribution({
+  expect(attachPaneForgeAttribution({
     project: 'D:\\Repo',
     sessions: [base],
-    ccpanes: snapshot
+    paneforge: snapshot
   })[0]).toMatchObject({
     projectRelation: 'owned',
     relationConfidence: 1,
     evidence: expect.arrayContaining([{
-      kind: 'ccpanes-session',
+      kind: 'paneforge-session',
       projectPath: 'd:/repo',
       sessionId: 'pty-1'
     }])
@@ -1184,7 +1184,7 @@ test('uses exact-project launch and Session IDs as ownership evidence', () => {
     generatedAt: '2026-08-15T09:00:00.000Z',
     project: 'D:\\Repo',
     codexSessions: [base],
-    ccpanes: snapshot
+    paneforge: snapshot
   }).edges).toEqual(expect.arrayContaining([
     expect.objectContaining({
       type: 'controller-for',
@@ -1212,16 +1212,16 @@ Create `src/session-federation.ts`:
 ```ts
 import { normalizeCodexPath, type CodexSessionRecord } from './codex-session-index.js';
 import {
-  inspectCcPanesSnapshotFreshness,
-  type CcPanesSessionSnapshot
-} from './ccpanes-session-snapshot.js';
+  inspectPaneForgeSnapshotFreshness,
+  type PaneForgeSessionSnapshot
+} from './paneforge-session-snapshot.js';
 import type { SessionEvidence } from './codex-session-attribution.js';
 
 export type FederationNodeType =
   | 'codex-thread'
-  | 'ccpanes-launch'
-  | 'ccpanes-session'
-  | 'ccpanes-task';
+  | 'paneforge-launch'
+  | 'paneforge-session'
+  | 'paneforge-task';
 
 export type FederationEdgeType =
   | 'resumed-from'
@@ -1250,12 +1250,12 @@ export interface FederationEdge {
 
 export type FederationEvidence =
   | SessionEvidence
-  | { kind: 'ccpanes-runtime-link'; sessionId: string }
+  | { kind: 'paneforge-runtime-link'; sessionId: string }
   | { kind: 'snapshot-field'; field: string; value: string };
 
 export type FederationDiagnostic =
-  | { kind: 'ccpanes-snapshot-missing' }
-  | { kind: 'ccpanes-snapshot-stale'; ageMs: number; maxAgeMs: number };
+  | { kind: 'paneforge-snapshot-missing' }
+  | { kind: 'paneforge-snapshot-stale'; ageMs: number; maxAgeMs: number };
 
 export interface SessionFederation {
   schemaVersion: 'hooks.session-federation/v1';
@@ -1268,22 +1268,22 @@ export interface SessionFederation {
 
 const nodeId = (type: FederationNodeType, id: string) => `${type}:${id}`;
 
-export function attachCcPanesAttribution(input: {
+export function attachPaneForgeAttribution(input: {
   project: string;
   sessions: CodexSessionRecord[];
-  ccpanes: CcPanesSessionSnapshot | null;
+  paneforge: PaneForgeSessionSnapshot | null;
 }): CodexSessionRecord[] {
-  if (!input.ccpanes) return input.sessions;
+  if (!input.paneforge) return input.sessions;
   const projectNorm = normalizeCodexPath(input.project);
   const launchByThread = new Map(
-    input.ccpanes.launches
+    input.paneforge.launches
       .filter((launch) =>
         launch.projectPathNorm === projectNorm && launch.resumeSessionId
       )
       .map((launch) => [launch.resumeSessionId as string, launch])
   );
   const runtimeByThread = new Map(
-    input.ccpanes.sessions
+    input.paneforge.sessions
       .filter((session) =>
         session.projectPathNorm === projectNorm &&
         session.observedCodexThreadId
@@ -1297,12 +1297,12 @@ export function attachCcPanesAttribution(input: {
     if (!launch && !runtime) return session;
     const evidence: SessionEvidence = launch
       ? {
-          kind: 'ccpanes-launch',
+          kind: 'paneforge-launch',
           projectPath: launch.projectPathNorm,
           launchId: launch.launchId
         }
       : {
-          kind: 'ccpanes-session',
+          kind: 'paneforge-session',
           projectPath: runtime!.projectPathNorm!,
           sessionId: runtime!.sessionId
         };
@@ -1314,8 +1314,8 @@ export function attachCcPanesAttribution(input: {
         ...new Set([
           ...session.relationReasons,
           launch
-            ? 'matched exact-project CC-Panes launch'
-            : 'matched exact-project CC-Panes Session'
+            ? 'matched exact-project PaneForge launch'
+            : 'matched exact-project PaneForge Session'
         ])
       ],
       evidence: session.evidence.some(
@@ -1331,7 +1331,7 @@ export function buildSessionFederation(input: {
   generatedAt?: string;
   project: string;
   codexSessions: CodexSessionRecord[];
-  ccpanes?: CcPanesSessionSnapshot | null;
+  paneforge?: PaneForgeSessionSnapshot | null;
 }): SessionFederation {
   const generatedAt = input.generatedAt ?? new Date().toISOString();
   const nodes = new Map<string, FederationNode>();
@@ -1393,8 +1393,8 @@ export function buildSessionFederation(input: {
     }
   }
 
-  for (const launch of input.ccpanes?.launches ?? []) {
-    const launchNode = addNode('ccpanes-launch', launch.launchId, {
+  for (const launch of input.paneforge?.launches ?? []) {
+    const launchNode = addNode('paneforge-launch', launch.launchId, {
       projectPathNorm: launch.projectPathNorm,
       workspaceName: launch.workspaceName,
       cliTool: launch.cliTool,
@@ -1421,14 +1421,14 @@ export function buildSessionFederation(input: {
     }
   }
 
-  for (const session of input.ccpanes?.sessions ?? []) {
-    const sessionNode = addNode('ccpanes-session', session.sessionId, {
+  for (const session of input.paneforge?.sessions ?? []) {
+    const sessionNode = addNode('paneforge-session', session.sessionId, {
       status: session.status,
       title: session.title,
       projectPathNorm: session.projectPathNorm
     });
     if (session.launchId) {
-      const launchNode = addNode('ccpanes-launch', session.launchId, {
+      const launchNode = addNode('paneforge-launch', session.launchId, {
         inferred: true
       });
       addEdge(
@@ -1436,11 +1436,11 @@ export function buildSessionFederation(input: {
         launchNode,
         sessionNode,
         1,
-        [{ kind: 'ccpanes-runtime-link', sessionId: session.sessionId }]
+        [{ kind: 'paneforge-runtime-link', sessionId: session.sessionId }]
       );
     }
     if (session.taskId) {
-      const taskNode = addNode('ccpanes-task', session.taskId, {});
+      const taskNode = addNode('paneforge-task', session.taskId, {});
       addEdge(
         'belongs-to-task',
         sessionNode,
@@ -1475,7 +1475,7 @@ export function buildSessionFederation(input: {
 
   for (const session of input.codexSessions) {
     if (!session.taskBinding) continue;
-    const taskNode = addNode('ccpanes-task', session.taskBinding.taskId, {
+    const taskNode = addNode('paneforge-task', session.taskBinding.taskId, {
       inferred: true
     });
     addEdge(
@@ -1491,9 +1491,9 @@ export function buildSessionFederation(input: {
     );
   }
 
-  for (const runtime of input.ccpanes?.sessions ?? []) {
+  for (const runtime of input.paneforge?.sessions ?? []) {
     if (!runtime.launchId || !runtime.observedCodexThreadId) continue;
-    const launch = input.ccpanes?.launches.find(
+    const launch = input.paneforge?.launches.find(
       (candidate) => candidate.launchId === runtime.launchId
     );
     if (!launch?.resumeSessionId ||
@@ -1504,7 +1504,7 @@ export function buildSessionFederation(input: {
       nodeId('codex-thread', launch.resumeSessionId),
       0.9,
       [
-        { kind: 'ccpanes-runtime-link', sessionId: runtime.sessionId },
+        { kind: 'paneforge-runtime-link', sessionId: runtime.sessionId },
         {
           kind: 'snapshot-field',
           field: 'session.launchId',
@@ -1514,16 +1514,16 @@ export function buildSessionFederation(input: {
     );
   }
 
-  if (!input.ccpanes) {
-    diagnostics.push({ kind: 'ccpanes-snapshot-missing' });
+  if (!input.paneforge) {
+    diagnostics.push({ kind: 'paneforge-snapshot-missing' });
   } else {
-    const freshness = inspectCcPanesSnapshotFreshness(
-      input.ccpanes.generatedAt,
+    const freshness = inspectPaneForgeSnapshotFreshness(
+      input.paneforge.generatedAt,
       generatedAt
     );
     if (freshness.state === 'stale') {
       diagnostics.push({
-        kind: 'ccpanes-snapshot-stale',
+        kind: 'paneforge-snapshot-stale',
         ageMs: freshness.ageMs,
         maxAgeMs: freshness.maxAgeMs
       });
@@ -1546,7 +1546,7 @@ export function buildSessionFederation(input: {
 Run:
 
 ```powershell
-npx vitest run tests/ccpanes-session-snapshot.test.ts tests/session-federation.test.ts
+npx vitest run tests/paneforge-session-snapshot.test.ts tests/session-federation.test.ts
 ```
 
 Expected: PASS.
@@ -1690,11 +1690,11 @@ test('resolve defaults exclude ambient and archived records', async () => {
   expect(output.totals.defaultVisible).toBe(1);
 });
 
-test('graph imports an explicit CC-Panes snapshot', async () => {
-  const snapshotPath = path.join(root, 'ccpanes.json');
+test('graph imports an explicit PaneForge snapshot', async () => {
+  const snapshotPath = path.join(root, 'paneforge.json');
   const graphPath = path.join(root, 'live', 'graph.json');
   await fs.writeFile(snapshotPath, JSON.stringify({
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: '2026-08-15T09:00:00.000Z',
     launches: [],
     sessions: []
@@ -1706,7 +1706,7 @@ test('graph imports an explicit CC-Panes snapshot', async () => {
     '--state-db', stateDb,
     '--thread-history-db', historyDb,
     '--project', 'D:\\Repo',
-    '--ccpanes-snapshot', snapshotPath,
+    '--paneforge-snapshot', snapshotPath,
     '--out', graphPath
   ]));
 
@@ -1733,17 +1733,17 @@ before any output write, then attach its evidence once and use the enriched
 records for `scan`, `resolve`, `retention`, and `graph`:
 
 ```ts
-const snapshotPath = valueAfter(args, '--ccpanes-snapshot');
+const snapshotPath = valueAfter(args, '--paneforge-snapshot');
 const snapshot = snapshotPath
-  ? validateCcPanesSessionSnapshot(
+  ? validatePaneForgeSessionSnapshot(
       JSON.parse(await readFile(path.resolve(snapshotPath), 'utf8'))
     )
   : null;
 const enrichedSessions = project
-  ? attachCcPanesAttribution({
+  ? attachPaneForgeAttribution({
       project,
       sessions: index.sessions,
-      ccpanes: snapshot
+      paneforge: snapshot
     })
   : index.sessions;
 const enrichedIndex = {
@@ -1751,7 +1751,7 @@ const enrichedIndex = {
   sessions: enrichedSessions,
   warnings: snapshot
     ? index.warnings
-    : [...index.warnings, 'CC-Panes snapshot not supplied']
+    : [...index.warnings, 'PaneForge snapshot not supplied']
 };
 ```
 
@@ -1776,7 +1776,7 @@ if (action === 'graph') {
   const graph = buildSessionFederation({
     project,
     codexSessions: enrichedSessions,
-    ccpanes: snapshot
+    paneforge: snapshot
   });
   const outPath = valueAfter(args, '--out') ??
     path.join(process.cwd(), 'live', 'session-federation.json');
@@ -1785,11 +1785,11 @@ if (action === 'graph') {
 }
 ```
 
-Import `readFile`, the snapshot validator, `attachCcPanesAttribution`, and the
+Import `readFile`, the snapshot validator, `attachPaneForgeAttribution`, and the
 federation builder using existing NodeNext import conventions. Add a CLI test
-that runs `scan --ccpanes-snapshot` with a launch or Session referencing the
+that runs `scan --paneforge-snapshot` with a launch or Session referencing the
 fixture thread ID and asserts that the emitted record is `owned` with typed
-CC-Panes evidence.
+PaneForge evidence.
 
 - [ ] **Step 4: Run CLI and core tests**
 
@@ -1800,7 +1800,7 @@ npx vitest run `
   tests/codex-session-cli.test.ts `
   tests/codex-session-bridge.test.ts `
   tests/codex-session-attribution.test.ts `
-  tests/ccpanes-session-snapshot.test.ts `
+  tests/paneforge-session-snapshot.test.ts `
   tests/session-federation.test.ts
 ```
 
@@ -1868,7 +1868,7 @@ Document:
 - `runtimeScope` versus `projectRelation`;
 - why 67/75 was an over-broad relation count;
 - default exclusions and include flags;
-- CC-Panes snapshot contract;
+- PaneForge snapshot contract;
 - graph nodes and edges;
 - migration from v1 files to versioned v2 files;
 - exact PowerShell examples from the design.
@@ -1949,7 +1949,7 @@ Assert from the generated JSON:
 - `--include-related --include-ambient --include-archived --include-subagents`
   exposes the broader diagnostic population.
 
-- [ ] **Step 4: Import a fresh read-only CC-Panes snapshot**
+- [ ] **Step 4: Import a fresh read-only PaneForge snapshot**
 
 From a Codex App conversation with a READY Companion preflight, collect only:
 
@@ -1960,7 +1960,7 @@ From a Codex App conversation with a READY Companion preflight, collect only:
 Write the bounded normalized snapshot to:
 
 ```text
-live/ccpanes-session-snapshot.json
+live/paneforge-session-snapshot.json
 ```
 
 Do not store endpoint, token, or full terminal output.
@@ -1972,7 +1972,7 @@ Run:
 ```powershell
 node dist/src/cli.js codex-sessions graph `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --out live/session-federation.json
 ```
 
@@ -1980,8 +1980,8 @@ Assert that the known chain contains:
 
 - Codex App thread `01a0040d-9521-73f1-b4d8-baf87c498c90`;
 - controller CLI thread `01a00490-90c0-7dc2-9fac-fbdb4d7baa0f` when represented by snapshot evidence;
-- CC-Panes Session `a078a6a2-652b-49a4-876e-fc0bf6b75873`;
-- CC-Panes Task `8ab8356e-2c52-4f37-9e2d-de9cd64698d1`;
+- PaneForge Session `a078a6a2-652b-49a4-876e-fc0bf6b75873`;
+- PaneForge Task `8ab8356e-2c52-4f37-9e2d-de9cd64698d1`;
 - typed edges with evidence rather than ID replacement.
 
 - [ ] **Step 6: Inspect final diff and status**
@@ -1993,13 +1993,13 @@ git diff --stat
 git diff -- `
   src/codex-session-index.ts `
   src/codex-session-attribution.ts `
-  src/ccpanes-session-snapshot.ts `
+  src/paneforge-session-snapshot.ts `
   src/session-federation.ts `
   src/codex-session-resolver.ts `
   src/codex-session-handoff.ts `
   src/cli.ts `
   tests/codex-session-attribution.test.ts `
-  tests/ccpanes-session-snapshot.test.ts `
+  tests/paneforge-session-snapshot.test.ts `
   tests/session-federation.test.ts `
   tests/codex-session-bridge.test.ts `
   tests/codex-session-cli.test.ts `

@@ -223,7 +223,7 @@ function lifecycleLines(input: LifecycleOutputInput): string[] {
   const runtimeIdentity = input.runtimeIdentity ?? getRuntimeIdentity();
   const runtimeComparison = compareRuntimeIdentityToTaskHead(runtimeIdentity, input.task.head);
   return [
-    'ccpanes-task-probe lifecycle context',
+    'paneforge-task-probe lifecycle context',
     `taskId: ${input.task.taskId}`,
     `workspace: ${input.task.workspace}`,
     `phase: ${input.task.phase}`,
@@ -262,7 +262,7 @@ export function createTaskBindingMismatchSessionStartOutput(
     hookSpecificOutput: {
       hookEventName: 'SessionStart',
       additionalContext: [
-        'ccpanes-task-probe task binding mismatch',
+        'paneforge-task-probe task binding mismatch',
         `taskBindingStatus: ${check.status}`,
         `reason: ${check.reason}`,
         `cwd: ${check.cwd}`,
@@ -287,8 +287,8 @@ export function createStopCheckHookOutput(input: LifecycleOutputInput): StopChec
   const auditDirectory = auditDir(input.auditRoot, input.task);
   const targeted = input.stopAnalysis?.targetedReminder === true;
   const lead = targeted
-    ? `ccpanes-task-probe ${input.task.taskId} (${input.task.phase}): targeted verification reminder: this turn appears to include edit/write tool use and a completion claim. Before finalizing, run fresh claim-specific checks, compare the evidence with the claim, inspect diff/status and reference repos, then record-acceptance and verify-acceptance; if proof is missing, state NOT_VERIFIED with the missing proof and next action.`
-    : `ccpanes-task-probe ${input.task.taskId} (${input.task.phase}): before claiming completion, run applicable checks such as npm test, npm run typecheck, npm run build, npm run smoke; inspect diff/status and reference repos; then record-acceptance and verify-acceptance.`;
+    ? `paneforge-task-probe ${input.task.taskId} (${input.task.phase}): targeted verification reminder: this turn appears to include edit/write tool use and a completion claim. Before finalizing, run fresh claim-specific checks, compare the evidence with the claim, inspect diff/status and reference repos, then record-acceptance and verify-acceptance; if proof is missing, state NOT_VERIFIED with the missing proof and next action.`
+    : `paneforge-task-probe ${input.task.taskId} (${input.task.phase}): before claiming completion, run applicable checks such as npm test, npm run typecheck, npm run build, npm run smoke; inspect diff/status and reference repos; then record-acceptance and verify-acceptance.`;
   return {
     continue: true,
     systemMessage: [
@@ -305,7 +305,7 @@ export function createTaskBindingMismatchStopOutput(
   return {
     continue: true,
     systemMessage:
-      `ccpanes-task-probe task binding mismatch (${check.status}): ` +
+      `paneforge-task-probe task binding mismatch (${check.status}): ` +
       `run verify-task-binding --cwd "${check.cwd}" and refresh the active worktree task binding before continuing writes.`
   };
 }

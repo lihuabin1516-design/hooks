@@ -3,8 +3,8 @@ import { dispatchMcpHook } from '../src/mcp-hook-adapter.js';
 import { createRuntimeIdentityReport, type RuntimeIdentity } from '../src/runtime-identity.js';
 
 const runtimeIdentity: RuntimeIdentity = {
-  schema: 'ccpanes.runtime-identity.v1',
-  packageName: 'ccpanes-hooks-tooling',
+  schema: 'paneforge.runtime-identity.v1',
+  packageName: 'paneforge-hooks-tooling',
   packageVersion: '0.1.0',
   gitCommit: 'abc123',
   gitDirty: false,
@@ -16,7 +16,7 @@ const runtimeIdentity: RuntimeIdentity = {
 describe('MCP hook adapter', () => {
   test('exposes runtime identity as a structured read-only MCP report', () => {
     expect(createRuntimeIdentityReport(runtimeIdentity, 'def456')).toMatchObject({
-      schema: 'ccpanes.runtime-identity-report.v1',
+      schema: 'paneforge.runtime-identity-report.v1',
       runtimeIdentity,
       taskHeadComparison: {
         status: 'mismatch',
@@ -50,7 +50,7 @@ describe('MCP hook adapter', () => {
       hookSpecificOutput: {
         hookEventName: 'PreToolUse',
         permissionDecision: 'deny',
-        permissionDecisionReason: 'CC-Panes hook runtime failed: policy unavailable'
+        permissionDecisionReason: 'PaneForge hook runtime failed: policy unavailable'
       }
     });
   });
@@ -65,7 +65,7 @@ describe('MCP hook adapter', () => {
 
     expect(JSON.parse(output).hookSpecificOutput.decision).toEqual({
       behavior: 'deny',
-      message: 'CC-Panes hook runtime failed: policy unavailable'
+      message: 'PaneForge hook runtime failed: policy unavailable'
     });
   });
 });

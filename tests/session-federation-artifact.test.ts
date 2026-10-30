@@ -28,8 +28,8 @@ function validGraph(): Record<string, unknown> {
         updatedAt: '2026-08-15T08:00:00.000Z'
       }
     }, {
-      id: 'ccpanes-launch:launch-1',
-      type: 'ccpanes-launch',
+      id: 'paneforge-launch:launch-1',
+      type: 'paneforge-launch',
       externalId: 'launch-1',
       attributes: {
         projectPathNorm: 'd:/repo',
@@ -38,8 +38,8 @@ function validGraph(): Record<string, unknown> {
         launchedAt: '2026-08-15T08:00:00.000Z'
       }
     }, {
-      id: 'ccpanes-session:session-1',
-      type: 'ccpanes-session',
+      id: 'paneforge-session:session-1',
+      type: 'paneforge-session',
       externalId: 'session-1',
       attributes: {
         status: 'active',
@@ -47,8 +47,8 @@ function validGraph(): Record<string, unknown> {
         projectPathNorm: 'd:/repo'
       }
     }, {
-      id: 'ccpanes-task:task-1',
-      type: 'ccpanes-task',
+      id: 'paneforge-task:task-1',
+      type: 'paneforge-task',
       externalId: 'task-1',
       attributes: {}
     }, {
@@ -58,9 +58,9 @@ function validGraph(): Record<string, unknown> {
       attributes: { inferred: true }
     }],
     edges: [{
-      id: 'resumed-from:ccpanes-launch:launch-1->codex-thread:thread-1',
+      id: 'resumed-from:paneforge-launch:launch-1->codex-thread:thread-1',
       type: 'resumed-from',
-      from: 'ccpanes-launch:launch-1',
+      from: 'paneforge-launch:launch-1',
       to: 'codex-thread:thread-1',
       confidence: 1,
       evidence: [{
@@ -71,7 +71,7 @@ function validGraph(): Record<string, unknown> {
       observedAt: '2026-08-15T09:00:00.000Z'
     }],
     diagnostics: [{
-      kind: 'ccpanes-snapshot-stale',
+      kind: 'paneforge-snapshot-stale',
       ageMs: 90_000_000,
       maxAgeMs: 86_400_000
     }]
@@ -174,8 +174,8 @@ function completeGeneratedGraph(
       primaryTargetRaw: null,
       primaryTargetNorm: null
     }],
-    ccpanes: {
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    paneforge: {
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: '2026-08-15T08:59:00.000Z',
       launches: [
         {
@@ -254,11 +254,11 @@ function requiredSnapshotFieldEvidence(
 
 function requiredRuntimeLinkEvidence(
   edge: FederationEdge
-): Extract<FederationEvidence, { kind: 'ccpanes-runtime-link' }> {
+): Extract<FederationEvidence, { kind: 'paneforge-runtime-link' }> {
   const evidence = edge.evidence.find((item) =>
-    item.kind === 'ccpanes-runtime-link'
+    item.kind === 'paneforge-runtime-link'
   );
-  if (!evidence || evidence.kind !== 'ccpanes-runtime-link') {
+  if (!evidence || evidence.kind !== 'paneforge-runtime-link') {
     throw new Error('missing fixture runtime-link evidence');
   }
   return evidence;
@@ -301,7 +301,7 @@ const GENERATED_EDGE_CASES = [
   [
     'belongs-to-task session',
     (edge) => edge.type === 'belongs-to-task' &&
-      edge.from.startsWith('ccpanes-session:')
+      edge.from.startsWith('paneforge-session:')
   ],
   [
     'belongs-to-task Codex',
@@ -342,7 +342,7 @@ test.each([
   [
     'resumed-from',
     GENERATED_EDGE_CASES[0][1],
-    [{ kind: 'ccpanes-runtime-link', sessionId: 'session-1' }]
+    [{ kind: 'paneforge-runtime-link', sessionId: 'session-1' }]
   ],
   [
     'hosts',
@@ -583,8 +583,8 @@ test('roundtrips generator node IDs containing delimiters and percent encoding',
     generatedAt: '2026-08-15T09:00:00.000Z',
     project: 'D:\\Repo',
     codexSessions: [],
-    ccpanes: {
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    paneforge: {
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: '2026-08-15T08:59:00.000Z',
       launches: [{
         launchId: 'launch:encoded/value',
@@ -609,9 +609,9 @@ test('roundtrips generator node IDs containing delimiters and percent encoding',
   });
 
   expect(graph.nodes.map((node) => node.id)).toEqual([
-    'ccpanes-launch:launch%3Aencoded%2Fvalue',
-    'ccpanes-session:session%3Aencoded%2Fvalue',
-    'ccpanes-task:task%3Aencoded%2Fvalue',
+    'paneforge-launch:launch%3Aencoded%2Fvalue',
+    'paneforge-session:session%3Aencoded%2Fvalue',
+    'paneforge-task:task%3Aencoded%2Fvalue',
     'codex-thread:thread%3Awith%3Acolon'
   ]);
   expect(validateSessionFederationArtifact(graph)).toEqual(graph);
@@ -674,8 +674,8 @@ test('roundtrips generated 512-character Codex thread IDs from every source', ()
       primaryTargetRaw: null,
       primaryTargetNorm: null
     }],
-    ccpanes: {
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    paneforge: {
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: '2026-08-15T08:59:00.000Z',
       launches: [{
         launchId: 'launch-owner-limit',
@@ -726,8 +726,8 @@ test('roundtrips the owner maximum evidence merged into one controller edge', ()
     generatedAt: '2026-08-15T09:00:00.000Z',
     project: 'D:\\Repo',
     codexSessions: [],
-    ccpanes: {
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    paneforge: {
+      schemaVersion: 'hooks.paneforge-session-snapshot/v1',
       generatedAt: '2026-08-15T08:59:00.000Z',
       launches,
       sessions
@@ -746,7 +746,7 @@ test('accepts the federation owner evidence capacity at the codec boundary', () 
   const edge = value.edges.find(MAIN_CONTROLLER_EDGE)!;
   const evidence: FederationEvidence[] = [
     ...Array.from({ length: 10_000 }, () => ({
-      kind: 'ccpanes-runtime-link' as const,
+      kind: 'paneforge-runtime-link' as const,
       sessionId: 'session-1'
     })),
     {
@@ -858,7 +858,7 @@ test.each([
     'hosts from one session',
     (edge: FederationEdge) =>
       edge.type === 'hosts' &&
-      edge.from === 'ccpanes-session:session-1',
+      edge.from === 'paneforge-session:session-1',
     (edge: FederationEdge) => {
       edge.to = 'codex-thread:other-controller-thread';
       requiredSnapshotFieldEvidence(
@@ -871,16 +871,16 @@ test.each([
     'incoming launched to one session',
     (edge: FederationEdge) =>
       edge.type === 'launched' &&
-      edge.to === 'ccpanes-session:session-1',
+      edge.to === 'paneforge-session:session-1',
     (edge: FederationEdge) => {
-      edge.from = 'ccpanes-launch:launch-2';
+      edge.from = 'paneforge-launch:launch-2';
     }
   ],
   [
     'resumed-from from one launch',
     (edge: FederationEdge) =>
       edge.type === 'resumed-from' &&
-      edge.from === 'ccpanes-launch:launch-1',
+      edge.from === 'paneforge-launch:launch-1',
     (edge: FederationEdge) => {
       edge.to = 'codex-thread:other-parent-thread';
       requiredSnapshotFieldEvidence(edge, 'launch.resumeSessionId').value =
@@ -891,9 +891,9 @@ test.each([
     'belongs-to-task from one session',
     (edge: FederationEdge) =>
       edge.type === 'belongs-to-task' &&
-      edge.from === 'ccpanes-session:session-1',
+      edge.from === 'paneforge-session:session-1',
     (edge: FederationEdge) => {
-      edge.to = 'ccpanes-task:task-2';
+      edge.to = 'paneforge-task:task-2';
       requiredSnapshotFieldEvidence(edge, 'session.taskId').value = 'task-2';
     }
   ],
@@ -914,7 +914,7 @@ test.each([
       edge.type === 'belongs-to-task' &&
       edge.from === 'codex-thread:child-thread',
     (edge: FederationEdge) => {
-      edge.to = 'ccpanes-task:task-2';
+      edge.to = 'paneforge-task:task-2';
       requiredTaskBindingEvidence(edge).taskId = 'task-2';
     }
   ]
@@ -964,7 +964,7 @@ test.each([
     const edge = (value.edges as Array<Record<string, unknown>>)[0]!;
     edge.to = 'codex-thread:missing';
     edge.id =
-      'resumed-from:ccpanes-launch:launch-1->codex-thread:missing';
+      'resumed-from:paneforge-launch:launch-1->codex-thread:missing';
   }, 'edges[0].to', 'missing-reference'],
   ['confidence', (value: Record<string, unknown>) => {
     (value.edges as Array<Record<string, unknown>>)[0]!.confidence = 1.1;

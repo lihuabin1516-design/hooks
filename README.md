@@ -54,7 +54,7 @@
 | Node.js 22+ | required | Repository scripts and CI target this baseline. |
 | Windows | primary validated | GitHub Actions runs on `windows-latest`. |
 | Codex App | supported | First-class hook path. |
-| CC-Panes | compatible | Same core contract, with a host-specific integration path. |
+| PaneForge | compatible | Same core contract, with a host-specific integration path. |
 | Other hook-capable runtimes | candidate | Track them through the generic CLI / adapter model. |
 
 If a runtime can emit comparable hook events or invoke the CLI, the core contracts still apply.
@@ -131,7 +131,7 @@ node dist/src/cli.js hook-enforce `
 ## FAQ
 
 ### Is this tied to one host?
-No. CC-Panes is a compatible host, not the whole story. The core contract is agent-agnostic.
+No. PaneForge is a compatible host, not the whole story. The core contract is agent-agnostic.
 
 ### Does this replace my agent runtime or IDE?
 No. It sits beside the runtime and adds task scope, policy gates, audits, and verification.

@@ -10,7 +10,7 @@ export interface HookPackageRehearsalCheck {
 }
 
 export interface HookPackageRehearsalReport {
-  schema: 'ccpanes.hook-package-rehearsal.v1';
+  schema: 'paneforge.hook-package-rehearsal.v1';
   mode: 'dry-run-rehearsal';
   createdAt: string;
   packageDir: string;
@@ -28,9 +28,9 @@ export interface RehearseHookPackageInput {
 const forbiddenReportOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function sha256Text(text: string): string {
@@ -58,7 +58,7 @@ export async function rehearseHookPackage(input: RehearseHookPackageInput): Prom
   let manifest: Record<string, unknown> = {};
   try {
     manifest = asRecord(await readJson(manifestPath));
-    addCheck(checks, 'manifest schema', manifest.schema === 'ccpanes.hook-package-manifest.v1' && manifest.mode === 'review-only', `manifest=${manifestPath}`);
+    addCheck(checks, 'manifest schema', manifest.schema === 'paneforge.hook-package-manifest.v1' && manifest.mode === 'review-only', `manifest=${manifestPath}`);
   } catch (error) {
     addCheck(checks, 'manifest schema', false, error instanceof Error ? error.message : String(error));
   }
@@ -85,14 +85,14 @@ export async function rehearseHookPackage(input: RehearseHookPackageInput): Prom
   let installPlan: Record<string, unknown> = {};
   try {
     installPlan = asRecord(await readJson(path.join(input.packageDir, 'install-plan.json')));
-    addCheck(checks, 'install plan schema', installPlan.schema === 'ccpanes.hook-install-plan.v1' && installPlan.mode === 'review-only', 'install-plan.json');
+    addCheck(checks, 'install plan schema', installPlan.schema === 'paneforge.hook-install-plan.v1' && installPlan.mode === 'review-only', 'install-plan.json');
   } catch (error) {
     addCheck(checks, 'install plan schema', false, error instanceof Error ? error.message : String(error));
   }
 
   try {
     const rollbackPlan = asRecord(await readJson(path.join(input.packageDir, 'rollback-plan.json')));
-    addCheck(checks, 'rollback plan schema', rollbackPlan.schema === 'ccpanes.hook-rollback-plan.v1' && rollbackPlan.mode === 'manual-rollback', 'rollback-plan.json');
+    addCheck(checks, 'rollback plan schema', rollbackPlan.schema === 'paneforge.hook-rollback-plan.v1' && rollbackPlan.mode === 'manual-rollback', 'rollback-plan.json');
   } catch (error) {
     addCheck(checks, 'rollback plan schema', false, error instanceof Error ? error.message : String(error));
   }
@@ -125,7 +125,7 @@ export async function rehearseHookPackage(input: RehearseHookPackageInput): Prom
   }
 
   return {
-    schema: 'ccpanes.hook-package-rehearsal.v1',
+    schema: 'paneforge.hook-package-rehearsal.v1',
     mode: 'dry-run-rehearsal',
     createdAt: input.now ?? new Date().toISOString(),
     packageDir: input.packageDir,

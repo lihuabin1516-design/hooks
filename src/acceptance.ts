@@ -43,7 +43,7 @@ export interface AcceptanceSummary {
 }
 
 export interface AcceptanceEvidence {
-  schema: 'ccpanes.acceptance.v1';
+  schema: 'paneforge.acceptance.v1';
   taskId: string;
   worktreeRoot: string;
   branch: string | null;
@@ -146,7 +146,7 @@ function isReferenceRepoCheck(check: AcceptanceCheck): boolean {
 }
 
 function isUserConfigCheck(check: AcceptanceCheck): boolean {
-  return matchesAny(check, [/user-config/, /config snapshot/, /\.codex/, /\.cc-panes/, /hooks\.json/, /config\.toml/]);
+  return matchesAny(check, [/user-config/, /config snapshot/, /\.codex/, /\.paneforge/, /hooks\.json/, /config\.toml/]);
 }
 
 export interface BuildAcceptanceTruthLayersInput {
@@ -270,7 +270,7 @@ export async function createAcceptanceEvidence(input: CreateAcceptanceEvidenceIn
     explicitTruthLayers: input.truthLayers
   });
   return {
-    schema: 'ccpanes.acceptance.v1',
+    schema: 'paneforge.acceptance.v1',
     taskId: input.task.taskId,
     worktreeRoot: input.task.worktreeRoot,
     branch: input.task.branch,

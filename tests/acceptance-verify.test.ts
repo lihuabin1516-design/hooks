@@ -10,9 +10,9 @@ let tempRoot: string;
 
 function task(root: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -28,7 +28,7 @@ function task(root: string): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-acceptance-verify-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-acceptance-verify-'));
 });
 
 afterEach(async () => {
@@ -48,7 +48,7 @@ describe('verifyAcceptanceEvidence', () => {
 
     const result = await verifyAcceptanceEvidence(evidence);
 
-    expect(result.schema).toBe('ccpanes.acceptance.verify.v1');
+    expect(result.schema).toBe('paneforge.acceptance.verify.v1');
     expect(result.passed).toBe(true);
     expect(result.artifactResults[0]).toMatchObject({ path: artifact, status: 'match' });
     expect(result.checkResults[0]).toMatchObject({ name: 'unit tests', status: 'pass' });

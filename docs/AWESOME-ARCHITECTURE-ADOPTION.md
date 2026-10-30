@@ -21,8 +21,8 @@ AI 编码工作台的价值不在于让 Agent 更自由，
 
 | 参考模式 | 本地 owner | 本地落点 | 不拥有 |
 |---|---|---|---|
-| 规格金字塔：ADR / AGENTS.md / CI gate | `PROJECT-DIRECTORY.md`、`templates/AGENTS.ccpanes-hooks.md`、测试与 smoke | 把规则分成“人读原因、Agent 常驻约束、机器强制检查”三层 | 不让文档规则替代 hard gate |
-| 共享上下文：目标、规格、任务、运行、学习 | `.ccpanes-task/current-task.json`、audit dir、`ACCEPTANCE.md` | 让 task scope、policy、tool trace、验收证据组成共同事实源 | 不把旧聊天记忆当 source of truth |
+| 规格金字塔：ADR / AGENTS.md / CI gate | `PROJECT-DIRECTORY.md`、`templates/AGENTS.paneforge-hooks.md`、测试与 smoke | 把规则分成“人读原因、Agent 常驻约束、机器强制检查”三层 | 不让文档规则替代 hard gate |
+| 共享上下文：目标、规格、任务、运行、学习 | `.paneforge-task/current-task.json`、audit dir、`ACCEPTANCE.md` | 让 task scope、policy、tool trace、验收证据组成共同事实源 | 不把旧聊天记忆当 source of truth |
 | 工作流：入口 → 规格 → 执行 → 门禁 → 回写 | `plan-intake.ts`、`workflow-profile.ts`、`session-lifecycle.ts` | plan dry-run、workflow profile、StopCheck 验收提醒 | 不让 workflow profile 变成阻断器 |
 | 责任治理：风险分层、权限网关、审计 | `hook-enforce`、`permission-enforce`、`post-enforce` | 写入边界、用户配置保护、项目 policy、JSONL 审计 | 不自动批准高风险权限请求 |
 | eval gate：代表性输入 + 判据 + 门禁 | `examples/evals/workflow-profile-eval-cases.json`、`tests/workflow-profile-eval-fixtures.test.ts` | 用 fixture 防止风险路由、闭环强度和检查建议退化 | 不用 LLM judge 做本仓库必要检查 |
@@ -73,7 +73,7 @@ Owners：`docs/` 记录判断，`examples/evals/` 记录样本，`tests/` 记录
 
 Context：参考仓库强调 workflow / Golden Path / eval，但本仓库已经有明确的写入 hard gate。
 
-Decision：`workflow-profile.ts` 只输出建议路线、闭环强度、检查项和边界提示；实际 allow/block 继续由 `hook-enforce`、`permission-enforce` 和 `.ccpanes-task/policy.json` 决定。
+Decision：`workflow-profile.ts` 只输出建议路线、闭环强度、检查项和边界提示；实际 allow/block 继续由 `hook-enforce`、`permission-enforce` 和 `.paneforge-task/policy.json` 决定。
 
 Rejected alternatives：
 
@@ -106,5 +106,5 @@ Owners：`workflow-profile.ts` advisory；`hook-dry-run.ts` / `hook-runner.ts` /
 
 1. 把 `workflow-profile-eval-fixtures.test.ts` 纳入常规 `npm test`。
 2. 后续若修改 task-risk / workflow-profile，先补或更新 eval case，再改实现。
-3. 若要在 CC-Panes 主应用 UI 暴露这些信号，新增独立设计记录；UI 只消费 advisory profile，不承接 hard gate 权威。
+3. 若要在 PaneForge 主应用 UI 暴露这些信号，新增独立设计记录；UI 只消费 advisory profile，不承接 hard gate 权威。
 4. 若要同步到 live prototype，走现有 production package / acceptance / live verification 流程。

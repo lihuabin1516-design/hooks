@@ -5,7 +5,7 @@ describe('host adapter registry', () => {
   test('exposes a machine-readable registry with Codex as the supported default', () => {
     const registry = createHostAdapterRegistry();
 
-    expect(registry.schema).toBe('ccpanes.host-adapter-registry.v1');
+    expect(registry.schema).toBe('paneforge.host-adapter-registry.v1');
     expect(registry.defaultHost).toBe('codex');
     expect(registry.sourceModel.adaptedFrom).toContain('https://github.com/foryourhealth111-pixel/Vibe-Skills/tree/main/adapters');
 
@@ -18,7 +18,7 @@ describe('host adapter registry', () => {
     ]));
     expect(codex?.auditArtifacts).toContain('workflow-advisory-audit.jsonl');
     expect(codex?.verification.map((check) => check.name)).toContain('installed-hooks');
-    expect(codex?.boundaries).toContain('.ccpanes-task/policy.json remains the executable allow/block authority');
+    expect(codex?.boundaries).toContain('.paneforge-task/policy.json remains the executable allow/block authority');
   });
 
   test('keeps unproven hosts out of hard-gate authority', () => {

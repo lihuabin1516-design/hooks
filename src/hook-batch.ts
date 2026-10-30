@@ -3,7 +3,7 @@ import { decideHookDryRun } from './hook-dry-run.js';
 import type { CurrentTask, HookCall, HookDryRunDecision } from './types.js';
 
 export interface HookDryRunBatchInput {
-  schema: 'ccpanes.hook-dry-run-batch.v1';
+  schema: 'paneforge.hook-dry-run-batch.v1';
   task: CurrentTask;
   calls: HookCall[];
 }
@@ -15,7 +15,7 @@ export interface HookDryRunBatchDecision extends HookDryRunDecision {
 }
 
 export interface HookDryRunBatchResult {
-  schema: 'ccpanes.hook-dry-run-batch-result.v1';
+  schema: 'paneforge.hook-dry-run-batch-result.v1';
   taskId: string;
   decisions: HookDryRunBatchDecision[];
 }
@@ -38,11 +38,11 @@ function validateHookCall(value: unknown, index: number): HookCall {
 export function validateHookDryRunBatch(value: unknown): HookDryRunBatchInput {
   if (!value || typeof value !== 'object') throw new Error('invalid hook batch: object');
   const record = value as Record<string, unknown>;
-  if (record.schema !== 'ccpanes.hook-dry-run-batch.v1') throw new Error('invalid hook batch: schema');
+  if (record.schema !== 'paneforge.hook-dry-run-batch.v1') throw new Error('invalid hook batch: schema');
   const task = validateCurrentTask(record.task);
   if (!Array.isArray(record.calls)) throw new Error('invalid hook batch: calls');
   const calls = record.calls.map((call, index) => validateHookCall(call, index));
-  return { schema: 'ccpanes.hook-dry-run-batch.v1', task, calls };
+  return { schema: 'paneforge.hook-dry-run-batch.v1', task, calls };
 }
 
 export function runHookDryRunBatch(value: unknown): HookDryRunBatchResult {
@@ -54,7 +54,7 @@ export function runHookDryRunBatch(value: unknown): HookDryRunBatchResult {
     ...decideHookDryRun(batch.task, call)
   }));
   return {
-    schema: 'ccpanes.hook-dry-run-batch-result.v1',
+    schema: 'paneforge.hook-dry-run-batch-result.v1',
     taskId: batch.task.taskId,
     decisions
   };

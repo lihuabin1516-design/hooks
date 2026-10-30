@@ -1,9 +1,9 @@
-# CC-Panes Task Probe Prototype Acceptance
+# PaneForge Task Probe Prototype Acceptance
 
 验收日期：2026-08-06<br>
-原型目录：`{workspace-root}\tool\experiments\ccpanes-task-probe`<br>
-计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-OWNERSHIP-RESUME-PROBE-PROTOTYPE-PLAN.md`<br>
-设计文件：`{workspace-root}\tool\designs\CCPANES-TASK-OWNERSHIP-RESUME-PROBE.md`
+原型目录：`{workspace-root}\tool\experiments\paneforge-task-probe`<br>
+计划文件：`{workspace-root}\tool\plans\PANEFORGE-TASK-OWNERSHIP-RESUME-PROBE-PROTOTYPE-PLAN.md`<br>
+设计文件：`{workspace-root}\tool\designs\PANEFORGE-TASK-OWNERSHIP-RESUME-PROBE.md`
 
 ## 1. 验收范围
 
@@ -14,7 +14,7 @@
 - Hook dry-run 写入门禁：用户配置目录、参考仓库、task worktree 边界、phase 策略。
 - CLI smoke：`probe`、`write-current`、`dry-run-hook`。
 
-本轮未安装 Comet，未接入真实 Hook，未写入用户级 Codex / Claude / CC-Panes 配置。
+本轮未安装 Comet，未接入真实 Hook，未写入用户级 Codex / Claude / PaneForge 配置。
 
 ## 2. 本地 Hook 参考元数据
 
@@ -30,22 +30,22 @@ sha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 ## 3. 已实现文件
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\package.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\package-lock.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\README.md
-{workspace-root}\tool\experiments\ccpanes-task-probe\tsconfig.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\vitest.config.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\cli.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\current-task.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\git-state.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\hook-dry-run.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\paths.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\resume-probe.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\src\types.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\tests\cli.test.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\tests\current-task.test.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\tests\hook-dry-run.test.ts
-{workspace-root}\tool\experiments\ccpanes-task-probe\tests\resume-probe.test.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\package.json
+{workspace-root}\tool\experiments\paneforge-task-probe\package-lock.json
+{workspace-root}\tool\experiments\paneforge-task-probe\README.md
+{workspace-root}\tool\experiments\paneforge-task-probe\tsconfig.json
+{workspace-root}\tool\experiments\paneforge-task-probe\vitest.config.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\cli.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\current-task.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\git-state.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\hook-dry-run.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\paths.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\resume-probe.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\src\types.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\tests\cli.test.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\tests\current-task.test.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\tests\hook-dry-run.test.ts
+{workspace-root}\tool\experiments\paneforge-task-probe\tests\resume-probe.test.ts
 ```
 
 ## 4. 必要检查
@@ -55,11 +55,11 @@ sha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 | Unit tests | `npm test` | 4 files / 23 tests pass | pass |
 | Typecheck | `npm run typecheck` | exit code 0 | pass |
 | Build | `npm run build` | exit code 0 and `dist/src/cli.js` exists | pass |
-| CLI probe | `node dist/src/cli.js probe --utterance '继续' --session leader-1` | emits `ccpanes.resume-probe.v1` JSON | pass |
+| CLI probe | `node dist/src/cli.js probe --utterance '继续' --session leader-1` | emits `paneforge.resume-probe.v1` JSON | pass |
 | CLI dry-run | `node dist/src/cli.js dry-run-hook ... --phase shape ... --tool write` | emits `block` with `phase_shape_blocks_implementation_write` | pass |
 | Comet repo isolation | `git -C {workspace-root}\tool\repos\comet status --short` | clean | pass |
 | FastCtx repo isolation | `git -C {workspace-root}\tool\repos\fastctx status --short` | clean | pass |
-| User config isolation | recent writes under `~/.codex`, `~/.claude`, `~/.cc-panes` | 0 during execution window | pass |
+| User config isolation | recent writes under `~/.codex`, `~/.claude`, `~/.paneforge` | 0 during execution window | pass |
 
 ## 5. Fresh verification evidence
 
@@ -82,7 +82,7 @@ CLI smoke evidence:
 
 ```json
 {
-  "schema": "ccpanes.resume-probe.v1",
+  "schema": "paneforge.resume-probe.v1",
   "action": "none",
   "reason": "no_candidates",
   "candidates": []
@@ -133,17 +133,17 @@ DEF35D2F9F3F2C6B930604EF7F1570468CF06865A870A098898A4EBE8431C877  tests/resume-p
 
 ## 8. 验收判断
 
-该 prototype 已满足本轮目标：在隔离目录内验证 CC-Panes task ownership / resume-probe / hook dry-run 的最小闭环。
+该 prototype 已满足本轮目标：在隔离目录内验证 PaneForge task ownership / resume-probe / hook dry-run 的最小闭环。
 
 后续建议：基于本 prototype 做第二轮设计，把 `resume-probe` 的候选任务发现从测试输入升级为扫描 synthetic workspace 的只读 CLI；仍保持 dry-run，不接入真实 Hook。
 ## 9. Round 2: Workspace scan acceptance
 
-第二轮目标：把候选任务从测试输入升级为扫描 synthetic workspace 下真实 `.ccpanes-task/current-task.json` 文件。
+第二轮目标：把候选任务从测试输入升级为扫描 synthetic workspace 下真实 `.paneforge-task/current-task.json` 文件。
 
 新增能力：
 
 - `src/workspace-scan.ts`
-  - 扫描 `<workspaceRoot>/*/.ccpanes-task/current-task.json`。
+  - 扫描 `<workspaceRoot>/*/.paneforge-task/current-task.json`。
   - 复用 `readCurrentTask` 做 bounded read 和 schema 校验。
   - 忽略无 current-task 的普通目录。
   - 对 invalid current-task 返回 `scanErrors[]`，不中断整体扫描。
@@ -179,7 +179,7 @@ Observed probe result：
 
 ```json
 {
-  "schema": "ccpanes.resume-probe.v1",
+  "schema": "paneforge.resume-probe.v1",
   "action": "auto_resume",
   "reason": "single_clean_matching_candidate",
   "candidates": [
@@ -202,8 +202,8 @@ Round 2 判断：通过。CLI 已能从 synthetic workspace 只读发现 task ca
 新增能力：
 
 - `src/hook-batch.ts`
-  - 输入 schema：`ccpanes.hook-dry-run-batch.v1`。
-  - 输出 schema：`ccpanes.hook-dry-run-batch-result.v1`。
+  - 输入 schema：`paneforge.hook-dry-run-batch.v1`。
+  - 输出 schema：`paneforge.hook-dry-run-batch-result.v1`。
   - 复用 `decideHookDryRun`。
   - 每条 decision 包含 `index`、`tool`、`targetPath`、`action`、`reason`、`targetInsideWorktree`、`phase`。
   - 对 invalid schema、invalid task、calls 非数组、call 字段类型错误直接报错。
@@ -244,12 +244,12 @@ Round 3 判断：通过。原型已能将 synthetic hook/tool-call JSON 批量�
 
 ## 11. Round 4: Acceptance evidence JSON acceptance
 
-第四轮目标：把验收证据从 Markdown 记录升级为机器可读 `ccpanes.acceptance.v1` JSON，绑定 task、artifact hashes、checks。
+第四轮目标：把验收证据从 Markdown 记录升级为机器可读 `paneforge.acceptance.v1` JSON，绑定 task、artifact hashes、checks。
 
 新增能力：
 
 - `src/acceptance.ts`
-  - 输出 schema：`ccpanes.acceptance.v1`。
+  - 输出 schema：`paneforge.acceptance.v1`。
   - 记录 `taskId`、`worktreeRoot`、`branch`、`head`。
   - 对 artifacts 计算 SHA-256。
   - 记录 checks，result 限定为 `pass|fail|blocked|not-run`。
@@ -277,13 +277,13 @@ Round 4 CLI smoke：
 
 ```powershell
 node dist/src/cli.js write-current --root <fixture>\project-alpha --task-id task-alpha --phase verify
-node dist/src/cli.js record-acceptance --task <fixture>\project-alpha\.ccpanes-task\current-task.json --artifact <fixture>\artifact.md --check "unit tests=pass=37 tests passed"
+node dist/src/cli.js record-acceptance --task <fixture>\project-alpha\.paneforge-task\current-task.json --artifact <fixture>\artifact.md --check "unit tests=pass=37 tests passed"
 ```
 
 Observed evidence summary：
 
 ```text
-schema: ccpanes.acceptance.v1
+schema: paneforge.acceptance.v1
 taskId: task-alpha
 artifactHashes[0].sha256: 604D0789249BBFB3FD63DD5FD410B47C6C6EE3ECD7A325E3DCFA64406A8CBA97
 checks[0].result: pass
@@ -293,12 +293,12 @@ Round 4 判断：通过。原型已能生成可机器读取的验收证据，并
 
 ## 12. Round 5: Acceptance verification acceptance
 
-第五轮目标：让 `ccpanes.acceptance.v1` 证据可被重新校验，判断 artifact hash 是否仍匹配、checks 是否仍全部为 pass。
+第五轮目标：让 `paneforge.acceptance.v1` 证据可被重新校验，判断 artifact hash 是否仍匹配、checks 是否仍全部为 pass。
 
 新增能力：
 
 - `src/acceptance-verify.ts`
-  - 输出 schema：`ccpanes.acceptance.verify.v1`。
+  - 输出 schema：`paneforge.acceptance.verify.v1`。
   - 重新计算每个 artifact 的 SHA-256。
   - 输出 `artifactResults[]`：`match|mismatch|missing`。
   - 输出 `checkResults[]`。
@@ -331,7 +331,7 @@ node dist/src/cli.js verify-acceptance --input <acceptance.json>
 Observed verify result before artifact mutation：
 
 ```text
-schema: ccpanes.acceptance.verify.v1
+schema: paneforge.acceptance.verify.v1
 passed: true
 artifactResults[0].status: match
 failures: []
@@ -340,7 +340,7 @@ failures: []
 Observed verify result after artifact mutation：
 
 ```text
-schema: ccpanes.acceptance.verify.v1
+schema: paneforge.acceptance.verify.v1
 passed: false
 artifactResults[0].status: mismatch
 failures[0]: artifact hash mismatch
@@ -403,12 +403,12 @@ Round 6 判断：通过。原型现在可通过 `npm run smoke` 一键复现完�
 
 ## 14. Phase 1: Hook event adapter acceptance
 
-Phase 1 目标：在继续不接入真实 Hook 的前提下，把 generic / Claude-like / Codex-like hook event JSON 适配成现有 `ccpanes.hook-dry-run-batch.v1`，让后续真实 Hook 接入前可以先做事件格式归一化和 dry-run 门禁。
+Phase 1 目标：在继续不接入真实 Hook 的前提下，把 generic / Claude-like / Codex-like hook event JSON 适配成现有 `paneforge.hook-dry-run-batch.v1`，让后续真实 Hook 接入前可以先做事件格式归一化和 dry-run 门禁。
 
 新增能力：
 
 - `src/hook-event-adapter.ts`
-  - 支持 synthetic generic event：`ccpanes.hook-event.v1` + `calls[]`。
+  - 支持 synthetic generic event：`paneforge.hook-event.v1` + `calls[]`。
   - 支持 Claude-like event：`hook_event_name` + `tool_name` + `tool_input`。
   - 支持 Codex-like event：`event` + `tool` + `arguments`。
   - 提取 `targetPath`：`targetPath|path|file_path|filePath|cwd`。
@@ -417,7 +417,7 @@ Phase 1 目标：在继续不接入真实 Hook 的前提下，把 generic / Clau
 - `adapt-hook-event --task <current-task.json> --event <hook-event.json>`
   - 校验 `current-task.json`。
   - 读取 hook event JSON。
-  - 输出 `ccpanes.hook-dry-run-batch.v1`，可继续送入 `dry-run-hook --input`。
+  - 输出 `paneforge.hook-dry-run-batch.v1`，可继续送入 `dry-run-hook --input`。
 - `scripts/smoke.mjs`
   - 新增 adapter 覆盖：Codex-like `apply_patch` event -> batch -> `dry-run-hook`。
 - `examples/hook-events/`
@@ -445,7 +445,7 @@ SMOKE_PASS
 Observed adapter smoke summary：
 
 ```text
-adapt-hook-event: ccpanes.hook-dry-run-batch.v1
+adapt-hook-event: paneforge.hook-dry-run-batch.v1
 call[0]: apply_patch / writes=true
 dry-run adapted batch: allow / verify_minimal_fix_inside_worktree
 ```
@@ -461,7 +461,7 @@ Phase 2 目标：新增只读 `hook-runner` 入口，支持从 stdin 接收 hook
 - `src/hook-runner.ts`
   - 输入：`CurrentTask` + hook event JSON。
   - 处理链路：`adaptHookEventToBatch` -> `validateHookDryRunBatch` -> `runHookDryRunBatch`。
-  - 输出 schema：`ccpanes.hook-runner-result.v1`。
+  - 输出 schema：`paneforge.hook-runner-result.v1`。
   - 输出字段：`mode: dry-run`、`taskId`、`allowed`、`batch`、`dryRun`。
   - `allowed=false` 表示至少一条 dry-run decision 为 `block`。
 - `hook-runner --task <current-task.json> [--event <event.json>]`
@@ -493,13 +493,13 @@ SMOKE_PASS
 Observed hook-runner smoke summary：
 
 ```text
-schema: ccpanes.hook-runner-result.v1
+schema: paneforge.hook-runner-result.v1
 mode: dry-run
 allowed: true
 dryRun.decisions[0].reason: verify_minimal_fix_inside_worktree
 ```
 
-Phase 2 判断：通过。prototype 已具备可被真实 Hook 管道调用前验证的 stdin dry-run runner；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 2 判断：通过。prototype 已具备可被真实 Hook 管道调用前验证的 stdin dry-run runner；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 16. Phase 3: Hook shadow audit acceptance
 
@@ -508,7 +508,7 @@ Phase 3 目标：新增 shadow wrapper/audit 入口，在真实 Hook 接入前�
 新增能力：
 
 - `src/hook-shadow.ts`
-  - 输出 schema：`ccpanes.hook-shadow-audit.v1`。
+  - 输出 schema：`paneforge.hook-shadow-audit.v1`。
   - 字段：`mode: shadow`、`createdAt`、`taskId`、`upstreamHook`、`runner`。
   - `upstreamHook` 只记录 `path`、`exists`、`size`、`lastWriteUtc`、`sha256`。
   - upstream hook 元数据读取只使用 stat/read/hash，不执行二进制。
@@ -544,14 +544,14 @@ SMOKE_PASS
 Observed hook-shadow smoke summary：
 
 ```text
-schema: ccpanes.hook-shadow-audit.v1
+schema: paneforge.hook-shadow-audit.v1
 mode: shadow
 upstreamHook.sha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 runner.allowed: true
 audit out file: written inside prototype .tmp-smoke fixture
 ```
 
-Phase 3 判断：通过。prototype 已具备 shadow audit 入口，可先用于真实 Hook 接入前的审计演练；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 3 判断：通过。prototype 已具备 shadow audit 入口，可先用于真实 Hook 接入前的审计演练；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 17. Phase 4: Review-only hook install plan acceptance
 
@@ -560,14 +560,14 @@ Phase 4 目标：新增真实配置接入前的 install-plan 生成器，只输�
 新增能力：
 
 - `src/hook-install-plan.ts`
-  - 输出 schema：`ccpanes.hook-install-plan.v1`。
+  - 输出 schema：`paneforge.hook-install-plan.v1`。
   - `mode: review-only`。
-  - `target` 支持 `codex|ccpanes|both`。
+  - `target` 支持 `codex|paneforge|both`。
   - 记录 `prototypeRoot`、`taskId`、`upstreamHook` 元数据、`shadowCommand`。
   - `proposedConfigChanges[]` 只包含 `review_patch_only` patch candidate 文本。
   - `manualChecks[]` 固定列出接入前人工核验项。
   - `writeHookInstallPlanAtomic` 支持显式 `--out` 原子写入，并阻止写入用户配置目录和 reference repos。
-- `plan-hook-install --prototype-root <dir> --task <current-task.json> --target <codex|ccpanes|both> --upstream-hook <exe> [--out <plan.json>]`
+- `plan-hook-install --prototype-root <dir> --task <current-task.json> --target <codex|paneforge|both> --upstream-hook <exe> [--out <plan.json>]`
   - stdout 总是输出 install plan JSON。
   - 有 `--out` 时写入同一份 install plan JSON。
 - `scripts/smoke.mjs`
@@ -596,7 +596,7 @@ SMOKE_PASS
 Observed install-plan smoke summary：
 
 ```text
-schema: ccpanes.hook-install-plan.v1
+schema: paneforge.hook-install-plan.v1
 mode: review-only
 target: both
 upstreamHook.sha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
@@ -604,7 +604,7 @@ proposedConfigChanges.length: 2
 patchCandidate includes: hook-shadow
 ```
 
-Phase 4 判断：通过。prototype 现在可以生成真实 Hook 接入前的审阅计划，但仍没有写入 `~/.codex`、`~/.claude`、`~/.cc-panes`，也没有执行或注册 `skills-hub-hook.exe`。
+Phase 4 判断：通过。prototype 现在可以生成真实 Hook 接入前的审阅计划，但仍没有写入 `~/.codex`、`~/.claude`、`~/.paneforge`，也没有执行或注册 `skills-hub-hook.exe`。
 
 ## 18. Phase 5: Review-only rollback package acceptance
 
@@ -613,19 +613,19 @@ Phase 5 目标：新增可回滚接入包生成器，基于 Phase 4 install plan
 新增能力：
 
 - `src/hook-package.ts`
-  - 输出 manifest schema：`ccpanes.hook-package-manifest.v1`。
+  - 输出 manifest schema：`paneforge.hook-package-manifest.v1`。
   - `mode: review-only`。
   - 生成文件：
     - `manifest.json`
     - `install-plan.json`
     - `rollback-plan.json`
     - `patches/codex.patch`
-    - `patches/ccpanes.patch`
+    - `patches/paneforge.patch`
     - `ACCEPTANCE-CHECKLIST.md`
-  - rollback plan schema：`ccpanes.hook-rollback-plan.v1`。
+  - rollback plan schema：`paneforge.hook-rollback-plan.v1`。
   - rollback plan 记录 config paths、manual rollback steps、verification commands。
-  - package 输出目录禁止位于 `~/.codex`、`~/.claude`、`~/.cc-panes` 和 reference repos。
-- `create-hook-package --prototype-root <dir> --task <current-task.json> --target <codex|ccpanes|both> --upstream-hook <exe> --out-dir <dir>`
+  - package 输出目录禁止位于 `~/.codex`、`~/.claude`、`~/.paneforge` 和 reference repos。
+- `create-hook-package --prototype-root <dir> --task <current-task.json> --target <codex|paneforge|both> --upstream-hook <exe> --out-dir <dir>`
   - stdout 输出 package manifest JSON。
   - 文件全部写入 `--out-dir`。
 - `scripts/smoke.mjs`
@@ -654,14 +654,14 @@ SMOKE_PASS
 Observed package smoke summary：
 
 ```text
-schema: ccpanes.hook-package-manifest.v1
+schema: paneforge.hook-package-manifest.v1
 mode: review-only
 upstreamHookSha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 files include: rollback-plan.json
-files exist: manifest.json, patches/codex.patch, patches/ccpanes.patch
+files exist: manifest.json, patches/codex.patch, patches/paneforge.patch
 ```
 
-Phase 5 判断：通过。prototype 现在可以生成可审阅、可回滚的 Hook 接入包；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 5 判断：通过。prototype 现在可以生成可审阅、可回滚的 Hook 接入包；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 19. Phase 6: Hook package dry-run rehearsal acceptance
 
@@ -670,7 +670,7 @@ Phase 6 目标：新增本机 dry-run 接入包验收演练，读取 Phase 5 pac
 新增能力：
 
 - `src/hook-package-rehearsal.ts`
-  - 输出 schema：`ccpanes.hook-package-rehearsal.v1`。
+  - 输出 schema：`paneforge.hook-package-rehearsal.v1`。
   - `mode: dry-run-rehearsal`。
   - 校验项：
     - `manifest schema`
@@ -710,7 +710,7 @@ SMOKE_PASS
 Observed rehearsal smoke summary：
 
 ```text
-schema: ccpanes.hook-package-rehearsal.v1
+schema: paneforge.hook-package-rehearsal.v1
 mode: dry-run-rehearsal
 passed: true
 failures: []
@@ -718,7 +718,7 @@ checks[file hashes]: pass
 checks[upstream hash]: pass
 ```
 
-Phase 6 判断：通过。prototype 现在可以对可回滚接入包做本机 dry-run 验收演练；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 6 判断：通过。prototype 现在可以对可回滚接入包做本机 dry-run 验收演练；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 20. Phase 7: Hook release gate acceptance
 
@@ -727,7 +727,7 @@ Phase 7 目标：新增真实接入前最终门禁报告生成器，聚合 packa
 新增能力：
 
 - `src/hook-release-gate.ts`
-  - 输出 schema：`ccpanes.hook-release-gate.v1`。
+  - 输出 schema：`paneforge.hook-release-gate.v1`。
   - `mode: final-preflight`。
   - 聚合：
     - `packageRehearsal`
@@ -771,7 +771,7 @@ SMOKE_PASS
 Observed release gate smoke summary：
 
 ```text
-schema: ccpanes.hook-release-gate.v1
+schema: paneforge.hook-release-gate.v1
 mode: final-preflight
 passed: true
 configSnapshots.length: 2
@@ -779,7 +779,7 @@ referenceRepos: comet=clean, fastctx=clean
 checks[verification checks]: pass
 ```
 
-Phase 7 判断：通过。prototype 现在可以生成真实接入前最终门禁报告；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 7 判断：通过。prototype 现在可以生成真实接入前最终门禁报告；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 21. Phase 8: Staged hook apply-plan acceptance
 
@@ -788,9 +788,9 @@ Phase 8 目标：新增 staged apply-plan 生成器，读取已通过的 `releas
 新增能力：
 
 - `src/hook-apply-plan.ts`
-  - 输出 schema：`ccpanes.hook-apply-plan.v1`。
+  - 输出 schema：`paneforge.hook-apply-plan.v1`。
   - `mode: staged-review`。
-  - 前置要求：release gate schema 为 `ccpanes.hook-release-gate.v1` 且 `passed=true`。
+  - 前置要求：release gate schema 为 `paneforge.hook-release-gate.v1` 且 `passed=true`。
   - 生成文件：
     - `apply-plan.json`
     - `APPLY-INSTRUCTIONS.md`
@@ -798,7 +798,7 @@ Phase 8 目标：新增 staged apply-plan 生成器，读取已通过的 `releas
     - `scripts/restore-from-backup.ps1`
     - `staged-patches/*.patch`
   - artifacts 记录 SHA-256。
-  - 输出目录禁止位于 `~/.codex`、`~/.claude`、`~/.cc-panes` 和 reference repos。
+  - 输出目录禁止位于 `~/.codex`、`~/.claude`、`~/.paneforge` 和 reference repos。
 - `create-hook-apply-plan --release-gate <release-gate.json> --out-dir <dir>`
   - stdout 输出 apply-plan JSON。
 - `scripts/smoke.mjs`
@@ -827,14 +827,14 @@ SMOKE_PASS
 Observed apply-plan smoke summary：
 
 ```text
-schema: ccpanes.hook-apply-plan.v1
+schema: paneforge.hook-apply-plan.v1
 mode: staged-review
 releaseGatePassed: true
 artifacts include: backup-script
 files exist: apply-plan.json, APPLY-INSTRUCTIONS.md, scripts/capture-prechange.ps1, staged-patches/codex.patch
 ```
 
-Phase 8 判断：通过。prototype 现在可以生成真实写配置前的 staged apply-plan；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 8 判断：通过。prototype 现在可以生成真实写配置前的 staged apply-plan；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 22. Phase 9: Hook approval preflight acceptance
 
@@ -843,8 +843,8 @@ Phase 9 目标：新增人工批准包检查器，读取 staged apply-plan 和�
 新增能力：
 
 - `src/hook-approval.ts`
-  - approval schema：`ccpanes.hook-approval.v1`。
-  - report schema：`ccpanes.hook-approval-check.v1`。
+  - approval schema：`paneforge.hook-approval.v1`。
+  - report schema：`paneforge.hook-approval-check.v1`。
   - `mode: approval-preflight`。
   - 校验项：
     - `approval schema`
@@ -886,25 +886,25 @@ SMOKE_PASS
 Observed approval-check smoke summary：
 
 ```text
-schema: ccpanes.hook-approval-check.v1
+schema: paneforge.hook-approval-check.v1
 mode: approval-preflight
 passed: true
 checks[config hashes]: pass
 checks[write window]: pass
 ```
 
-Phase 9 判断：通过。prototype 现在可以校验人工批准包是否满足真实写配置前置条件；当前仍未修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，也未执行或注册 `skills-hub-hook.exe`。
+Phase 9 判断：通过。prototype 现在可以校验人工批准包是否满足真实写配置前置条件；当前仍未修改 `~/.codex`、`~/.claude`、`~/.paneforge`，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 23. Phase 10: Hook write preview dry-run acceptance
 
-Phase 10 目标：新增 dry-run 写入预览器，读取已通过的 approval-check 和 staged apply-plan，生成真实写配置前的 preview artifacts；仍只写入显式 preview 输出目录，不修改 `~/.codex`、`~/.claude`、`~/.cc-panes`，不执行或注册上游 hook。
+Phase 10 目标：新增 dry-run 写入预览器，读取已通过的 approval-check 和 staged apply-plan，生成真实写配置前的 preview artifacts；仍只写入显式 preview 输出目录，不修改 `~/.codex`、`~/.claude`、`~/.paneforge`，不执行或注册上游 hook。
 
 新增能力：
 
 - `src/hook-write-preview.ts`
-  - report schema：`ccpanes.hook-write-preview.v1`。
+  - report schema：`paneforge.hook-write-preview.v1`。
   - `mode: dry-run-write-preview`。
-  - 输入要求：approval-check schema 为 `ccpanes.hook-approval-check.v1` 且 `passed=true`。
+  - 输入要求：approval-check schema 为 `paneforge.hook-approval-check.v1` 且 `passed=true`。
   - 读取 apply-plan 的 staged patches 和 target config snapshots。
   - 输出：
     - `write-preview.json`
@@ -950,7 +950,7 @@ SMOKE_PASS
 Observed write-preview smoke summary：
 
 ```text
-schema: ccpanes.hook-write-preview.v1
+schema: paneforge.hook-write-preview.v1
 mode: dry-run-write-preview
 approvalCheckPassed: true
 files exist: write-preview.json, backup-manifest.json, before/*.toml, after/*.toml, diffs/*.diff
@@ -963,21 +963,21 @@ comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 10 判断：通过。prototype 现在可以在人工批准通过后生成真实写配置前的 dry-run write preview；当前仅在显式 preview 输出目录生成 artifacts，用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 24. Phase 11: Hook guarded write apply acceptance
 
-Phase 11 目标：新增受保护的 config 写入执行器，读取 approval-check 与 write-preview，在显式 `--allow-root` 覆盖目标 config 且写前/写后哈希可校验时执行备份、原子写入和写后验证。本阶段 smoke 只写 `.tmp-smoke` synthetic config，不写真实 `~/.codex`、`~/.claude`、`~/.cc-panes`，不执行或注册上游 hook。
+Phase 11 目标：新增受保护的 config 写入执行器，读取 approval-check 与 write-preview，在显式 `--allow-root` 覆盖目标 config 且写前/写后哈希可校验时执行备份、原子写入和写后验证。本阶段 smoke 只写 `.tmp-smoke` synthetic config，不写真实 `~/.codex`、`~/.claude`、`~/.paneforge`，不执行或注册上游 hook。
 
 新增能力：
 
 - `src/hook-write-apply.ts`
-  - report schema：`ccpanes.hook-write-apply.v1`。
+  - report schema：`paneforge.hook-write-apply.v1`。
   - `mode: guarded-apply`。
-  - 输入要求：approval-check schema 为 `ccpanes.hook-approval-check.v1` 且 `passed=true`；write-preview schema 为 `ccpanes.hook-write-preview.v1` 且 `mode=dry-run-write-preview`。
+  - 输入要求：approval-check schema 为 `paneforge.hook-approval-check.v1` 且 `passed=true`；write-preview schema 为 `paneforge.hook-write-preview.v1` 且 `mode=dry-run-write-preview`。
   - `write-preview.approvalCheckPath` 必须匹配传入 approval-check。
   - 目标 config 必须在至少一个显式 `--allow-root` 内。
   - 写入前验证当前 config SHA-256 等于 preview `beforeSha256`。
@@ -1021,7 +1021,7 @@ SMOKE_PASS
 Observed guarded apply smoke summary：
 
 ```text
-schema: ccpanes.hook-write-apply.v1
+schema: paneforge.hook-write-apply.v1
 mode: guarded-apply
 passed: true
 target written: .tmp-smoke/synthetic-apply/config.toml
@@ -1036,21 +1036,21 @@ comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 11 判断：通过。prototype 现在具备 guarded apply executor，可在显式 allow-root、approval-check、write-preview、写前哈希和写后哈希全部满足时写入 synthetic config；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，也未执行或注册 `skills-hub-hook.exe`。
 
 ## 25. Phase 12: Hook guarded restore acceptance
 
-Phase 12 目标：新增受保护的 config 回滚恢复执行器，读取 Phase 11 apply report，在显式 `--allow-root` 覆盖目标 config、当前 config 仍是 apply 后内容、backup 仍匹配 apply 前哈希时，原子恢复 synthetic config 并验证恢复后哈希。本阶段 smoke 只写 `.tmp-smoke` synthetic config，不写真实 `~/.codex`、`~/.claude`、`~/.cc-panes`，不执行或注册上游 hook。
+Phase 12 目标：新增受保护的 config 回滚恢复执行器，读取 Phase 11 apply report，在显式 `--allow-root` 覆盖目标 config、当前 config 仍是 apply 后内容、backup 仍匹配 apply 前哈希时，原子恢复 synthetic config 并验证恢复后哈希。本阶段 smoke 只写 `.tmp-smoke` synthetic config，不写真实 `~/.codex`、`~/.claude`、`~/.paneforge`，不执行或注册上游 hook。
 
 新增能力：
 
 - `src/hook-write-restore.ts`
-  - report schema：`ccpanes.hook-write-restore.v1`。
+  - report schema：`paneforge.hook-write-restore.v1`。
   - `mode: guarded-restore`。
-  - 输入要求：apply report schema 为 `ccpanes.hook-write-apply.v1`、`mode=guarded-apply` 且 `passed=true`。
+  - 输入要求：apply report schema 为 `paneforge.hook-write-apply.v1`、`mode=guarded-apply` 且 `passed=true`。
   - 目标 config 必须在至少一个显式 `--allow-root` 内。
   - 恢复前验证当前 config SHA-256 等于 apply report `afterSha256`。
   - 恢复前验证 backup SHA-256 等于 apply report `beforeSha256`。
@@ -1092,7 +1092,7 @@ SMOKE_PASS
 Observed guarded restore smoke summary：
 
 ```text
-schema: ccpanes.hook-write-restore.v1
+schema: paneforge.hook-write-restore.v1
 mode: guarded-restore
 passed: true
 target restored: .tmp-smoke/synthetic-apply/config.toml
@@ -1106,7 +1106,7 @@ comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 12 判断：通过。prototype 现在具备 guarded restore executor，可在显式 allow-root、apply report、当前 after hash、backup before hash 全部满足时恢复 synthetic config；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，也未执行或注册 `skills-hub-hook.exe`。
@@ -1118,7 +1118,7 @@ Phase 13 目标：新增最终生产就绪门禁聚合器，读取 release-gate�
 新增能力：
 
 - `src/hook-production-readiness.ts`
-  - report schema：`ccpanes.hook-production-readiness.v1`。
+  - report schema：`paneforge.hook-production-readiness.v1`。
   - `mode: final-readiness`。
   - 检查项：
     - `release gate`
@@ -1168,7 +1168,7 @@ SMOKE_PASS
 Observed production readiness smoke summary：
 
 ```text
-schema: ccpanes.hook-production-readiness.v1
+schema: paneforge.hook-production-readiness.v1
 mode: final-readiness
 ready: true
 checks: all pass
@@ -1181,7 +1181,7 @@ comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 13 判断：通过。prototype 现在具备 final production readiness aggregator，可把 release-gate、approval-check、write-preview、synthetic apply、synthetic restore 五段 evidence 聚合成唯一 readiness artifact；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，`skills-hub-hook.exe` 保持哈希基线。
@@ -1193,9 +1193,9 @@ Phase 14 目标：新增人工授权批准包生成器，读取 `production-read
 新增能力：
 
 - `src/hook-go-live-approval.ts`
-  - manifest schema：`ccpanes.hook-go-live-approval-package.v1`。
+  - manifest schema：`paneforge.hook-go-live-approval-package.v1`。
   - `mode: manual-approval-package`。
-  - 输入要求：readiness schema 为 `ccpanes.hook-production-readiness.v1`、`mode=final-readiness` 且 `ready=true`。
+  - 输入要求：readiness schema 为 `paneforge.hook-production-readiness.v1`、`mode=final-readiness` 且 `ready=true`。
   - 生成文件：
     - `manifest.json`
     - `GO-LIVE-APPROVAL.md`
@@ -1239,7 +1239,7 @@ SMOKE_PASS
 Observed go-live approval package smoke summary：
 
 ```text
-schema: ccpanes.hook-go-live-approval-package.v1
+schema: paneforge.hook-go-live-approval-package.v1
 mode: manual-approval-package
 manualApproval.approved: true
 manualApproval.approvedBy: AI001
@@ -1253,7 +1253,7 @@ comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 14 判断：通过。prototype 现在具备 go-live approval package generator，可将人工授权批准固化为可审计 package；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，`skills-hub-hook.exe` 保持哈希基线且未执行。
@@ -1265,9 +1265,9 @@ Phase 15 目标：新增最终人工执行 runbook 生成器，读取已经人�
 新增能力：
 
 - `src/hook-final-runbook.ts`
-  - manifest schema：`ccpanes.hook-final-runbook.v1`。
+  - manifest schema：`paneforge.hook-final-runbook.v1`。
   - `mode: manual-execution-runbook`。
-  - 输入要求：go-live manifest schema 为 `ccpanes.hook-go-live-approval-package.v1`、`mode=manual-approval-package`、`manualApproval.approved=true` 且 readiness ready。
+  - 输入要求：go-live manifest schema 为 `paneforge.hook-go-live-approval-package.v1`、`mode=manual-approval-package`、`manualApproval.approved=true` 且 readiness ready。
   - 输出目录防护：拒绝写入用户配置根和参考仓库根。
   - 生成文件：
     - `manifest.json`
@@ -1316,7 +1316,7 @@ SMOKE_PASS
 Observed final runbook smoke summary：
 
 ```text
-schema: ccpanes.hook-final-runbook.v1
+schema: paneforge.hook-final-runbook.v1
 mode: manual-execution-runbook
 files exist: manifest.json, FINAL-RUNBOOK.md, PRE-FLIGHT.ps1, POST-FLIGHT.ps1, ROLLBACK-CHECKLIST.md
 FINAL-RUNBOOK.md contains: Write pre-flight snapshot, Apply one config at a time, Rollback condition
@@ -1329,7 +1329,7 @@ comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 .tmp-smoke exists after smoke: false
 ```
 
@@ -1337,7 +1337,7 @@ Phase 15 判断：通过。prototype 现在具备 final manual runbook generator
 
 ## 29. Phase 16: Codex live hook go-live acceptance
 
-Phase 16 目标：在用户明确给出“人工授权批准”后，把任务边界检查以 Codex 官方 hook 形态接入真实 Codex 用户 hooks 层。接入点选择 `%USERPROFILE%\.codex\hooks.json`，保留既有 `UserPromptSubmit` skills-hub hook，只新增 `PreToolUse` / `^apply_patch$` 的 `hook-enforce` 命令。未写入 `%USERPROFILE%\.codex\config.toml`，未写入 `%USERPROFILE%\.cc-panes\config.toml`，未执行 `skills-hub-hook.exe`。
+Phase 16 目标：在用户明确给出“人工授权批准”后，把任务边界检查以 Codex 官方 hook 形态接入真实 Codex 用户 hooks 层。接入点选择 `%USERPROFILE%\.codex\hooks.json`，保留既有 `UserPromptSubmit` skills-hub hook，只新增 `PreToolUse` / `^apply_patch$` 的 `hook-enforce` 命令。未写入 `%USERPROFILE%\.codex\config.toml`，未写入 `%USERPROFILE%\.paneforge\config.toml`，未执行 `skills-hub-hook.exe`。
 
 官方 Codex hook 依据：
 
@@ -1372,20 +1372,20 @@ Modified: %USERPROFILE%\.codex\hooks.json
 Added event: hooks.PreToolUse
 Matcher: ^apply_patch$
 Command:
-node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" hook-enforce --task "{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\current-task.json" --audit-out "{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hook-enforce-audit.json"
-Status message: CC-Panes task boundary check
+node "{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js" hook-enforce --task "{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\current-task.json" --audit-out "{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\hook-enforce-audit.json"
+Status message: PaneForge task boundary check
 ```
 
 Go-live artifacts：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\preflight-snapshot.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\postflight-snapshot.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hooks.json.before.bak
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hooks.json.after
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\current-task.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\verify-allowed-audit.json
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\verify-blocked-audit.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\preflight-snapshot.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\postflight-snapshot.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\hooks.json.before.bak
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\hooks.json.after
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\current-task.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\verify-allowed-audit.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\verify-blocked-audit.json
 ```
 
 Focused live-entry verification：
@@ -1426,7 +1426,7 @@ Post-write config evidence：
 ```text
 %USERPROFILE%\.codex\hooks.json size: 1381, SHA-256: 443514CE6AF876F08F50856AF1BD5CE1834FDC88D3779B26492A92351031C4F0
 %USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 comet status --short: clean
 fastctx status --short: clean
@@ -1472,10 +1472,10 @@ UserPromptSubmit hook completed with context:
 
 ```text
 allowed apply_patch was blocked with:
-ccpanes-task-probe: write_without_target_path
+paneforge-task-probe: write_without_target_path
 
 blocked user config probe was also blocked with:
-ccpanes-task-probe: write_without_target_path
+paneforge-task-probe: write_without_target_path
 ```
 
 根因：Codex `PreToolUse` 对 `apply_patch` 的实际 payload 使用 `tool_input.command` 承载 patch text；原 adapter 只读取 `tool_input.patch`。
@@ -1494,24 +1494,24 @@ tests/hook-event-adapter.test.ts
 
 ```text
 Allowed probe:
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\codex-cli-allowed-probe.txt
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\codex-cli-allowed-probe.txt
 Result: success
 Content: allowed probe
 
 Blocked probe:
-%USERPROFILE%\.codex\__ccpanes_hook_probe_should_be_blocked.tmp
+%USERPROFILE%\.codex\__paneforge_hook_probe_should_be_blocked.tmp
 Result: blocked by PreToolUse hook
-Reason: ccpanes-task-probe: forbidden_user_config_path
+Reason: paneforge-task-probe: forbidden_user_config_path
 File exists after probe: false
 ```
 
 Final hook audit artifact:
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hook-enforce-audit.json
-schema: ccpanes.hook-runner-result.v1
+{workspace-root}\tool\experiments\paneforge-task-probe\live\codex-hook-go-live\hook-enforce-audit.json
+schema: paneforge.hook-runner-result.v1
 allowed: false
-targetPath: %USERPROFILE%\.codex\__ccpanes_hook_probe_should_be_blocked.tmp
+targetPath: %USERPROFILE%\.codex\__paneforge_hook_probe_should_be_blocked.tmp
 decision.action: block
 decision.reason: forbidden_user_config_path
 ```
@@ -1545,7 +1545,7 @@ fastctx status --short: clean
 %USERPROFILE%\.codex\config.toml size: 16284, SHA-256:
 C11144BC931A85FBA44B5036B088B5206E4CAC20EB6E76AB1241A96F21945E34
 
-%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256:
+%USERPROFILE%\.paneforge\config.toml size: 3660, SHA-256:
 1DA33C211890827883D2311BF968A5F2C5CBB07B0372820917EB6C569B752C04
 
 %USERPROFILE%\skills-hub\bin\skills-hub-hook.exe SHA-256:
@@ -1559,23 +1559,23 @@ Config hash note：
 [hooks.state.'%USERPROFILE%\.codex\hooks.json:pre_tool_use:0:0']
 trusted_hash = "sha256:f8cd360afc69c96f9e5f7cc719076e055c02f8df961ec262c4b8b959b7e77034"
 
-%USERPROFILE%\.cc-panes\config.toml hash also changed while using CC-Panes to launch/drive the verification session. No hook write was applied to that file in the task-probe path.
+%USERPROFILE%\.paneforge\config.toml hash also changed while using PaneForge to launch/drive the verification session. No hook write was applied to that file in the task-probe path.
 ```
 
 Phase 17 判断：通过。新开的 Codex CLI 真实识别并信任了新增 `PreToolUse` hook；真实 `apply_patch` allowed probe 成功写入 task worktree 内 artifact，真实 forbidden 用户配置 probe 被 hook 拒绝且目标文件未生成。当前 hook 可用于 Codex CLI 实际执行链路；由于配置在用户级 `~/.codex/hooks.json`，Codex app 使用同一 Codex 用户配置层时也会加载同一 hook。
 
 ## 31. Phase 18: Dynamic task resolver / multi-project bootstrap acceptance
 
-Phase 18 目标：把 Phase 17 的固定 `--task <live/current-task.json>` hook 升级为方案 B：用户级 Codex hook 只作为 dispatcher，运行时根据 hook event 的 `cwd` 向上查找最近的 `<project>\.ccpanes-task\current-task.json`。每个项目在启动、接手或 plan 阶段写入自己的 `current-task.json` 后即可自动启用边界检查；没有 task 文件的项目自动 no-op。
+Phase 18 目标：把 Phase 17 的固定 `--task <live/current-task.json>` hook 升级为方案 B：用户级 Codex hook 只作为 dispatcher，运行时根据 hook event 的 `cwd` 向上查找最近的 `<project>\.paneforge-task\current-task.json`。每个项目在启动、接手或 plan 阶段写入自己的 `current-task.json` 后即可自动启用边界检查；没有 task 文件的项目自动 no-op。
 
 架构决策：
 
 ```text
 State authority:
-<project>\.ccpanes-task\current-task.json
+<project>\.paneforge-task\current-task.json
 
 Runtime resolver:
-hook event cwd -> parent walk -> nearest .ccpanes-task/current-task.json
+hook event cwd -> parent walk -> nearest .paneforge-task/current-task.json
 
 No task found:
 stdout empty, no audit, no hook decision
@@ -1588,7 +1588,7 @@ use task.worktreeRoot as write boundary, emit Codex deny JSON only for blocked c
 
 - `src/current-task.ts`
   - 新增 `resolveCurrentTaskFromCwd(cwd)`。
-  - 从 `cwd` 向上查找 `.ccpanes-task/current-task.json`，复用现有 16KB 上限和 schema 校验。
+  - 从 `cwd` 向上查找 `.paneforge-task/current-task.json`，复用现有 16KB 上限和 schema 校验。
 - `src/cli.ts`
   - `hook-enforce` 新增：
     - `--resolve-task-from-cwd`
@@ -1601,7 +1601,7 @@ use task.worktreeRoot as write boundary, emit Codex deny JSON only for blocked c
 - `scripts/smoke.mjs`
   - smoke 改用 `--resolve-task-from-cwd --audit-root` 覆盖动态 resolver。
 - `{workspace-root}\AGENTS.md`
-  - 新增项目启动/规划时写入 `.ccpanes-task/current-task.json` 的规则和命令。
+  - 新增项目启动/规划时写入 `.paneforge-task/current-task.json` 的规则和命令。
 - `README.md` / `examples/README.md`
   - 增加多项目 hook bootstrap 文档。
 
@@ -1612,11 +1612,11 @@ Modified:
 %USERPROFILE%\.codex\hooks.json
 
 PreToolUse command:
-node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" hook-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js" hook-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits"
 
 Initialized:
-{workspace-root}\.ccpanes-task\current-task.json
-taskId: cc-pane-dynamic-hook-root
+{workspace-root}\.paneforge-task\current-task.json
+taskId: paneforge-dynamic-hook-root
 phase: build
 ```
 
@@ -1653,14 +1653,14 @@ Live dynamic resolver probes：
 
 ```text
 Allowed probe:
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-hook-go-live\dynamic-codex-cli-allowed.txt
+{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-hook-go-live\dynamic-codex-cli-allowed.txt
 Result: apply_patch success
 Content: dynamic allowed
 
 Blocked probe:
 %USERPROFILE%\.codex\__dynamic_hook_block_probe.tmp
 Result: blocked by PreToolUse hook
-Reason: ccpanes-task-probe: forbidden_user_config_path
+Reason: paneforge-task-probe: forbidden_user_config_path
 File exists after probe: false
 ```
 
@@ -1693,24 +1693,24 @@ SHA-256: E674A62FC567E03BAAB5F277BA6E8532F5D5510BD3B1194477472F25AF9261BE
 %USERPROFILE%\.codex\config.toml size: 16284
 SHA-256: A6497D7FB573DCBFA839A05ADFAE40241F6613517D0AABC63F0EA56581AC6450
 
-%USERPROFILE%\.cc-panes\config.toml size: 3660
+%USERPROFILE%\.paneforge\config.toml size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
 %USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 
-{workspace-root}\.ccpanes-task\current-task.json
+{workspace-root}\.paneforge-task\current-task.json
 SHA-256: 302A0118493F06F2C732FEF28DF87356B5CDD959BBE97CECB51242B7BD786464
 ```
 
-Phase 18 判断：通过。现在其它项目要使用 hook 的完整边界能力，不需要改全局 hook；只要在项目根写入 `.ccpanes-task/current-task.json`，Codex 在该项目 `cwd` 下触发 `apply_patch` 时会自动使用该项目的任务边界。没有初始化 current-task 的项目保持 no-op。
+Phase 18 判断：通过。现在其它项目要使用 hook 的完整边界能力，不需要改全局 hook；只要在项目根写入 `.paneforge-task/current-task.json`，Codex 在该项目 `cwd` 下触发 `apply_patch` 时会自动使用该项目的任务边界。没有初始化 current-task 的项目保持 no-op。
 
 ## Phase 19 — PreToolUse 多工具覆盖与实机验收
 
 日期：2026-08-07<br>
-计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE19-PRETOOLUSE-FULL-COVERAGE-PLAN.md`
+计划文件：`{workspace-root}\tool\plans\PANEFORGE-TASK-PROBE-PHASE19-PRETOOLUSE-FULL-COVERAGE-PLAN.md`
 
-Phase 19 目标：把动态 `PreToolUse` dispatcher 从 `apply_patch` 单点扩展为多工具覆盖，并保持项目级 `.ccpanes-task/current-task.json` 自动解析。
+Phase 19 目标：把动态 `PreToolUse` dispatcher 从 `apply_patch` 单点扩展为多工具覆盖，并保持项目级 `.paneforge-task/current-task.json` 自动解析。
 
 新增/变更能力：
 
@@ -1756,28 +1756,28 @@ sessionId: 455281ae-cbbd-4abb-84c1-4ece5ef3c884
 PreToolUse Installed=1 Active=1
 
 Allowed:
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase19-real-validation\codex-apply-patch-active.txt
+{workspace-root}\tool\experiments\paneforge-task-probe\live\phase19-real-validation\codex-apply-patch-active.txt
 content: phase19 apply_patch active allowed
 
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase19-real-validation\shell-active-allowed.txt
+{workspace-root}\tool\experiments\paneforge-task-probe\live\phase19-real-validation\shell-active-allowed.txt
 content: phase19 shell active allowed
 
 Blocked:
 %USERPROFILE%\.codex\__phase19_hook_block_probe.tmp
-Reason: ccpanes-task-probe: forbidden_user_config_path
+Reason: paneforge-task-probe: forbidden_user_config_path
 File exists after probe: false
 
 Blocked:
 git reset --hard HEAD
-Reason: ccpanes-task-probe: destructive_git_reset_hard
+Reason: paneforge-task-probe: destructive_git_reset_hard
 
 Blocked:
 node -e require('fs').writeFileSync(...)
-Reason: ccpanes-task-probe: interpreter_filesystem_mutation
+Reason: paneforge-task-probe: interpreter_filesystem_mutation
 %USERPROFILE%\.codex\__phase19_node_bypass_probe.tmp exists after probe: false
 ```
 
-Phase 19 判断：通过。当前全局 Codex hook 已从单一 `apply_patch` 扩展到常用写入工具、shell 命令和 FastCtx MCP 文件工具；未初始化 `.ccpanes-task/current-task.json` 的项目仍 no-op，已初始化项目按 task worktree 边界执行门禁。
+Phase 19 判断：通过。当前全局 Codex hook 已从单一 `apply_patch` 扩展到常用写入工具、shell 命令和 FastCtx MCP 文件工具；未初始化 `.paneforge-task/current-task.json` 的项目仍 no-op，已初始化项目按 task worktree 边界执行门禁。
 
 Final Phase 19 verification：
 
@@ -1812,7 +1812,7 @@ SHA-256: B9E741ADB79F4FFBF85F415CE3767E4FCD3F4ED7BE1DAF395EA0A100B9C6DA6E
 %USERPROFILE%\.codex\config.toml size: 16284
 SHA-256: B4B41CA3E3EFA82D4BD4915C1600DE33D412DE310230937CE1C2A8E3E0B39EC0
 
-%USERPROFILE%\.cc-panes\config.toml size: 3660
+%USERPROFILE%\.paneforge\config.toml size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
 %USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
@@ -1830,7 +1830,7 @@ Forbidden probes:
 计划文件：
 
 ```text
-{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE22-SESSIONSTART-STOP-PLAN.md
+{workspace-root}\tool\plans\PANEFORGE-TASK-PROBE-PHASE22-SESSIONSTART-STOP-PLAN.md
 ```
 
 新增/变更能力：
@@ -1841,13 +1841,13 @@ session-start --resolve-task-from-cwd --audit-root <audit-root>
 stop-check --resolve-task-from-cwd --audit-root <audit-root>
 
 SessionStart behavior:
-- dynamic resolver 复用 <project>\.ccpanes-task\current-task.json。
+- dynamic resolver 复用 <project>\.paneforge-task\current-task.json。
 - 输出 hookSpecificOutput.hookEventName = "SessionStart"。
 - 输出 hookSpecificOutput.additionalContext，包含 taskId、phase、worktreeRoot、currentTaskPath、auditDir、post-tool-use-audit.jsonl 和生产验收门禁。
 - 无 current-task 时 stdout empty。
 
 Stop behavior:
-- dynamic resolver 复用 <project>\.ccpanes-task\current-task.json。
+- dynamic resolver 复用 <project>\.paneforge-task\current-task.json。
 - 输出 JSON systemMessage 和 continue=true。
 - 不输出 decision:block，不触发自动 continuation prompt。
 - 无 current-task 时 stdout empty。
@@ -1861,20 +1861,20 @@ Matcher:
 ^(startup|resume|clear|compact)$
 
 Command:
-node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" session-start --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js" session-start --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits"
 
 statusMessage:
-CC-Panes task lifecycle context
+PaneForge task lifecycle context
 
 additionalContextLimit:
 1200
 
 Event: Stop
 Command:
-node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" stop-check --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js" stop-check --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits"
 
 statusMessage:
-CC-Panes completion gate reminder
+PaneForge completion gate reminder
 ```
 
 官方 Codex manual 依据：
@@ -1902,9 +1902,9 @@ Hook discovery/trust:
 - PostToolUse Installed=1, Active=1
 
 Stop runtime evidence:
-Running Stop hook: CC-Panes completion gate reminder
+Running Stop hook: PaneForge completion gate reminder
 Stop (completed) says:
-ccpanes-task-probe cc-pane-dynamic-hook-root (build): before claiming completion,
+paneforge-task-probe paneforge-dynamic-hook-root (build): before claiming completion,
 run applicable checks such as npm test, npm run typecheck, npm run build,
 npm run smoke; inspect diff/status and reference repos; then record-acceptance
 and verify-acceptance.
@@ -1945,7 +1945,7 @@ failures: []
 Phase 22 acceptance artifact：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase22-acceptance\acceptance.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\phase22-acceptance\acceptance.json
 SHA-256: CBF65912CA648E18341D656B2ED718F980B13BB8676D52FB4E1833FC25C7FA0A
 ```
 
@@ -1968,7 +1968,7 @@ after size: 16908
 after SHA-256: B9CD8EE35BBCF98282531541170C67D3E1B160032FDB1E078E03F62480E9A50A
 note: config.toml changed during Codex hook trust; added trusted hashes for session_start and stop.
 
-%USERPROFILE%\.cc-panes\config.toml
+%USERPROFILE%\.paneforge\config.toml
 size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
@@ -1977,7 +1977,7 @@ size: 2779136
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 ```
 
-Phase 22 判断：通过。当前工具层已覆盖 `SessionStart`、`PreToolUse`、`PermissionRequest`、`PostToolUse`、`Stop` 五个关键 Hook 点；任意已写入 `<project>\.ccpanes-task\current-task.json` 的项目会自动获得任务上下文、执行前门禁、权限请求门禁、执行后审计和结束前验收提醒。
+Phase 22 判断：通过。当前工具层已覆盖 `SessionStart`、`PreToolUse`、`PermissionRequest`、`PostToolUse`、`Stop` 五个关键 Hook 点；任意已写入 `<project>\.paneforge-task\current-task.json` 的项目会自动获得任务上下文、执行前门禁、权限请求门禁、执行后审计和结束前验收提醒。
 
 ## 22. Phase 23: Production toolkit acceptance
 
@@ -1986,7 +1986,7 @@ Phase 22 判断：通过。当前工具层已覆盖 `SessionStart`、`PreToolUse
 计划文件：
 
 ```text
-{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE23-PRODUCTION-TOOLKIT-PLAN.md
+{workspace-root}\tool\plans\PANEFORGE-TASK-PROBE-PHASE23-PRODUCTION-TOOLKIT-PLAN.md
 ```
 
 新增能力：
@@ -2008,8 +2008,8 @@ manifest.json
 真实安装只读自检：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase23-installed-hooks-verify.json
-schema: ccpanes.installed-hooks.verify.v1
+{workspace-root}\tool\experiments\paneforge-task-probe\live\phase23-installed-hooks-verify.json
+schema: paneforge.installed-hooks.verify.v1
 passed: true
 discovered: 5
 failures: 0
@@ -2019,8 +2019,8 @@ SHA-256: AF6B7B40290483CBC882F59BA961BC82FFAB57CA78300D681557F396C97AEF48
 生产工具包 artifact：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase23-production-toolkit\manifest.json
-schema: ccpanes.production-toolkit-manifest.v1
+{workspace-root}\tool\experiments\paneforge-task-probe\live\phase23-production-toolkit\manifest.json
+schema: paneforge.production-toolkit-manifest.v1
 files: 5
 file hashes match: true
 SHA-256: 44FAF3A5C4BB2DA467E584529699A22776D9BB415FF95BB06BC11D0FBF6805C1
@@ -2065,7 +2065,7 @@ failures: []
 Phase 23 acceptance artifact：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase23-acceptance\acceptance.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\phase23-acceptance\acceptance.json
 SHA-256: 0F5D2C686B231A2ED4E9873E043AD7C8B6ACF3CEC9CCF9DE1DC4C0A29F2E5872
 ```
 
@@ -2083,7 +2083,7 @@ SHA-256: B1091E063DAAEE64121A7BE52DCC39AD304D91CAD39C562FEB8E9CF41D05E4AC
 size: 16908
 SHA-256: B9CD8EE35BBCF98282531541170C67D3E1B160032FDB1E078E03F62480E9A50A
 
-%USERPROFILE%\.cc-panes\config.toml
+%USERPROFILE%\.paneforge\config.toml
 size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
@@ -2097,7 +2097,7 @@ Phase 23 判断：通过。当前交付物已从“已上线原型”升级为�
 ## Phase 21 — PostToolUse 执行后审计
 
 日期：2026-08-07<br>
-计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE21-POSTTOOLUSE-AUDIT-PLAN.md`
+计划文件：`{workspace-root}\tool\plans\PANEFORGE-TASK-PROBE-PHASE21-POSTTOOLUSE-AUDIT-PLAN.md`
 
 Phase 21 目标：为 Codex `PostToolUse` 增加执行后审计。该 hook 只追加 JSONL 证据，不输出 stdout，不阻断、不改写 Codex 原工具结果。
 
@@ -2108,7 +2108,7 @@ CLI:
 post-enforce --resolve-task-from-cwd --audit-root <audit-root>
 
 Behavior:
-- dynamic resolver 复用 <project>\.ccpanes-task\current-task.json。
+- dynamic resolver 复用 <project>\.paneforge-task\current-task.json。
 - 有 task 的 cwd：追加审计记录。
 - 无 task / cwd 不在 task worktree：no-op。
 - stdout empty，保持 Codex 原 tool result 流。
@@ -2126,10 +2126,10 @@ Matcher:
 ^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\.shell_command|mcp__fastctx__(read|grep|glob|replace))$
 
 Command:
-node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" post-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js" post-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits"
 
 statusMessage:
-CC-Panes post tool audit
+PaneForge post tool audit
 ```
 
 真实 Codex CLI 验证：
@@ -2142,12 +2142,12 @@ Hook trust:
 - trusted changed hook set
 
 Observed audit:
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\post-tool-use-audit.jsonl
+{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\post-tool-use-audit.jsonl
 
 LineCount: 6
 Last record:
-schema: ccpanes.post-tool-use-audit.v1
-taskId: cc-pane-dynamic-hook-root
+schema: paneforge.post-tool-use-audit.v1
+taskId: paneforge-dynamic-hook-root
 cwd: {workspace-root}
 toolName: mcp__fastctx__read
 toolUseId: call_XDjtrGU92fl6zsQ4mycWWPLz
@@ -2162,7 +2162,7 @@ Phase 21 判断：通过。当前工具已具备三层生产能力：`PreToolUse
 ## Phase 20 — PermissionRequest 二阶段门禁
 
 日期：2026-08-07<br>
-计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE20-PERMISSIONREQUEST-GATE-PLAN.md`
+计划文件：`{workspace-root}\tool\plans\PANEFORGE-TASK-PROBE-PHASE20-PERMISSIONREQUEST-GATE-PLAN.md`
 
 Phase 20 目标：在 Phase 19 `PreToolUse` 预执行阻断之外，新增 Codex `PermissionRequest` 二阶段门禁。该门禁只对 dry-run 判定为 blocked 的权限请求输出官方 deny shape；对允许类请求输出空字符串，让 Codex 保持默认审批流，不自动批准提权。
 
@@ -2186,7 +2186,7 @@ CLI:
 permission-enforce --resolve-task-from-cwd --audit-root <audit-root>
 
 Behavior:
-- dynamic resolver 复用 <project>\.ccpanes-task\current-task.json。
+- dynamic resolver 复用 <project>\.paneforge-task\current-task.json。
 - blocked decision -> PermissionRequest deny JSON。
 - allowed decision -> stdout empty，不自动 allow。
 - audit:
@@ -2201,10 +2201,10 @@ Matcher:
 ^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\.shell_command|mcp__fastctx__(read|grep|glob|replace))$
 
 Command:
-node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" permission-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\paneforge-task-probe\dist\src\cli.js" permission-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits"
 
 statusMessage:
-CC-Panes permission request boundary check
+PaneForge permission request boundary check
 ```
 
 真实 Codex CLI 验证：
@@ -2235,7 +2235,7 @@ stdout: empty
 No automatic allow decision emitted
 
 Audit:
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
 ```
 
 Phase 20 判断：通过。当前工具已经具备双层门禁：`PreToolUse` 在工具执行前阻断已识别风险；`PermissionRequest` 在 Codex 即将请求权限审批时再次 fail-closed，并且不会自动批准可通过请求。
@@ -2273,13 +2273,13 @@ SHA-256: E0AD3C8C7042E6A1311BB47EC69DDB49F4CF9D9FFA75C3640E9009A5F2315CF0
 %USERPROFILE%\.codex\config.toml size: 16446
 SHA-256: B8C85B6627915FB3B115B14A6541EC1D7BE7205F4EF2F3B80B3CBCC0016862B6
 
-%USERPROFILE%\.cc-panes\config.toml size: 3660
+%USERPROFILE%\.paneforge\config.toml size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
 %USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 
-{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
+{workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
 SHA-256: EB10D803B85234DAEE3BDD3B206099BA75AA0B708471A52D52A45C6E6920D4F1
 
 Forbidden probes:

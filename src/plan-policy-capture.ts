@@ -48,7 +48,7 @@ export interface PlanPolicyCaptureInput {
 }
 
 export interface PlanPolicyCaptureResult {
-  schema: 'ccpanes.plan-policy-capture-result.v1';
+  schema: 'paneforge.plan-policy-capture-result.v1';
   projectRoot: string;
   changed: boolean;
   detectedCount: number;
@@ -199,7 +199,7 @@ export async function capturePlanPolicyInstructions(input: PlanPolicyCaptureInpu
   const actions = detectPlanPolicyInstructions(input.text);
   if (actions.length === 0) {
     return {
-      schema: 'ccpanes.plan-policy-capture-result.v1',
+      schema: 'paneforge.plan-policy-capture-result.v1',
       projectRoot: input.projectRoot,
       changed: false,
       detectedCount: 0,
@@ -249,7 +249,7 @@ export async function capturePlanPolicyInstructions(input: PlanPolicyCaptureInpu
   const capturedCount = results.filter((result) => result.status === 'captured').length;
   const clearedCount = results.filter((result) => result.status === 'cleared').length;
   return {
-    schema: 'ccpanes.plan-policy-capture-result.v1',
+    schema: 'paneforge.plan-policy-capture-result.v1',
     projectRoot: input.projectRoot,
     changed: results.some((result) => result.status === 'captured' || result.status === 'cleared'),
     detectedCount: actions.length,

@@ -7,7 +7,7 @@ export default defineConfig({
     environment: 'node',
     env: {
       GIT_CEILING_DIRECTORIES: os.tmpdir(),
-      CCPANES_TASK_SEARCH_ROOT: os.tmpdir()
+      PANEFORGE_TASK_SEARCH_ROOT: os.tmpdir()
     },
     include: ['tests/**/*.test.ts'],
     fileParallelism: false,

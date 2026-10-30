@@ -4,11 +4,11 @@ import type { CurrentTask } from '../src/types.js';
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
-    projectPath: 'D:/cc-pane/project-alpha',
-    worktreeRoot: 'D:/cc-pane/project-alpha',
+    workspace: 'paneforge',
+    projectPath: 'D:/paneforge/project-alpha',
+    worktreeRoot: 'D:/paneforge/project-alpha',
     mainRepoRoot: null,
     branch: null,
     head: null,
@@ -24,18 +24,18 @@ function task(): CurrentTask {
 describe('adaptHookEventToBatch', () => {
   test('adapts generic hook event schema', () => {
     const batch = adaptHookEventToBatch(task(), {
-      schema: 'ccpanes.hook-event.v1',
+      schema: 'paneforge.hook-event.v1',
       calls: [
-        { tool: 'read', targetPath: 'D:/cc-pane/project-alpha/src/a.ts' },
-        { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/src/a.ts' }
+        { tool: 'read', targetPath: 'D:/paneforge/project-alpha/src/a.ts' },
+        { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src/a.ts' }
       ]
     });
 
-    expect(batch.schema).toBe('ccpanes.hook-dry-run-batch.v1');
+    expect(batch.schema).toBe('paneforge.hook-dry-run-batch.v1');
     expect(batch.task.taskId).toBe('task-alpha');
     expect(batch.calls).toEqual([
-      { tool: 'read', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: false },
-      { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true }
+      { tool: 'read', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: false },
+      { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true }
     ]);
   });
 
@@ -43,11 +43,11 @@ describe('adaptHookEventToBatch', () => {
     const batch = adaptHookEventToBatch(task(), {
       hook_event_name: 'PreToolUse',
       tool_name: 'Edit',
-      tool_input: { file_path: 'D:/cc-pane/project-alpha/src/a.ts' }
+      tool_input: { file_path: 'D:/paneforge/project-alpha/src/a.ts' }
     });
 
     expect(batch.calls).toEqual([
-      { tool: 'edit', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true }
+      { tool: 'edit', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true }
     ]);
   });
 
@@ -55,18 +55,18 @@ describe('adaptHookEventToBatch', () => {
     const batch = adaptHookEventToBatch(task(), {
       event: 'tool_call',
       tool: 'shell',
-      arguments: { cwd: 'D:/cc-pane/project-alpha', command: 'npm test' }
+      arguments: { cwd: 'D:/paneforge/project-alpha', command: 'npm test' }
     });
 
     expect(batch.calls).toEqual([
-      { tool: 'shell', targetPath: 'D:/cc-pane/project-alpha', writes: false, command: 'npm test' }
+      { tool: 'shell', targetPath: 'D:/paneforge/project-alpha', writes: false, command: 'npm test' }
     ]);
   });
 
   test('adapts Codex Bash command and extracts shell write target', () => {
     const batch = adaptHookEventToBatch(task(), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'Bash',
       tool_input: { command: 'Set-Content -Path C:/Users/AI001/.codex/config.toml -Value x' }
     });
@@ -82,15 +82,15 @@ describe('adaptHookEventToBatch', () => {
       tool_name: 'mcp__fastctx__inspect_local_file',
       tool_input: {
         files: [
-          { path: 'D:/cc-pane/project-alpha/src/a.ts' },
-          { path: 'D:/cc-pane/project-alpha/src/b.ts' }
+          { path: 'D:/paneforge/project-alpha/src/a.ts' },
+          { path: 'D:/paneforge/project-alpha/src/b.ts' }
         ]
       }
     });
 
     expect(batch.calls).toEqual([
-      { tool: 'read', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: false },
-      { tool: 'read', targetPath: 'D:/cc-pane/project-alpha/src/b.ts', writes: false }
+      { tool: 'read', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: false },
+      { tool: 'read', targetPath: 'D:/paneforge/project-alpha/src/b.ts', writes: false }
     ]);
   });
 
@@ -98,18 +98,18 @@ describe('adaptHookEventToBatch', () => {
     const batch = adaptHookEventToBatch(task(), {
       hook_event_name: 'PreToolUse',
       tool_name: 'mcp__fastctx__replace',
-      tool_input: { path: 'D:/cc-pane/project-alpha/src' }
+      tool_input: { path: 'D:/paneforge/project-alpha/src' }
     });
 
     expect(batch.calls).toEqual([
-      { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/src', writes: true }
+      { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src', writes: true }
     ]);
   });
 
   test('adapts functions.shell_command as shell command', () => {
     const batch = adaptHookEventToBatch(task(), {
       hook_event_name: 'PreToolUse',
-      cwd: 'D:/cc-pane/project-alpha',
+      cwd: 'D:/paneforge/project-alpha',
       tool_name: 'functions.shell_command',
       tool_input: { command: 'git push origin HEAD' }
     });
@@ -117,7 +117,7 @@ describe('adaptHookEventToBatch', () => {
     expect(batch.calls).toEqual([
       {
         tool: 'shell',
-        targetPath: 'D:/cc-pane/project-alpha',
+        targetPath: 'D:/paneforge/project-alpha',
         writes: true,
         command: 'git push origin HEAD',
         policyReason: 'external_publication_git_push'
@@ -130,15 +130,15 @@ describe('adaptHookEventToBatch', () => {
       hook_event_name: 'PreToolUse',
       tool_name: 'apply_patch',
       tool_input: {
-        patch: '*** Begin Patch\n*** Update File: D:/cc-pane/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
+        patch: '*** Begin Patch\n*** Update File: D:/paneforge/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
       }
     });
 
     expect(batch.calls[0]).toEqual({
       tool: 'apply_patch',
-      targetPath: 'D:/cc-pane/project-alpha/src/a.ts',
+      targetPath: 'D:/paneforge/project-alpha/src/a.ts',
       writes: true,
-      command: '*** Begin Patch\n*** Update File: D:/cc-pane/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
+      command: '*** Begin Patch\n*** Update File: D:/paneforge/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
     });
   });
 
@@ -147,15 +147,15 @@ describe('adaptHookEventToBatch', () => {
       hook_event_name: 'PreToolUse',
       tool_name: 'apply_patch',
       tool_input: {
-        command: '*** Begin Patch\n*** Add File: D:/cc-pane/project-alpha/src/from-command.ts\n+export const value = 1;\n*** End Patch\n'
+        command: '*** Begin Patch\n*** Add File: D:/paneforge/project-alpha/src/from-command.ts\n+export const value = 1;\n*** End Patch\n'
       }
     });
 
     expect(batch.calls[0]).toEqual({
       tool: 'apply_patch',
-      targetPath: 'D:/cc-pane/project-alpha/src/from-command.ts',
+      targetPath: 'D:/paneforge/project-alpha/src/from-command.ts',
       writes: true,
-      command: '*** Begin Patch\n*** Add File: D:/cc-pane/project-alpha/src/from-command.ts\n+export const value = 1;\n*** End Patch\n'
+      command: '*** Begin Patch\n*** Add File: D:/paneforge/project-alpha/src/from-command.ts\n+export const value = 1;\n*** End Patch\n'
     });
   });
 

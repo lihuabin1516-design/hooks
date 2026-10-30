@@ -146,7 +146,7 @@ const KNOWN_CODEX_SESSION_OPTIONS = new Set([
   '--thread-history-db',
   '--project',
   '--task-context',
-  '--ccpanes-snapshot',
+  '--paneforge-snapshot',
   '--json',
   '--include-archived',
   '--include-subagents',

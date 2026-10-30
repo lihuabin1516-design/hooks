@@ -7,7 +7,7 @@ import { captureProjectPolicyInstruction } from '../src/project-policy-capture.j
 let tempRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-policy-capture-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-policy-capture-'));
 });
 
 afterEach(async () => {
@@ -29,11 +29,11 @@ describe('captureProjectPolicyInstruction', () => {
       now: '2026-08-07T04:00:00.000Z'
     });
 
-    const ledger = await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.md'), 'utf8');
-    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const ledger = await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(result).toMatchObject({
-      schema: 'ccpanes.project-policy-capture-result.v1',
+      schema: 'paneforge.project-policy-capture-result.v1',
       changed: true,
       ruleId: 'block-publish',
       policyRuleCount: 1
@@ -57,8 +57,8 @@ describe('captureProjectPolicyInstruction', () => {
   });
 
   test('preserves existing ledger text and replaces an existing executable rule when requested', async () => {
-    await fs.mkdir(path.join(tempRoot, '.ccpanes-task'), { recursive: true });
-    await fs.writeFile(path.join(tempRoot, '.ccpanes-task', 'policy.md'), '# Existing Policy\n\nKeep this line.\n', 'utf8');
+    await fs.mkdir(path.join(tempRoot, '.paneforge-task'), { recursive: true });
+    await fs.writeFile(path.join(tempRoot, '.paneforge-task', 'policy.md'), '# Existing Policy\n\nKeep this line.\n', 'utf8');
     await captureProjectPolicyInstruction({
       projectRoot: tempRoot,
       id: 'allow-docs',
@@ -80,8 +80,8 @@ describe('captureProjectPolicyInstruction', () => {
       now: '2026-08-07T04:01:00.000Z'
     });
 
-    const ledger = await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.md'), 'utf8');
-    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const ledger = await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(result.ledgerChanged).toBe(true);
     expect(ledger).toContain('Keep this line.');

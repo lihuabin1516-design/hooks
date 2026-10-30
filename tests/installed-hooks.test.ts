@@ -8,7 +8,7 @@ let tempRoot: string;
 const legacyEvents = ['SessionStart', 'PreToolUse', 'PermissionRequest', 'PostToolUse', 'Stop'];
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-installed-hooks-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-installed-hooks-'));
 });
 
 afterEach(async () => {
@@ -60,14 +60,14 @@ describe('verifyInstalledHooks', () => {
 
     const report = await verifyInstalledHooks({ hooksJsonPath, configTomlPath, prototypeRoot, auditRoot });
 
-    expect(report.schema).toBe('ccpanes.installed-hooks.verify.v1');
+    expect(report.schema).toBe('paneforge.installed-hooks.verify.v1');
     expect(report.mode).toBe('read-only');
     expect(report.passed).toBe(true);
     expect(report.failures).toEqual([]);
     expect(report.discovered.map((item) => [item.name, item.event, item.installed])).toEqual([
       ['SessionStart', 'SessionStart', true],
       ['UserPromptSubmit skills-hub', 'UserPromptSubmit', true],
-      ['UserPromptSubmit cc-panes prompt-before', 'UserPromptSubmit', true],
+      ['UserPromptSubmit paneforge prompt-before', 'UserPromptSubmit', true],
       ['UserPromptSubmit workflow advisory', 'UserPromptSubmit', true],
       ['PreToolUse', 'PreToolUse', true],
       ['PermissionRequest', 'PermissionRequest', true],
@@ -78,7 +78,7 @@ describe('verifyInstalledHooks', () => {
       expect(report.checks).toContainEqual(expect.objectContaining({ name: `${event} installed`, status: 'pass' }));
     }
     expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit skills-hub trusted hash', status: 'pass' }));
-    expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit cc-panes prompt-before trusted hash advisory', status: 'pass' }));
+    expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit paneforge prompt-before trusted hash advisory', status: 'pass' }));
     expect(report.checks).toContainEqual(expect.objectContaining({ name: 'UserPromptSubmit workflow advisory trusted hash', status: 'pass' }));
   });
 
@@ -96,7 +96,7 @@ describe('verifyInstalledHooks', () => {
     expect(report.failures.some((failure) => failure.includes('Stop'))).toBe(true);
   });
 
-  test('fails when the CC-Panes prompt-before UserPromptSubmit hook is missing', async () => {
+  test('fails when the PaneForge prompt-before UserPromptSubmit hook is missing', async () => {
     const prototypeRoot = path.join(tempRoot, 'prototype');
     const auditRoot = path.join(tempRoot, 'audits');
     const hooksJsonPath = path.join(tempRoot, 'hooks.json');
@@ -109,7 +109,7 @@ describe('verifyInstalledHooks', () => {
     const report = await verifyInstalledHooks({ hooksJsonPath, prototypeRoot, auditRoot });
 
     expect(report.passed).toBe(false);
-    expect(report.failures.some((failure) => failure.includes('UserPromptSubmit cc-panes prompt-before installed'))).toBe(true);
+    expect(report.failures.some((failure) => failure.includes('UserPromptSubmit paneforge prompt-before installed'))).toBe(true);
   });
 
   test('fails when the workflow advisory UserPromptSubmit hook is missing', async () => {

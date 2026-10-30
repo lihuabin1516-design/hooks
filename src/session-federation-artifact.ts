@@ -1,4 +1,4 @@
-import { canonicalizeCcPanesTimezoneTimestamp } from './ccpanes-session-snapshot.js';
+import { canonicalizePaneForgeTimezoneTimestamp } from './paneforge-session-snapshot.js';
 import {
   sanitizeCodexSessionArtifactExcerpt,
   sanitizeCodexSessionExternalIdentity,
@@ -93,9 +93,9 @@ const SESSION_FIELDS = fields('status', 'title', 'projectPathNorm');
 const TASK_FIELDS = fields();
 const NODE_TYPES = values<FederationNodeType>(
   'codex-thread',
-  'ccpanes-launch',
-  'ccpanes-session',
-  'ccpanes-task'
+  'paneforge-launch',
+  'paneforge-session',
+  'paneforge-task'
 );
 const EDGE_TYPES = values<FederationEdgeType>(
   'resumed-from',
@@ -105,7 +105,7 @@ const EDGE_TYPES = values<FederationEdgeType>(
   'delegated-from',
   'controller-for'
 );
-const THREAD_HOSTS = values('codex-app', 'codex-cli', 'ccpanes', 'unknown');
+const THREAD_HOSTS = values('codex-app', 'codex-cli', 'paneforge', 'unknown');
 const THREAD_SOURCES = values('user', 'subagent', 'automation', 'unknown');
 const STORAGE_STATES = values('active', 'archived', 'missing');
 const PROJECT_RELATIONS = values(
@@ -123,19 +123,19 @@ const SNAPSHOT_FIELDS = values(
   'session.launchId'
 );
 const DIAGNOSTIC_KINDS = values(
-  'ccpanes-snapshot-missing',
-  'ccpanes-snapshot-stale',
-  'ccpanes-snapshot-future'
+  'paneforge-snapshot-missing',
+  'paneforge-snapshot-stale',
+  'paneforge-snapshot-future'
 );
 const EVIDENCE_KINDS = values<FederationEvidence['kind']>(
   'task-binding',
-  'ccpanes-launch',
-  'ccpanes-session',
+  'paneforge-launch',
+  'paneforge-session',
   'cwd',
   'primary-target',
   'prompt-mention',
   'delegation',
-  'ccpanes-runtime-link',
+  'paneforge-runtime-link',
   'snapshot-field'
 );
 
@@ -199,7 +199,7 @@ function safeIdentity(
 }
 
 function safeTimestamp(value: unknown, field: string): string {
-  const canonical = canonicalizeCcPanesTimezoneTimestamp(value);
+  const canonical = canonicalizePaneForgeTimezoneTimestamp(value);
   if (!canonical) return invalid(field, 'unsafe-timestamp');
   return canonical;
 }
@@ -314,7 +314,7 @@ function validateAttributes(
         : safeTimestamp(attributes.updatedAt, `${field}.updatedAt`)
     };
   }
-  if (type === 'ccpanes-launch') {
+  if (type === 'paneforge-launch') {
     knownFields(attributes, LAUNCH_FIELDS, field);
     return {
       projectPathNorm: safeNormalizedPath(
@@ -333,7 +333,7 @@ function validateAttributes(
       launchedAt: safeTimestamp(attributes.launchedAt, `${field}.launchedAt`)
     };
   }
-  if (type === 'ccpanes-session') {
+  if (type === 'paneforge-session') {
     knownFields(attributes, SESSION_FIELDS, field);
     return {
       status: safeDisplayString(
@@ -402,7 +402,7 @@ function validateEvidence(
       taskId: safeIdentity(item.taskId, `${field}.taskId`)
     };
   }
-  if (kind === 'ccpanes-launch') {
+  if (kind === 'paneforge-launch') {
     knownFields(item, fields('kind', 'projectPath', 'launchId'), field);
     return {
       kind,
@@ -413,7 +413,7 @@ function validateEvidence(
       launchId: safeIdentity(item.launchId, `${field}.launchId`)
     };
   }
-  if (kind === 'ccpanes-session') {
+  if (kind === 'paneforge-session') {
     knownFields(item, fields('kind', 'projectPath', 'sessionId'), field);
     return {
       kind,
@@ -453,7 +453,7 @@ function validateEvidence(
       )
     };
   }
-  if (kind === 'ccpanes-runtime-link') {
+  if (kind === 'paneforge-runtime-link') {
     knownFields(item, fields('kind', 'sessionId'), field);
     return {
       kind,
@@ -514,14 +514,14 @@ function assertEdgeSemantics(
   if (!to) invalid(`${field}.to`, 'missing-reference');
   const valid =
     (edge.type === 'resumed-from' &&
-      from.type === 'ccpanes-launch' && to.type === 'codex-thread') ||
+      from.type === 'paneforge-launch' && to.type === 'codex-thread') ||
     (edge.type === 'hosts' &&
-      from.type === 'ccpanes-session' && to.type === 'codex-thread') ||
+      from.type === 'paneforge-session' && to.type === 'codex-thread') ||
     (edge.type === 'launched' &&
-      from.type === 'ccpanes-launch' && to.type === 'ccpanes-session') ||
+      from.type === 'paneforge-launch' && to.type === 'paneforge-session') ||
     (edge.type === 'belongs-to-task' &&
-      (from.type === 'ccpanes-session' || from.type === 'codex-thread') &&
-      to.type === 'ccpanes-task') ||
+      (from.type === 'paneforge-session' || from.type === 'codex-thread') &&
+      to.type === 'paneforge-task') ||
     ((edge.type === 'delegated-from' ||
       edge.type === 'controller-for') &&
       from.type === 'codex-thread' && to.type === 'codex-thread');
@@ -549,11 +549,11 @@ function assertEdgeSemantics(
     );
   } else if (edge.type === 'launched') {
     validEvidence = exactEvidence((evidence) =>
-      evidence.kind === 'ccpanes-runtime-link' &&
+      evidence.kind === 'paneforge-runtime-link' &&
       evidence.sessionId === to.externalId
     );
   } else if (edge.type === 'belongs-to-task') {
-    validEvidence = from.type === 'ccpanes-session'
+    validEvidence = from.type === 'paneforge-session'
       ? exactEvidence((evidence) =>
           isSnapshotFieldEvidence(
             evidence,
@@ -572,8 +572,8 @@ function assertEdgeSemantics(
     );
   } else {
     const allowed = edge.evidence.every((evidence) =>
-      (evidence.kind === 'ccpanes-runtime-link' &&
-        hasNodeExternalId(nodes, 'ccpanes-session', evidence.sessionId)) ||
+      (evidence.kind === 'paneforge-runtime-link' &&
+        hasNodeExternalId(nodes, 'paneforge-session', evidence.sessionId)) ||
       isSnapshotFieldEvidence(
         evidence,
         'launch.resumeSessionId',
@@ -581,7 +581,7 @@ function assertEdgeSemantics(
       ) ||
       (evidence.kind === 'snapshot-field' &&
         evidence.field === 'session.launchId' &&
-        hasNodeExternalId(nodes, 'ccpanes-launch', evidence.value)) ||
+        hasNodeExternalId(nodes, 'paneforge-launch', evidence.value)) ||
       isSnapshotFieldEvidence(
         evidence,
         'session.observedCodexThreadId',
@@ -590,7 +590,7 @@ function assertEdgeSemantics(
     );
     validEvidence = allowed &&
       edge.evidence.some((evidence) =>
-        evidence.kind === 'ccpanes-runtime-link'
+        evidence.kind === 'paneforge-runtime-link'
       ) &&
       edge.evidence.some((evidence) =>
         isSnapshotFieldEvidence(evidence, 'launch.resumeSessionId')
@@ -690,9 +690,9 @@ function assertControllerClosures(edges: readonly FederationEdge[]): void {
     if (edge.type !== 'controller-for') continue;
     const runtimeSessions = new Set(
       edge.evidence
-        .filter((item) => item.kind === 'ccpanes-runtime-link')
+        .filter((item) => item.kind === 'paneforge-runtime-link')
         .map((item) =>
-          expectedNodeId('ccpanes-session', item.sessionId)
+          expectedNodeId('paneforge-session', item.sessionId)
         )
     );
     const launches = new Set(
@@ -704,7 +704,7 @@ function assertControllerClosures(edges: readonly FederationEdge[]): void {
           item.kind === 'snapshot-field' &&
           item.field === 'session.launchId'
         )
-        .map((item) => expectedNodeId('ccpanes-launch', item.value))
+        .map((item) => expectedNodeId('paneforge-launch', item.value))
     );
     const invalidClosure =
       [...runtimeSessions].some((sessionId) =>
@@ -732,11 +732,11 @@ function validateDiagnostic(
     DIAGNOSTIC_KINDS,
     `${field}.kind`
   );
-  if (kind === 'ccpanes-snapshot-missing') {
+  if (kind === 'paneforge-snapshot-missing') {
     knownFields(diagnostic, fields('kind'), field);
     return { kind };
   }
-  if (kind === 'ccpanes-snapshot-stale') {
+  if (kind === 'paneforge-snapshot-stale') {
     knownFields(diagnostic, fields('kind', 'ageMs', 'maxAgeMs'), field);
     return {
       kind,

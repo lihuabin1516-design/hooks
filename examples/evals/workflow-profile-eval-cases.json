@@ -1,10 +1,10 @@
 {
-  "schema": "ccpanes.workflow-profile-eval-cases.v1",
+  "schema": "paneforge.workflow-profile-eval-cases.v1",
   "source": {
     "referenceRepo": "https://github.com/study8677/awesome-architecture.git",
     "referenceHead": "d3febc75fa26bad746f6f9216bcad171b3923765",
     "capturedAt": "2026-08-07",
-    "localOwner": "D:/cc-pane/tool/repos/hooks/src/workflow-profile.ts"
+    "localOwner": "D:/paneforge/tool/repos/hooks/src/workflow-profile.ts"
   },
   "cases": [
     {

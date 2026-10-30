@@ -12,7 +12,7 @@ export interface HookWriteApplyEntry {
 }
 
 export interface HookWriteApplyReport {
-  schema: 'ccpanes.hook-write-apply.v1';
+  schema: 'paneforge.hook-write-apply.v1';
   mode: 'guarded-apply';
   createdAt: string;
   approvalCheckPath: string;
@@ -34,9 +34,9 @@ export interface CreateHookWriteApplyInput {
 const forbiddenApplyOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeApplyOutDir(outDir: string): void {
@@ -78,11 +78,11 @@ export async function createHookWriteApply(input: CreateHookWriteApplyInput): Pr
   if (input.allowRoots.length === 0) throw new Error('missing --allow-root');
 
   const approvalCheck = asRecord(JSON.parse(await fs.readFile(input.approvalCheckPath, 'utf8')));
-  if (approvalCheck.schema !== 'ccpanes.hook-approval-check.v1') throw new Error('invalid approval check: schema');
+  if (approvalCheck.schema !== 'paneforge.hook-approval-check.v1') throw new Error('invalid approval check: schema');
   if (approvalCheck.passed !== true) throw new Error('invalid approval check: passed must be true');
 
   const writePreview = asRecord(JSON.parse(await fs.readFile(input.writePreviewPath, 'utf8')));
-  if (writePreview.schema !== 'ccpanes.hook-write-preview.v1') throw new Error('invalid write preview: schema');
+  if (writePreview.schema !== 'paneforge.hook-write-preview.v1') throw new Error('invalid write preview: schema');
   if (writePreview.mode !== 'dry-run-write-preview') throw new Error('invalid write preview: mode');
   const previewApprovalCheckPath = typeof writePreview.approvalCheckPath === 'string' ? writePreview.approvalCheckPath : '';
   if (normalizeForComparison(previewApprovalCheckPath) !== normalizeForComparison(input.approvalCheckPath)) {
@@ -126,7 +126,7 @@ export async function createHookWriteApply(input: CreateHookWriteApplyInput): Pr
   }
 
   return {
-    schema: 'ccpanes.hook-write-apply.v1',
+    schema: 'paneforge.hook-write-apply.v1',
     mode: 'guarded-apply',
     createdAt: input.now ?? new Date().toISOString(),
     approvalCheckPath: input.approvalCheckPath,

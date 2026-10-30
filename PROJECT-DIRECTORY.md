@@ -113,7 +113,7 @@ host-adapter-registry.test.ts     宿主适配 registry 契约
 
 ```text
 docs/plans/       分阶段实施计划；每个 Phase 一个文件
-docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md  宿主 hook 能力和适配边界
+docs/PANEFORGE-HOOK-HOST-ADAPTER-MATRIX.md  宿主 hook 能力和适配边界
 docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md   Codex plugin 分发后续设计记录
 docs/quick-start.md   对外快速上手、5 分钟端到端示例和排障入口
 docs/artifacts.md     核心 JSON artifact 与 schema version 索引
@@ -135,7 +135,7 @@ REMOTE.md         远端与本地路径明文记录
 建议后续长期文档命名：
 
 ```text
-docs/plans/CCPANES-HOOKS-PHASEXX-<TOPIC>-PLAN.md
+docs/plans/PANEFORGE-HOOKS-PHASEXX-<TOPIC>-PLAN.md
 docs/adr/ADR-XXXX-<TOPIC>.md        # 仅在出现长期架构决策时新增
 ```
 
@@ -148,7 +148,7 @@ docs/adr/ADR-XXXX-<TOPIC>.md        # 仅在出现长期架构决策时新增
 `templates/` 放可被 CLI 写入其它项目的模板：
 
 ```text
-AGENTS.ccpanes-hooks.md  注入项目 AGENTS.md 的托管块
+AGENTS.paneforge-hooks.md  注入项目 AGENTS.md 的托管块
 policy.example.md        policy.md 示例
 policy.example.json      policy.json 示例
 ```
@@ -166,11 +166,11 @@ policy.example.json      policy.json 示例
 live 路径：
 
 ```text
-{workspace-root}\tool\experiments\ccpanes-task-probe
+{workspace-root}\tool\experiments\paneforge-task-probe
 ```
 
 Codex 全局 hooks 指向 live 的 `dist/src/cli.js`。`UserPromptSubmit` 保留
-skills-hub 与 CC-Panes prompt-before，并追加独立的 `workflow-advisory`
+skills-hub 与 PaneForge prompt-before，并追加独立的 `workflow-advisory`
 消费链路。仓库修改完成、测试通过、提交并 push 后，需要同步 repo 到 live，
 重新信任变更的 hook，再在 live 路径重复完整验收。
 
@@ -180,8 +180,8 @@ skills-hub 与 CC-Panes prompt-before，并追加独立的 `workflow-advisory`
 
 ```text
 repo 源仓库：{workspace-root}\tool\repos\hooks
-live 运行副本：{workspace-root}\tool\experiments\ccpanes-task-probe
-项目接入状态：<project>\.ccpanes-task + <project>\AGENTS.md
+live 运行副本：{workspace-root}\tool\experiments\paneforge-task-probe
+项目接入状态：<project>\.paneforge-task + <project>\AGENTS.md
 ```
 
 不要把业务项目、参考仓库、用户全局配置混入 repo。用户全局配置的修改只通过已审批生产工具包或人工明确授权流程进行。

@@ -9,9 +9,9 @@ let tempRoot: string;
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: path.join(tempRoot, 'project-alpha'),
     worktreeRoot: path.join(tempRoot, 'project-alpha'),
     mainRepoRoot: null,
@@ -27,7 +27,7 @@ function task(): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-shadow-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-shadow-'));
 });
 
 afterEach(async () => {
@@ -50,7 +50,7 @@ describe('createHookShadowAudit', () => {
       now: '2026-08-06T00:00:02.000Z'
     });
 
-    expect(audit.schema).toBe('ccpanes.hook-shadow-audit.v1');
+    expect(audit.schema).toBe('paneforge.hook-shadow-audit.v1');
     expect(audit.mode).toBe('shadow');
     expect(audit.createdAt).toBe('2026-08-06T00:00:02.000Z');
     expect(audit.upstreamHook).toMatchObject({
@@ -59,7 +59,7 @@ describe('createHookShadowAudit', () => {
       size: 29
     });
     expect(audit.upstreamHook?.sha256).toMatch(/^[A-F0-9]{64}$/);
-    expect(audit.runner.schema).toBe('ccpanes.hook-runner-result.v1');
+    expect(audit.runner.schema).toBe('paneforge.hook-runner-result.v1');
     expect(audit.runner.allowed).toBe(true);
   });
 });

@@ -1,6 +1,6 @@
 # Codex Plugin Distribution Notes
 
-目标：记录把 CC-Panes hooks 工具层包装为 Codex plugin 的后续方案。本文件只描述
+目标：记录把 PaneForge hooks 工具层包装为 Codex plugin 的后续方案。本文件只描述
 设计和门禁，本轮仅产出设计记录，真实插件生成、用户配置变更和 live 同步留到后续授权步骤。
 
 参考 do-it plugin 形态：
@@ -13,7 +13,7 @@
 ## Candidate Package Shape
 
 ```text
-plugins/ccpanes-hooks/
+plugins/paneforge-hooks/
   .codex-plugin/plugin.json
   hooks/hooks.json
   dist/src/cli.js
@@ -24,7 +24,7 @@ plugins/ccpanes-hooks/
 
 `plugin.json` 应声明：
 
-- `name`: `ccpanes-hooks`
+- `name`: `paneforge-hooks`
 - `skills`: optional future surface
 - `hooks`: `./hooks/hooks.json`
 - `interface.capabilities`: `Hooks`
@@ -38,7 +38,7 @@ plugins/ccpanes-hooks/
 src/ + templates/ + docs/
   -> npm run build
   -> scripts/build-codex-plugin.mjs
-  -> plugins/ccpanes-hooks/
+  -> plugins/paneforge-hooks/
 ```
 
 生成物校验要求：
@@ -47,7 +47,7 @@ src/ + templates/ + docs/
 - bundled hook commands 只指向 plugin 内相对路径。
 - `hooks.json` 中 PreToolUse / PermissionRequest / PostToolUse / SessionStart /
   Stop 与 `installed-hooks.ts` 的期望配置保持一致。
-- 生成后用 `git diff --exit-code -- plugins/ccpanes-hooks` 证明 artifact 已登记。
+- 生成后用 `git diff --exit-code -- plugins/paneforge-hooks` 证明 artifact 已登记。
 
 ## Doctor / Install Strategy
 
@@ -57,7 +57,7 @@ src/ + templates/ + docs/
 npm run build
 node scripts/build-codex-plugin.mjs
 CODEX_HOME=<tmp-home> codex plugin marketplace add <repo-root>
-CODEX_HOME=<tmp-home> codex plugin add ccpanes-hooks@<marketplace-name>
+CODEX_HOME=<tmp-home> codex plugin add paneforge-hooks@<marketplace-name>
 node dist/src/cli.js verify-installed-hooks --hooks-json <tmp-home>\hooks.json --prototype-root <plugin-root> --audit-root <tmp-audit>
 ```
 
@@ -90,9 +90,9 @@ git diff --check
 
 ```powershell
 node scripts/build-codex-plugin.mjs
-git diff --exit-code -- plugins/ccpanes-hooks
+git diff --exit-code -- plugins/paneforge-hooks
 CODEX_HOME=<tmp-home> codex plugin marketplace add <repo-root>
-CODEX_HOME=<tmp-home> codex plugin add ccpanes-hooks@<marketplace-name>
+CODEX_HOME=<tmp-home> codex plugin add paneforge-hooks@<marketplace-name>
 ```
 
 真实用户环境采用独立授权包推进，授权包内必须包含 exact diff、备份路径、

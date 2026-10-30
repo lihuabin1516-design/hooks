@@ -4,11 +4,11 @@ import type { CurrentTask } from '../src/types.js';
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
-    projectPath: 'D:\\cc-pane\\project-alpha',
-    worktreeRoot: 'D:\\cc-pane\\project-alpha',
+    workspace: 'paneforge',
+    projectPath: 'D:\\paneforge\\project-alpha',
+    worktreeRoot: 'D:\\paneforge\\project-alpha',
     mainRepoRoot: null,
     branch: null,
     head: null,
@@ -24,16 +24,16 @@ function task(): CurrentTask {
 describe('runHookDryRunBatch', () => {
   test('evaluates multiple calls and preserves call indexes', () => {
     const result = runHookDryRunBatch({
-      schema: 'ccpanes.hook-dry-run-batch.v1',
+      schema: 'paneforge.hook-dry-run-batch.v1',
       task: task(),
       calls: [
-        { tool: 'read', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: false },
-        { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true },
+        { tool: 'read', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: false },
+        { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true },
         { tool: 'write', targetPath: 'C:/Users/AI001/.codex/config.toml', writes: true }
       ]
     });
 
-    expect(result.schema).toBe('ccpanes.hook-dry-run-batch-result.v1');
+    expect(result.schema).toBe('paneforge.hook-dry-run-batch-result.v1');
     expect(result.taskId).toBe('task-alpha');
     expect(result.decisions.map((item) => item.index)).toEqual([0, 1, 2]);
     expect(result.decisions.map((item) => item.action)).toEqual(['allow', 'allow', 'block']);
@@ -43,10 +43,10 @@ describe('runHookDryRunBatch', () => {
   test('uses task phase when deciding every call', () => {
     const shapeTask = { ...task(), phase: 'shape' as const };
     const result = runHookDryRunBatch({
-      schema: 'ccpanes.hook-dry-run-batch.v1',
+      schema: 'paneforge.hook-dry-run-batch.v1',
       task: shapeTask,
       calls: [
-        { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true }
+        { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true }
       ]
     });
 
@@ -62,6 +62,6 @@ describe('runHookDryRunBatch', () => {
   });
 
   test('rejects non-array calls', () => {
-    expect(() => runHookDryRunBatch({ schema: 'ccpanes.hook-dry-run-batch.v1', task: task(), calls: 'bad' })).toThrow('invalid hook batch: calls');
+    expect(() => runHookDryRunBatch({ schema: 'paneforge.hook-dry-run-batch.v1', task: task(), calls: 'bad' })).toThrow('invalid hook batch: calls');
   });
 });

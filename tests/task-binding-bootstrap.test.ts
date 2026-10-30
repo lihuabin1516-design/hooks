@@ -2,24 +2,24 @@ import { describe, expect, test } from 'vitest';
 import { authorizeTaskBindingBootstrapWrite } from '../src/task-binding-bootstrap.js';
 import type { HookCall, TaskBindingCheck } from '../src/types.js';
 
-const gitRoot = 'D:\\cc-pane\\.worktrees\\hooks-phase51-task-binding';
-const trustedCliPath = 'D:\\cc-pane\\.worktrees\\hooks-phase51-task-binding\\dist\\src\\cli.js';
+const gitRoot = 'D:\\paneforge\\.worktrees\\hooks-phase51-task-binding';
+const trustedCliPath = 'D:\\paneforge\\.worktrees\\hooks-phase51-task-binding\\dist\\src\\cli.js';
 
 function check(status: TaskBindingCheck['status'] = 'stale-parent-binding'): TaskBindingCheck {
   return {
-    schema: 'ccpanes.task-binding-check.v1',
+    schema: 'paneforge.task-binding-check.v1',
     status,
     reason: status === 'stale-parent-binding'
       ? 'task_found_above_current_git_root'
       : 'declared_project_path_or_main_repo_root_does_not_match_git_topology',
     cwd: gitRoot,
     gitRoot,
-    gitCommonDir: 'D:\\cc-pane\\tool\\repos\\hooks\\.git',
-    canonicalProjectRoot: 'D:\\cc-pane\\tool\\repos\\hooks',
-    taskPath: 'D:\\cc-pane\\.ccpanes-task\\current-task.json',
-    taskFileRoot: 'D:\\cc-pane',
-    declaredProjectPath: 'D:\\cc-pane',
-    declaredWorktreeRoot: 'D:\\cc-pane',
+    gitCommonDir: 'D:\\paneforge\\tool\\repos\\hooks\\.git',
+    canonicalProjectRoot: 'D:\\paneforge\\tool\\repos\\hooks',
+    taskPath: 'D:\\paneforge\\.paneforge-task\\current-task.json',
+    taskFileRoot: 'D:\\paneforge',
+    declaredProjectPath: 'D:\\paneforge',
+    declaredWorktreeRoot: 'D:\\paneforge',
     declaredMainRepoRoot: null,
     taskId: 'parent-task'
   };
@@ -52,7 +52,7 @@ describe('authorizeTaskBindingBootstrapWrite', () => {
   test('rejects a write-current bootstrap command with the wrong root', () => {
     const result = authorizeTaskBindingBootstrapWrite({
       check: check(),
-      call: shellCall(`node "${trustedCliPath}" write-current --root "D:\\cc-pane\\other" --task-id "task-alpha" --phase build`),
+      call: shellCall(`node "${trustedCliPath}" write-current --root "D:\\paneforge\\other" --task-id "task-alpha" --phase build`),
       trustedCliPath,
       processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
     });
@@ -63,7 +63,7 @@ describe('authorizeTaskBindingBootstrapWrite', () => {
   test('rejects a write-current bootstrap command with the wrong CLI path', () => {
     const result = authorizeTaskBindingBootstrapWrite({
       check: check(),
-      call: shellCall(`node "D:\\cc-pane\\tool\\repos\\hooks\\dist\\src\\cli.js" write-current --root "${gitRoot}" --task-id "task-alpha" --phase build`),
+      call: shellCall(`node "D:\\paneforge\\tool\\repos\\hooks\\dist\\src\\cli.js" write-current --root "${gitRoot}" --task-id "task-alpha" --phase build`),
       trustedCliPath,
       processExecPath: 'C:\\Program Files\\nodejs\\node.exe'
     });

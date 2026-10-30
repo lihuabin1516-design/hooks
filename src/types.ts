@@ -8,7 +8,7 @@ export interface TaskOwner {
 }
 
 export interface CurrentTask {
-  schema: 'ccpanes.task-selection.v1';
+  schema: 'paneforge.task-selection.v1';
   taskId: string;
   workspace: string;
   projectPath: string;
@@ -48,7 +48,7 @@ export type TaskBindingStatus =
   | 'project-root-mismatch';
 
 export interface TaskBindingCheck {
-  schema: 'ccpanes.task-binding-check.v1';
+  schema: 'paneforge.task-binding-check.v1';
   status: TaskBindingStatus;
   reason: string;
   cwd: string;
@@ -73,7 +73,7 @@ export interface ResumeCandidate {
 }
 
 export interface ResumeProbeResult {
-  schema: 'ccpanes.resume-probe.v1';
+  schema: 'paneforge.resume-probe.v1';
   action: ResumeAction;
   reason: string;
   candidates: ResumeCandidate[];

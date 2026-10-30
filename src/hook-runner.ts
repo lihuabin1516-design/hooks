@@ -9,7 +9,7 @@ import {
 import type { CurrentTask, HookCall, TaskBindingCheck, TaskBindingStatus } from './types.js';
 
 export interface HookRunnerResult {
-  schema: 'ccpanes.hook-runner-result.v1';
+  schema: 'paneforge.hook-runner-result.v1';
   mode: 'dry-run';
   taskId: string;
   allowed: boolean;
@@ -23,9 +23,9 @@ export function createTaskBindingMismatchGateTask(check: TaskBindingCheck): Curr
   const worktreeRoot = check.gitRoot ?? check.cwd;
   const projectPath = check.canonicalProjectRoot ?? worktreeRoot;
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'unresolved-task-binding',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath,
     worktreeRoot,
     mainRepoRoot: check.canonicalProjectRoot,
@@ -44,7 +44,7 @@ export function runHookEventDryRun(task: CurrentTask, event: unknown): HookRunne
   const batch = validateHookDryRunBatch(adaptHookEventToBatch(task, event));
   const dryRun = runHookDryRunBatch(batch);
   return {
-    schema: 'ccpanes.hook-runner-result.v1',
+    schema: 'paneforge.hook-runner-result.v1',
     mode: 'dry-run',
     taskId: task.taskId,
     allowed: dryRun.decisions.every((decision) => decision.action === 'allow'),
@@ -102,7 +102,7 @@ function rewriteMismatchCall(
 function resultFromBatch(task: CurrentTask, batch: HookDryRunBatchInput): HookRunnerResult {
   const dryRun = runHookDryRunBatch(batch);
   return {
-    schema: 'ccpanes.hook-runner-result.v1',
+    schema: 'paneforge.hook-runner-result.v1',
     mode: 'dry-run',
     taskId: task.taskId,
     allowed: dryRun.decisions.every((decision) => decision.action === 'allow'),
@@ -123,7 +123,7 @@ export async function runHookEventDryRunWithProjectPolicy(
     if (!(error instanceof ProjectPolicyError)) throw error;
     const policyPath = projectPolicyPath(task.worktreeRoot);
     const batch = validateHookDryRunBatch({
-      schema: 'ccpanes.hook-dry-run-batch.v1',
+      schema: 'paneforge.hook-dry-run-batch.v1',
       task,
       calls: [{
         tool: 'write',

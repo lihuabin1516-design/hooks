@@ -8,12 +8,12 @@ import type { CurrentTask, HookCall, TaskPhase } from '../src/types.js';
 
 function task(phase: TaskPhase): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
-    projectPath: 'D:/cc-pane/project-alpha',
-    worktreeRoot: 'D:/cc-pane/project-alpha',
-    mainRepoRoot: 'D:/cc-pane/main-project',
+    workspace: 'paneforge',
+    projectPath: 'D:/paneforge/project-alpha',
+    worktreeRoot: 'D:/paneforge/project-alpha',
+    mainRepoRoot: 'D:/paneforge/main-project',
     branch: 'feature/task-alpha',
     head: 'abc123',
     owner: { leaderSessionId: 'leader-1', paneId: 'pane-1', layoutId: 'layout-1' },
@@ -27,21 +27,21 @@ function task(phase: TaskPhase): CurrentTask {
 
 describe('path helpers', () => {
   test('normalizes path separators for stable comparisons', () => {
-    expect(normalizeForComparison('D:/cc-pane/tool')).toBe('d:/cc-pane/tool');
-    expect(normalizeForComparison('D:\\cc-pane\\tool\\')).toBe('d:/cc-pane/tool');
+    expect(normalizeForComparison('D:/paneforge/tool')).toBe('d:/paneforge/tool');
+    expect(normalizeForComparison('D:\\paneforge\\tool\\')).toBe('d:/paneforge/tool');
   });
 
   test('detects paths inside a worktree without accepting sibling prefixes', () => {
-    expect(isPathInside('D:/cc-pane/project', 'D:/cc-pane/project/src/a.ts')).toBe(true);
-    expect(isPathInside('D:/cc-pane/project', 'D:/cc-pane/project-other/src/a.ts')).toBe(false);
-    expect(isPathInside('D:/cc-pane/project', 'D:/cc-pane/project')).toBe(true);
+    expect(isPathInside('D:/paneforge/project', 'D:/paneforge/project/src/a.ts')).toBe(true);
+    expect(isPathInside('D:/paneforge/project', 'D:/paneforge/project-other/src/a.ts')).toBe(false);
+    expect(isPathInside('D:/paneforge/project', 'D:/paneforge/project')).toBe(true);
   });
 
   test('normalizes physically equivalent existing-prefix paths before comparison', async () => {
-    const physicalRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-paths-physical-'));
+    const physicalRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-paths-physical-'));
     const aliasRoot = path.join(
       os.tmpdir(),
-      `ccpanes-paths-alias-${process.pid}-${Date.now()}`
+      `paneforge-paths-alias-${process.pid}-${Date.now()}`
     );
     try {
       await fs.symlink(physicalRoot, aliasRoot, process.platform === 'win32' ? 'junction' : 'dir');
@@ -68,24 +68,24 @@ describe('task phase type', () => {
 
 describe('decideHookDryRun', () => {
   test('allows non-write calls regardless of phase', () => {
-    const call: HookCall = { tool: 'read', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: false };
+    const call: HookCall = { tool: 'read', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: false };
     expect(decideHookDryRun(task('archive'), call).action).toBe('allow');
   });
 
   test('allows build writes inside the task worktree', () => {
-    const call: HookCall = { tool: 'write', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true };
+    const call: HookCall = { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true };
     const decision = decideHookDryRun(task('build'), call);
     expect(decision).toMatchObject({ action: 'allow', reason: 'build_write_inside_worktree', targetInsideWorktree: true });
   });
 
   test('blocks implementation writes during shape phase', () => {
-    const call: HookCall = { tool: 'edit', targetPath: 'D:/cc-pane/project-alpha/src/a.ts', writes: true };
+    const call: HookCall = { tool: 'edit', targetPath: 'D:/paneforge/project-alpha/src/a.ts', writes: true };
     const decision = decideHookDryRun(task('shape'), call);
     expect(decision).toMatchObject({ action: 'block', reason: 'phase_shape_blocks_implementation_write' });
   });
 
   test('blocks writes into the main repo when task worktree differs', () => {
-    const call: HookCall = { tool: 'write', targetPath: 'D:/cc-pane/main-project/src/a.ts', writes: true };
+    const call: HookCall = { tool: 'write', targetPath: 'D:/paneforge/main-project/src/a.ts', writes: true };
     const decision = decideHookDryRun(task('build'), call);
     expect(decision).toMatchObject({ action: 'block', reason: 'target_outside_task_worktree' });
   });
@@ -99,7 +99,7 @@ describe('decideHookDryRun', () => {
   test('blocks policy-denied shell commands before path scope checks', () => {
     const call: HookCall = {
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha',
+      targetPath: 'D:/paneforge/project-alpha',
       writes: true,
       policyReason: 'destructive_git_reset_hard'
     };
@@ -112,7 +112,7 @@ describe('decideHookDryRun', () => {
   });
 
   test('allows shell verification commands during shape because they are non-write calls', () => {
-    const call: HookCall = { tool: 'shell', targetPath: 'D:/cc-pane/project-alpha', writes: false };
+    const call: HookCall = { tool: 'shell', targetPath: 'D:/paneforge/project-alpha', writes: false };
     const decision = decideHookDryRun(task('shape'), call);
     expect(decision).toMatchObject({ action: 'allow', reason: 'non_write_call' });
   });
@@ -120,7 +120,7 @@ describe('decideHookDryRun', () => {
   test('project block rules can deny otherwise allowed non-write calls', () => {
     const call: HookCall = {
       tool: 'shell',
-      targetPath: 'D:/cc-pane/project-alpha',
+      targetPath: 'D:/paneforge/project-alpha',
       writes: false,
       policyEffect: 'block',
       policyReason: 'user_blocked_publish_probe'
@@ -132,7 +132,7 @@ describe('decideHookDryRun', () => {
   test('project allow rules can open phase guarded writes inside the worktree', () => {
     const call: HookCall = {
       tool: 'write',
-      targetPath: 'D:/cc-pane/project-alpha/docs/plan.md',
+      targetPath: 'D:/paneforge/project-alpha/docs/plan.md',
       writes: true,
       policyEffect: 'allow',
       policyReason: 'user_opened_docs_during_shape'

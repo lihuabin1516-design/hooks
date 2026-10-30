@@ -22,7 +22,7 @@ export interface HookDecisionAuditContext {
 }
 
 export interface HookDecisionAuditRecord extends HookDecisionAuditContext {
-  schema: 'ccpanes.hook-decision-audit.v1';
+  schema: 'paneforge.hook-decision-audit.v1';
   auditId: string;
   allowed: boolean;
   reason: string;
@@ -31,7 +31,7 @@ export interface HookDecisionAuditRecord extends HookDecisionAuditContext {
 }
 
 interface HookDecisionAuditPending {
-  schema: 'ccpanes.hook-decision-audit-pending.v1';
+  schema: 'paneforge.hook-decision-audit-pending.v1';
   record: HookDecisionAuditRecord;
 }
 
@@ -61,7 +61,7 @@ export function createHookDecisionAuditRecord(
   const eventRecord = asRecord(event);
   const decisive = result.dryRun.decisions.find((decision) => decision.action === 'block') ?? result.dryRun.decisions[0];
   return {
-    schema: 'ccpanes.hook-decision-audit.v1',
+    schema: 'paneforge.hook-decision-audit.v1',
     auditId: randomUUID(),
     observedAt: now,
     hookEventName,
@@ -116,7 +116,7 @@ async function lastHistoryAuditId(historyPath: string): Promise<string | null> {
     if (!line) continue;
     try {
       const value = JSON.parse(line) as Partial<HookDecisionAuditRecord>;
-      if (value.schema === 'ccpanes.hook-decision-audit.v1' && typeof value.auditId === 'string') return value.auditId;
+      if (value.schema === 'paneforge.hook-decision-audit.v1' && typeof value.auditId === 'string') return value.auditId;
     } catch {
       // A partial final append is preserved; recovery appends a fresh complete line.
     }
@@ -153,8 +153,8 @@ async function reconcilePendingAudit(snapshotPath: string): Promise<void> {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return;
     throw error;
   }
-  if (pending.schema !== 'ccpanes.hook-decision-audit-pending.v1'
-    || pending.record?.schema !== 'ccpanes.hook-decision-audit.v1'
+  if (pending.schema !== 'paneforge.hook-decision-audit-pending.v1'
+    || pending.record?.schema !== 'paneforge.hook-decision-audit.v1'
     || typeof pending.record.auditId !== 'string') {
     throw new Error('invalid hook decision audit pending record');
   }
@@ -175,7 +175,7 @@ export async function writeHookDecisionAudit(
   await fs.mkdir(dir, { recursive: true });
   await withFileLock(`${snapshotPath}.lock`, async () => {
     await reconcilePendingAudit(snapshotPath);
-    const pending: HookDecisionAuditPending = { schema: 'ccpanes.hook-decision-audit-pending.v1', record };
+    const pending: HookDecisionAuditPending = { schema: 'paneforge.hook-decision-audit-pending.v1', record };
     await writeTextFileAtomic(decisionPendingPath(snapshotPath), `${JSON.stringify(pending, null, 2)}\n`);
     await appendHistoryRecord(decisionHistoryPath(snapshotPath), record);
     await options.afterHistoryAppend?.();

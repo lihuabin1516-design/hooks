@@ -9,7 +9,7 @@ import {
   sanitizeCodexSessionPromptDerivedPath
 } from './codex-session-index.js';
 
-export interface CcPanesLaunchSnapshot {
+export interface PaneForgeLaunchSnapshot {
   launchId: string;
   projectPath: string;
   projectPathNorm: string;
@@ -19,7 +19,7 @@ export interface CcPanesLaunchSnapshot {
   launchedAt: string;
 }
 
-export interface CcPanesRuntimeSessionSnapshot {
+export interface PaneForgeRuntimeSessionSnapshot {
   sessionId: string;
   launchId: string | null;
   taskId: string | null;
@@ -30,18 +30,18 @@ export interface CcPanesRuntimeSessionSnapshot {
   observedCodexThreadId: string | null;
 }
 
-export interface CcPanesSessionSnapshot {
-  schemaVersion: 'hooks.ccpanes-session-snapshot/v1';
+export interface PaneForgeSessionSnapshot {
+  schemaVersion: 'hooks.paneforge-session-snapshot/v1';
   generatedAt: string;
-  launches: CcPanesLaunchSnapshot[];
-  sessions: CcPanesRuntimeSessionSnapshot[];
+  launches: PaneForgeLaunchSnapshot[];
+  sessions: PaneForgeRuntimeSessionSnapshot[];
 }
 
-export type CcPanesSnapshotRelationshipPrivacyReason =
+export type PaneForgeSnapshotRelationshipPrivacyReason =
   | 'unsafe-identity'
   | 'unsafe-path';
 
-export interface CcPanesSnapshotRelationshipPrivacyIssue {
+export interface PaneForgeSnapshotRelationshipPrivacyIssue {
   field:
     | 'launchId'
     | 'resumeSessionId'
@@ -50,14 +50,14 @@ export interface CcPanesSnapshotRelationshipPrivacyIssue {
     | 'sessionId'
     | 'taskId'
     | 'observedCodexThreadId';
-  reason: CcPanesSnapshotRelationshipPrivacyReason;
+  reason: PaneForgeSnapshotRelationshipPrivacyReason;
 }
 
-export type CcPanesSnapshotRelationshipPrivacyResult =
+export type PaneForgeSnapshotRelationshipPrivacyResult =
   | { safe: true }
-  | { safe: false; issue: CcPanesSnapshotRelationshipPrivacyIssue };
+  | { safe: false; issue: PaneForgeSnapshotRelationshipPrivacyIssue };
 
-export type CcPanesSnapshotFreshness =
+export type PaneForgeSnapshotFreshness =
   | {
       state: 'fresh' | 'stale';
       ageMs: number;
@@ -71,7 +71,7 @@ export type CcPanesSnapshotFreshness =
       maxFutureSkewMs: number;
     };
 
-export const CCPANES_SESSION_SNAPSHOT_LIMITS = Object.freeze({
+export const PANEFORGE_SESSION_SNAPSHOT_LIMITS = Object.freeze({
   launches: 10_000,
   sessions: 10_000,
   identityReferenceId: 256,
@@ -86,7 +86,7 @@ export const CCPANES_SESSION_SNAPSHOT_LIMITS = Object.freeze({
   timestampFractionalSeconds: 9
 });
 
-const SNAPSHOT_SCHEMA_VERSION = 'hooks.ccpanes-session-snapshot/v1';
+const SNAPSHOT_SCHEMA_VERSION = 'hooks.paneforge-session-snapshot/v1';
 const DEFAULT_MAX_AGE_MS = 24 * 60 * 60 * 1_000;
 const DEFAULT_MAX_FUTURE_SKEW_MS = 5 * 60 * 1_000;
 const ISO_TIMESTAMP_WITH_TIMEZONE =
@@ -117,11 +117,11 @@ const SESSION_FIELDS: ReadonlySet<string> = new Set([
 ]);
 
 function invalidSnapshot(field: string): never {
-  throw new Error(`invalid CC-Panes snapshot: ${field}`);
+  throw new Error(`invalid PaneForge snapshot: ${field}`);
 }
 
 function invalidFreshness(field: string): never {
-  throw new Error(`invalid CC-Panes snapshot freshness: ${field}`);
+  throw new Error(`invalid PaneForge snapshot freshness: ${field}`);
 }
 
 function record(value: unknown, field: string): Record<string, unknown> {
@@ -150,7 +150,7 @@ function requiredString(
   if (typeof value !== 'string') return invalidSnapshot(field);
   if (
     value.length >
-    maxLength + CCPANES_SESSION_SNAPSHOT_LIMITS.rawStringOverhead
+    maxLength + PANEFORGE_SESSION_SNAPSHOT_LIMITS.rawStringOverhead
   ) {
     return invalidSnapshot(field);
   }
@@ -174,7 +174,7 @@ function optionalThreadId(value: unknown, field: string): string | null {
     typeof value !== 'string' ||
     value.length >
       CODEX_THREAD_ID_MAX_LENGTH +
-        CCPANES_SESSION_SNAPSHOT_LIMITS.rawStringOverhead
+        PANEFORGE_SESSION_SNAPSHOT_LIMITS.rawStringOverhead
   ) {
     return invalidSnapshot(field);
   }
@@ -199,11 +199,11 @@ function canonicalIsoTimestamp(
   invalid: (field: string) => never
 ): string {
   if (typeof value !== 'string') return invalid(field);
-  if (value.length > CCPANES_SESSION_SNAPSHOT_LIMITS.timestampRaw) {
+  if (value.length > PANEFORGE_SESSION_SNAPSHOT_LIMITS.timestampRaw) {
     return invalid(field);
   }
   const text = value.trim();
-  if (!text || text.length > CCPANES_SESSION_SNAPSHOT_LIMITS.timestamp) {
+  if (!text || text.length > PANEFORGE_SESSION_SNAPSHOT_LIMITS.timestamp) {
     return invalid(field);
   }
   const match = ISO_TIMESTAMP_WITH_TIMEZONE.exec(text);
@@ -211,7 +211,7 @@ function canonicalIsoTimestamp(
   if (
     match[7] !== undefined &&
     match[7].length >
-      CCPANES_SESSION_SNAPSHOT_LIMITS.timestampFractionalSeconds
+      PANEFORGE_SESSION_SNAPSHOT_LIMITS.timestampFractionalSeconds
   ) {
     return invalid(field);
   }
@@ -250,7 +250,7 @@ function snapshotIsoTimestamp(value: unknown, field: string): string {
   return canonicalIsoTimestamp(value, field, invalidSnapshot);
 }
 
-export function canonicalizeCcPanesTimezoneTimestamp(
+export function canonicalizePaneForgeTimezoneTimestamp(
   value: unknown
 ): string | null {
   try {
@@ -269,7 +269,7 @@ function normalizedRequiredPath(
   const projectPath = requiredString(
     value,
     field,
-    CCPANES_SESSION_SNAPSHOT_LIMITS.projectPath
+    PANEFORGE_SESSION_SNAPSHOT_LIMITS.projectPath
   );
   const projectPathNorm = normalizeCodexPath(projectPath);
   if (!projectPathNorm) return invalidSnapshot(field);
@@ -283,7 +283,7 @@ function normalizedOptionalPath(
   const projectPath = optionalString(
     value,
     field,
-    CCPANES_SESSION_SNAPSHOT_LIMITS.projectPath
+    PANEFORGE_SESSION_SNAPSHOT_LIMITS.projectPath
   );
   if (projectPath === null) {
     return { projectPath: null, projectPathNorm: null };
@@ -295,9 +295,9 @@ function normalizedOptionalPath(
 
 function inspectRelationshipIdentity(
   value: string | null,
-  field: CcPanesSnapshotRelationshipPrivacyIssue['field'],
+  field: PaneForgeSnapshotRelationshipPrivacyIssue['field'],
   optional = false
-): CcPanesSnapshotRelationshipPrivacyResult {
+): PaneForgeSnapshotRelationshipPrivacyResult {
   if (value === null && optional) return { safe: true };
   return sanitizeCodexSessionExternalIdentity(value)
     ? { safe: true }
@@ -307,7 +307,7 @@ function inspectRelationshipIdentity(
 function inspectRelationshipThreadId(
   value: string | null,
   field: 'resumeSessionId' | 'observedCodexThreadId'
-): CcPanesSnapshotRelationshipPrivacyResult {
+): PaneForgeSnapshotRelationshipPrivacyResult {
   return value === null || isCodexThreadId(value)
     ? { safe: true }
     : { safe: false, issue: { field, reason: 'unsafe-identity' } };
@@ -317,7 +317,7 @@ function inspectRelationshipPath(
   raw: string | null,
   norm: string | null,
   optional = false
-): CcPanesSnapshotRelationshipPrivacyResult {
+): PaneForgeSnapshotRelationshipPrivacyResult {
   if (raw === null && norm === null && optional) return { safe: true };
   const projection = sanitizeCodexSessionPromptDerivedPath(raw);
   if (!projection) {
@@ -334,9 +334,9 @@ function inspectRelationshipPath(
       };
 }
 
-export function inspectCcPanesLaunchRelationshipPrivacy(
-  launch: CcPanesLaunchSnapshot
-): CcPanesSnapshotRelationshipPrivacyResult {
+export function inspectPaneForgeLaunchRelationshipPrivacy(
+  launch: PaneForgeLaunchSnapshot
+): PaneForgeSnapshotRelationshipPrivacyResult {
   for (const result of [
     inspectRelationshipIdentity(launch.launchId, 'launchId'),
     inspectRelationshipThreadId(
@@ -350,9 +350,9 @@ export function inspectCcPanesLaunchRelationshipPrivacy(
   return { safe: true };
 }
 
-export function inspectCcPanesRuntimeRelationshipPrivacy(
-  runtime: CcPanesRuntimeSessionSnapshot
-): CcPanesSnapshotRelationshipPrivacyResult {
+export function inspectPaneForgeRuntimeRelationshipPrivacy(
+  runtime: PaneForgeRuntimeSessionSnapshot
+): PaneForgeSnapshotRelationshipPrivacyResult {
   for (const result of [
     inspectRelationshipIdentity(runtime.sessionId, 'sessionId'),
     inspectRelationshipIdentity(runtime.launchId, 'launchId', true),
@@ -382,9 +382,9 @@ function assertUnique(values: string[], identity: 'launchId' | 'sessionId'): voi
   }
 }
 
-export function validateCcPanesSessionSnapshot(
+export function validatePaneForgeSessionSnapshot(
   value: unknown
-): CcPanesSessionSnapshot {
+): PaneForgeSessionSnapshot {
   const root = record(value, 'root');
   assertKnownFields(root, ROOT_FIELDS, 'root');
   if (root.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) {
@@ -392,14 +392,14 @@ export function validateCcPanesSessionSnapshot(
   }
   if (!Array.isArray(root.launches)) invalidSnapshot('launches');
   if (!Array.isArray(root.sessions)) invalidSnapshot('sessions');
-  if (root.launches.length > CCPANES_SESSION_SNAPSHOT_LIMITS.launches) {
+  if (root.launches.length > PANEFORGE_SESSION_SNAPSHOT_LIMITS.launches) {
     invalidSnapshot('launches');
   }
-  if (root.sessions.length > CCPANES_SESSION_SNAPSHOT_LIMITS.sessions) {
+  if (root.sessions.length > PANEFORGE_SESSION_SNAPSHOT_LIMITS.sessions) {
     invalidSnapshot('sessions');
   }
 
-  const launches = root.launches.map((entry, index): CcPanesLaunchSnapshot => {
+  const launches = root.launches.map((entry, index): PaneForgeLaunchSnapshot => {
     const field = `launches[${index}]`;
     const item = record(entry, field);
     assertKnownFields(item, LAUNCH_FIELDS, field);
@@ -408,18 +408,18 @@ export function validateCcPanesSessionSnapshot(
       launchId: requiredString(
         item.launchId,
         `${field}.launchId`,
-        CCPANES_SESSION_SNAPSHOT_LIMITS.identityReferenceId
+        PANEFORGE_SESSION_SNAPSHOT_LIMITS.identityReferenceId
       ),
       ...path,
       workspaceName: optionalString(
         item.workspaceName,
         `${field}.workspaceName`,
-        CCPANES_SESSION_SNAPSHOT_LIMITS.workspaceName
+        PANEFORGE_SESSION_SNAPSHOT_LIMITS.workspaceName
       ),
       cliTool: requiredString(
         item.cliTool,
         `${field}.cliTool`,
-        CCPANES_SESSION_SNAPSHOT_LIMITS.cliTool
+        PANEFORGE_SESSION_SNAPSHOT_LIMITS.cliTool
       ),
       resumeSessionId: optionalThreadId(
         item.resumeSessionId,
@@ -430,7 +430,7 @@ export function validateCcPanesSessionSnapshot(
   });
 
   const sessions = root.sessions.map(
-    (entry, index): CcPanesRuntimeSessionSnapshot => {
+    (entry, index): PaneForgeRuntimeSessionSnapshot => {
       const field = `sessions[${index}]`;
       const item = record(entry, field);
       assertKnownFields(item, SESSION_FIELDS, field);
@@ -439,28 +439,28 @@ export function validateCcPanesSessionSnapshot(
         sessionId: requiredString(
           item.sessionId,
           `${field}.sessionId`,
-          CCPANES_SESSION_SNAPSHOT_LIMITS.identityReferenceId
+          PANEFORGE_SESSION_SNAPSHOT_LIMITS.identityReferenceId
         ),
         launchId: optionalString(
           item.launchId,
           `${field}.launchId`,
-          CCPANES_SESSION_SNAPSHOT_LIMITS.identityReferenceId
+          PANEFORGE_SESSION_SNAPSHOT_LIMITS.identityReferenceId
         ),
         taskId: optionalString(
           item.taskId,
           `${field}.taskId`,
-          CCPANES_SESSION_SNAPSHOT_LIMITS.identityReferenceId
+          PANEFORGE_SESSION_SNAPSHOT_LIMITS.identityReferenceId
         ),
         ...path,
         status: requiredString(
           item.status,
           `${field}.status`,
-          CCPANES_SESSION_SNAPSHOT_LIMITS.status
+          PANEFORGE_SESSION_SNAPSHOT_LIMITS.status
         ),
         title: optionalString(
           item.title,
           `${field}.title`,
-          CCPANES_SESSION_SNAPSHOT_LIMITS.title
+          PANEFORGE_SESSION_SNAPSHOT_LIMITS.title
         ),
         observedCodexThreadId: optionalThreadId(
           item.observedCodexThreadId,
@@ -481,12 +481,12 @@ export function validateCcPanesSessionSnapshot(
   };
 }
 
-export function inspectCcPanesSnapshotFreshness(
+export function inspectPaneForgeSnapshotFreshness(
   generatedAt: string,
   now = new Date().toISOString(),
   maxAgeMs = DEFAULT_MAX_AGE_MS,
   maxFutureSkewMs = DEFAULT_MAX_FUTURE_SKEW_MS
-): CcPanesSnapshotFreshness {
+): PaneForgeSnapshotFreshness {
   if (!Number.isFinite(maxAgeMs) || maxAgeMs < 0) {
     invalidFreshness('maxAgeMs');
   }

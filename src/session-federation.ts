@@ -1,13 +1,13 @@
 import {
-  CCPANES_SESSION_SNAPSHOT_LIMITS,
-  canonicalizeCcPanesTimezoneTimestamp,
-  inspectCcPanesLaunchRelationshipPrivacy,
-  inspectCcPanesRuntimeRelationshipPrivacy,
-  inspectCcPanesSnapshotFreshness,
-  type CcPanesLaunchSnapshot,
-  type CcPanesRuntimeSessionSnapshot,
-  type CcPanesSessionSnapshot
-} from './ccpanes-session-snapshot.js';
+  PANEFORGE_SESSION_SNAPSHOT_LIMITS,
+  canonicalizePaneForgeTimezoneTimestamp,
+  inspectPaneForgeLaunchRelationshipPrivacy,
+  inspectPaneForgeRuntimeRelationshipPrivacy,
+  inspectPaneForgeSnapshotFreshness,
+  type PaneForgeLaunchSnapshot,
+  type PaneForgeRuntimeSessionSnapshot,
+  type PaneForgeSessionSnapshot
+} from './paneforge-session-snapshot.js';
 import { isCodexThreadId } from './codex-session-identity.js';
 import {
   assertCodexSessionProjectOwnerInvariant,
@@ -31,9 +31,9 @@ export {
 
 export type FederationNodeType =
   | 'codex-thread'
-  | 'ccpanes-launch'
-  | 'ccpanes-session'
-  | 'ccpanes-task';
+  | 'paneforge-launch'
+  | 'paneforge-session'
+  | 'paneforge-task';
 
 export type FederationEdgeType =
   | 'resumed-from'
@@ -52,7 +52,7 @@ export interface FederationNode {
 
 export type FederationEvidence =
   | SessionEvidence
-  | { kind: 'ccpanes-runtime-link'; sessionId: string }
+  | { kind: 'paneforge-runtime-link'; sessionId: string }
   | { kind: 'snapshot-field'; field: string; value: string };
 
 export interface FederationEdge {
@@ -67,14 +67,14 @@ export interface FederationEdge {
 }
 
 export type FederationDiagnostic =
-  | { kind: 'ccpanes-snapshot-missing' }
+  | { kind: 'paneforge-snapshot-missing' }
   | {
-      kind: 'ccpanes-snapshot-stale';
+      kind: 'paneforge-snapshot-stale';
       ageMs: number;
       maxAgeMs: number;
     }
   | {
-      kind: 'ccpanes-snapshot-future';
+      kind: 'paneforge-snapshot-future';
       futureByMs: number;
       maxFutureSkewMs: number;
     };
@@ -116,17 +116,17 @@ export class CodexSessionFederationInvariantError extends Error {
 }
 
 export const SESSION_FEDERATION_EVIDENCE_PER_EDGE_LIMIT =
-  CCPANES_SESSION_SNAPSHOT_LIMITS.sessions * 2 + 2;
+  PANEFORGE_SESSION_SNAPSHOT_LIMITS.sessions * 2 + 2;
 
 const EVIDENCE_KIND_ORDER: Record<FederationEvidence['kind'], number> = {
   'task-binding': 0,
-  'ccpanes-launch': 1,
-  'ccpanes-session': 2,
+  'paneforge-launch': 1,
+  'paneforge-session': 2,
   cwd: 3,
   'primary-target': 4,
   'prompt-mention': 5,
   delegation: 6,
-  'ccpanes-runtime-link': 7,
+  'paneforge-runtime-link': 7,
   'snapshot-field': 8
 };
 
@@ -258,7 +258,7 @@ function assertFederationGeneratedAt(
   generatedAt: string | undefined
 ): string {
   const candidate = generatedAt ?? new Date().toISOString();
-  const canonical = canonicalizeCcPanesTimezoneTimestamp(candidate);
+  const canonical = canonicalizePaneForgeTimezoneTimestamp(candidate);
   if (!canonical) {
     throw new CodexSessionFederationInvariantError(
       'generatedAt',
@@ -292,19 +292,19 @@ function addToIndex<T>(
 }
 
 function indexSnapshotThreadReferences(
-  snapshot: CcPanesSessionSnapshot
+  snapshot: PaneForgeSessionSnapshot
 ): {
-  launchesByThreadId: Map<string, CcPanesLaunchSnapshot[]>;
-  runtimeByThreadId: Map<string, CcPanesRuntimeSessionSnapshot[]>;
+  launchesByThreadId: Map<string, PaneForgeLaunchSnapshot[]>;
+  runtimeByThreadId: Map<string, PaneForgeRuntimeSessionSnapshot[]>;
 } {
-  const launchesByThreadId = new Map<string, CcPanesLaunchSnapshot[]>();
-  const runtimeByThreadId = new Map<string, CcPanesRuntimeSessionSnapshot[]>();
+  const launchesByThreadId = new Map<string, PaneForgeLaunchSnapshot[]>();
+  const runtimeByThreadId = new Map<string, PaneForgeRuntimeSessionSnapshot[]>();
   for (const launch of snapshot.launches) {
-    if (!inspectCcPanesLaunchRelationshipPrivacy(launch).safe) continue;
+    if (!inspectPaneForgeLaunchRelationshipPrivacy(launch).safe) continue;
     addToIndex(launchesByThreadId, launch.resumeSessionId, launch);
   }
   for (const runtime of snapshot.sessions) {
-    if (!inspectCcPanesRuntimeRelationshipPrivacy(runtime).safe) continue;
+    if (!inspectPaneForgeRuntimeRelationshipPrivacy(runtime).safe) continue;
     addToIndex(
       runtimeByThreadId,
       runtime.observedCodexThreadId,
@@ -322,15 +322,15 @@ function indexSnapshotThreadReferences(
 
 function sessionTypedPathFacts(
   session: CodexSessionRecord,
-  matchedLaunches: CcPanesLaunchSnapshot[],
-  matchedRuntimeSessions: CcPanesRuntimeSessionSnapshot[]
+  matchedLaunches: PaneForgeLaunchSnapshot[],
+  matchedRuntimeSessions: PaneForgeRuntimeSessionSnapshot[]
 ): TypedProjectPathFact[] {
   const evidenceFacts = session.evidence.flatMap(
     (item): TypedProjectPathFact[] => {
       if (
         item.kind === 'task-binding' ||
-        item.kind === 'ccpanes-launch' ||
-        item.kind === 'ccpanes-session'
+        item.kind === 'paneforge-launch' ||
+        item.kind === 'paneforge-session'
       ) {
         return [{
           source: `evidence.${item.kind}.projectPath`,
@@ -364,8 +364,8 @@ function sessionTypedPathFacts(
 function typedProjectConflictReasons(
   projectNorm: string,
   session: CodexSessionRecord,
-  matchedLaunches: CcPanesLaunchSnapshot[],
-  matchedRuntimeSessions: CcPanesRuntimeSessionSnapshot[]
+  matchedLaunches: PaneForgeLaunchSnapshot[],
+  matchedRuntimeSessions: PaneForgeRuntimeSessionSnapshot[]
 ): string[] {
   const reasons = new Set<string>();
   for (const fact of sessionTypedPathFacts(
@@ -404,16 +404,16 @@ function duplicateIdentity(
   if (duplicate !== undefined) throw new Error(`${label}: ${duplicate}`);
 }
 
-export function attachCcPanesAttribution(input: {
+export function attachPaneForgeAttribution(input: {
   project: string;
   sessions: CodexSessionRecord[];
-  ccpanes: CcPanesSessionSnapshot | null;
+  paneforge: PaneForgeSessionSnapshot | null;
 }): CodexSessionRecord[] {
   const project = assertCodexSessionFederationProject(input.project);
   for (const session of input.sessions) {
     assertCodexSessionProjectOwnerInvariant(session, project);
   }
-  if (!input.ccpanes) {
+  if (!input.paneforge) {
     return input.sessions.map((session) => ({ ...session }));
   }
 
@@ -421,7 +421,7 @@ export function attachCcPanesAttribution(input: {
   const {
     launchesByThreadId,
     runtimeByThreadId
-  } = indexSnapshotThreadReferences(input.ccpanes);
+  } = indexSnapshotThreadReferences(input.paneforge);
 
   return input.sessions.map((session) => {
     const matchedLaunches = launchesByThreadId.get(session.threadId) ?? [];
@@ -437,16 +437,16 @@ export function attachCcPanesAttribution(input: {
       matchedRelations.push(relation);
       if (!projectPath) continue;
       addedEvidence.push({
-        kind: 'ccpanes-launch',
+        kind: 'paneforge-launch',
         projectPath,
         launchId: launch.launchId
       });
       if (relation === 'exact') {
-        addedReasons.push('matched exact-project CC-Panes launch');
+        addedReasons.push('matched exact-project PaneForge launch');
       } else if (relation === 'descendant') {
-        addedReasons.push('matched compatible-project CC-Panes launch');
+        addedReasons.push('matched compatible-project PaneForge launch');
       } else if (relation === 'conflict') {
-        addedReasons.push('matched foreign-project CC-Panes launch');
+        addedReasons.push('matched foreign-project PaneForge launch');
       }
     }
     for (const runtime of matchedRuntimeSessions) {
@@ -457,16 +457,16 @@ export function attachCcPanesAttribution(input: {
       matchedRelations.push(relation);
       if (!projectPath) continue;
       addedEvidence.push({
-        kind: 'ccpanes-session',
+        kind: 'paneforge-session',
         projectPath,
         sessionId: runtime.sessionId
       });
       if (relation === 'exact') {
-        addedReasons.push('matched exact-project CC-Panes Session');
+        addedReasons.push('matched exact-project PaneForge Session');
       } else if (relation === 'descendant') {
-        addedReasons.push('matched compatible-project CC-Panes Session');
+        addedReasons.push('matched compatible-project PaneForge Session');
       } else if (relation === 'conflict') {
-        addedReasons.push('matched foreign-project CC-Panes Session');
+        addedReasons.push('matched foreign-project PaneForge Session');
       }
     }
 
@@ -545,7 +545,7 @@ export function buildSessionFederation(input: {
   generatedAt?: string;
   project: string;
   codexSessions: CodexSessionRecord[];
-  ccpanes?: CcPanesSessionSnapshot | null;
+  paneforge?: PaneForgeSessionSnapshot | null;
 }): SessionFederation {
   const project = assertCodexSessionFederationProject(input.project);
   const generatedAt = assertFederationGeneratedAt(input.generatedAt);
@@ -556,20 +556,20 @@ export function buildSessionFederation(input: {
       `codexSessions[${index}].threadId`
     );
   }
-  for (const [index, launch] of (input.ccpanes?.launches ?? []).entries()) {
-    const privacy = inspectCcPanesLaunchRelationshipPrivacy(launch);
+  for (const [index, launch] of (input.paneforge?.launches ?? []).entries()) {
+    const privacy = inspectPaneForgeLaunchRelationshipPrivacy(launch);
     if (!privacy.safe) {
       throw new CodexSessionFederationInvariantError(
-        `ccpanes.launches[${index}].${privacy.issue.field}`,
+        `paneforge.launches[${index}].${privacy.issue.field}`,
         privacy.issue.reason
       );
     }
   }
-  for (const [index, runtime] of (input.ccpanes?.sessions ?? []).entries()) {
-    const privacy = inspectCcPanesRuntimeRelationshipPrivacy(runtime);
+  for (const [index, runtime] of (input.paneforge?.sessions ?? []).entries()) {
+    const privacy = inspectPaneForgeRuntimeRelationshipPrivacy(runtime);
     if (!privacy.safe) {
       throw new CodexSessionFederationInvariantError(
-        `ccpanes.sessions[${index}].${privacy.issue.field}`,
+        `paneforge.sessions[${index}].${privacy.issue.field}`,
         privacy.issue.reason
       );
     }
@@ -579,16 +579,16 @@ export function buildSessionFederation(input: {
     'duplicate codex threadId'
   );
   duplicateIdentity(
-    (input.ccpanes?.launches ?? []).map((launch) => launch.launchId),
-    'duplicate CC-Panes launchId'
+    (input.paneforge?.launches ?? []).map((launch) => launch.launchId),
+    'duplicate PaneForge launchId'
   );
   duplicateIdentity(
-    (input.ccpanes?.sessions ?? []).map((session) => session.sessionId),
-    'duplicate CC-Panes sessionId'
+    (input.paneforge?.sessions ?? []).map((session) => session.sessionId),
+    'duplicate PaneForge sessionId'
   );
 
   const snapshotObservedAt = federationObservedAt(
-    input.ccpanes?.generatedAt ?? null,
+    input.paneforge?.generatedAt ?? null,
     generatedAt
   );
   const nodes = new Map<string, NodeState>();
@@ -722,8 +722,8 @@ export function buildSessionFederation(input: {
     );
   }
 
-  for (const launch of input.ccpanes?.launches ?? []) {
-    const launchNode = addNode('ccpanes-launch', launch.launchId, {
+  for (const launch of input.paneforge?.launches ?? []) {
+    const launchNode = addNode('paneforge-launch', launch.launchId, {
       projectPathNorm: launch.projectPathNorm,
       workspaceName: sanitizeCodexSessionArtifactExcerpt(launch.workspaceName),
       cliTool: sanitizeCodexSessionArtifactExcerpt(launch.cliTool),
@@ -750,15 +750,15 @@ export function buildSessionFederation(input: {
     );
   }
 
-  for (const runtime of input.ccpanes?.sessions ?? []) {
-    const runtimeNode = addNode('ccpanes-session', runtime.sessionId, {
+  for (const runtime of input.paneforge?.sessions ?? []) {
+    const runtimeNode = addNode('paneforge-session', runtime.sessionId, {
       status: sanitizeCodexSessionArtifactExcerpt(runtime.status),
       title: sanitizeCodexSessionArtifactExcerpt(runtime.title),
       projectPathNorm: runtime.projectPathNorm
     }, true);
     if (runtime.launchId) {
       const launchNode = addNode(
-        'ccpanes-launch',
+        'paneforge-launch',
         runtime.launchId,
         { inferred: true },
         false
@@ -768,12 +768,12 @@ export function buildSessionFederation(input: {
         launchNode,
         runtimeNode,
         1,
-        [{ kind: 'ccpanes-runtime-link', sessionId: runtime.sessionId }],
+        [{ kind: 'paneforge-runtime-link', sessionId: runtime.sessionId }],
         snapshotObservedAt
       );
     }
     if (runtime.taskId) {
-      const taskNode = addNode('ccpanes-task', runtime.taskId, {}, true);
+      const taskNode = addNode('paneforge-task', runtime.taskId, {}, true);
       addEdge(
         'belongs-to-task',
         runtimeNode,
@@ -813,7 +813,7 @@ export function buildSessionFederation(input: {
     const taskBinding = sanitizeCodexSessionTaskBinding(session.taskBinding);
     if (!taskBinding) continue;
     const taskNode = addNode(
-      'ccpanes-task',
+      'paneforge-task',
       taskBinding.taskId,
       { inferred: true },
       false
@@ -833,9 +833,9 @@ export function buildSessionFederation(input: {
   }
 
   const launchById = new Map(
-    (input.ccpanes?.launches ?? []).map((launch) => [launch.launchId, launch])
+    (input.paneforge?.launches ?? []).map((launch) => [launch.launchId, launch])
   );
-  for (const runtime of input.ccpanes?.sessions ?? []) {
+  for (const runtime of input.paneforge?.sessions ?? []) {
     if (!runtime.launchId || !runtime.observedCodexThreadId) continue;
     const launch = launchById.get(runtime.launchId);
     if (
@@ -850,7 +850,7 @@ export function buildSessionFederation(input: {
       federationNodeId('codex-thread', launch.resumeSessionId),
       0.9,
       [
-        { kind: 'ccpanes-runtime-link', sessionId: runtime.sessionId },
+        { kind: 'paneforge-runtime-link', sessionId: runtime.sessionId },
         {
           kind: 'snapshot-field',
           field: 'launch.resumeSessionId',
@@ -871,22 +871,22 @@ export function buildSessionFederation(input: {
     );
   }
 
-  if (!input.ccpanes) {
-    diagnostics.push({ kind: 'ccpanes-snapshot-missing' });
+  if (!input.paneforge) {
+    diagnostics.push({ kind: 'paneforge-snapshot-missing' });
   } else {
-    const freshness = inspectCcPanesSnapshotFreshness(
-      input.ccpanes.generatedAt,
+    const freshness = inspectPaneForgeSnapshotFreshness(
+      input.paneforge.generatedAt,
       generatedAt
     );
     if (freshness.state === 'stale') {
       diagnostics.push({
-        kind: 'ccpanes-snapshot-stale',
+        kind: 'paneforge-snapshot-stale',
         ageMs: freshness.ageMs,
         maxAgeMs: freshness.maxAgeMs
       });
     } else if (freshness.state === 'future') {
       diagnostics.push({
-        kind: 'ccpanes-snapshot-future',
+        kind: 'paneforge-snapshot-future',
         futureByMs: freshness.futureByMs,
         maxFutureSkewMs: freshness.maxFutureSkewMs
       });

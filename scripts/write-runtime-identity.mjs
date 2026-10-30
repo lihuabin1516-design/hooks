@@ -19,7 +19,7 @@ function gitOutput(args) {
 const gitCommit = gitOutput(['rev-parse', 'HEAD']);
 const gitStatus = gitOutput(['status', '--porcelain']);
 const identity = {
-  schema: 'ccpanes.runtime-identity.v1',
+  schema: 'paneforge.runtime-identity.v1',
   packageName: packageJson.name,
   packageVersion: packageJson.version,
   gitCommit,

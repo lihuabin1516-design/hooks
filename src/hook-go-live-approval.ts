@@ -10,7 +10,7 @@ export interface HookGoLiveApprovalFile {
 }
 
 export interface HookGoLiveApprovalPackage {
-  schema: 'ccpanes.hook-go-live-approval-package.v1';
+  schema: 'paneforge.hook-go-live-approval-package.v1';
   mode: 'manual-approval-package';
   createdAt: string;
   outDir: string;
@@ -56,9 +56,9 @@ export interface CreateHookGoLiveApprovalInput {
 const forbiddenGoLiveOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeGoLiveOutDir(outDir: string): void {
@@ -169,7 +169,7 @@ export async function createHookGoLiveApprovalPackage(input: CreateHookGoLiveApp
   const now = input.now ?? new Date().toISOString();
   const readinessText = await fs.readFile(input.readinessPath, 'utf8');
   const readiness = asRecord(JSON.parse(readinessText));
-  if (readiness.schema !== 'ccpanes.hook-production-readiness.v1') throw new Error('invalid production readiness: schema');
+  if (readiness.schema !== 'paneforge.hook-production-readiness.v1') throw new Error('invalid production readiness: schema');
   if (readiness.mode !== 'final-readiness') throw new Error('invalid production readiness: mode');
   if (readiness.ready !== true) throw new Error('production readiness must be ready');
 
@@ -196,7 +196,7 @@ export async function createHookGoLiveApprovalPackage(input: CreateHookGoLiveApp
   await fs.mkdir(input.outDir, { recursive: true });
 
   const baseManifest = {
-    schema: 'ccpanes.hook-go-live-approval-package.v1' as const,
+    schema: 'paneforge.hook-go-live-approval-package.v1' as const,
     mode: 'manual-approval-package' as const,
     createdAt: now,
     outDir: input.outDir,

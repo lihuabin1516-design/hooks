@@ -1,7 +1,7 @@
 # Codex 外部会话桥接
 
-本工具把 Codex App、Codex CLI 与显式提供的 CC-Panes 会话事实整理成可重建的只读投影。
-投影用于检索、解释、留存检查、关系图和轻量交接，不是 Codex 或 CC-Panes 的 authority。
+本工具把 Codex App、Codex CLI 与显式提供的 PaneForge 会话事实整理成可重建的只读投影。
+投影用于检索、解释、留存检查、关系图和轻量交接，不是 Codex 或 PaneForge 的 authority。
 它不修改 Codex rollout、SQLite、用户配置、历史 rollout/sqlite 或官方程序。
 
 ## 归因模型
@@ -11,7 +11,7 @@ v2 将运行位置事实与项目语义归因拆成两个独立字段：
 - `runtimeScope`：`exact`、`descendant`、`ancestor`、`unrelated`、`unknown`。它只描述
   会话 cwd 与目标项目路径的运行位置关系。
 - `projectRelation`：`owned`、`supporting`、`mentioned`、`ambient`、`unrelated`、
-  `unknown`。它综合 task binding、显式 CC-Panes 关联、主目标路径、cwd 和 prompt
+  `unknown`。它综合 task binding、显式 PaneForge 关联、主目标路径、cwd 和 prompt
   mention 等证据，描述会话与项目的语义关系。
 
 旧 `scopeMatch` 仅作为迁移兼容字段保留，不再是默认筛选、handoff 摘要或项目所有权
@@ -111,13 +111,13 @@ GitHub、Slack、AWS、GitLab、npm、Hugging Face、Google 和 Stripe secret pr
 - federation builder 对直接传入的外部 `CodexSessionRecord` 再次调用同一公开
   sanitizer/validator，不信任外部 delegation/task-binding projection。
 
-## CC-Panes snapshot
+## PaneForge snapshot
 
-`hooks.ccpanes-session-snapshot/v1` 是显式输入，不会自动发现 CC-Panes。输入在读取
+`hooks.paneforge-session-snapshot/v1` 是显式输入，不会自动发现 PaneForge。输入在读取
 Codex 数据和写出目标文件前经过严格 schema、字段、时间戳、路径与唯一 ID validation。
 
 snapshot 只持久化关联所需的 IDs、project path、status、task/launch 引用及有限显示
-元数据等字段；工具不发现、不读取、不保存 CC-Panes HTTP token 或动态端口。
+元数据等字段；工具不发现、不读取、不保存 PaneForge HTTP token 或动态端口。
 
 snapshot 归因必须同时提供非空 project；缺少 project 时不执行 snapshot-to-project
 归因。输入资源边界包括：
@@ -132,16 +132,16 @@ snapshot 归因必须同时提供非空 project；缺少 project 时不执行 sn
 
 structural validation 后，launch/session 的 identity、reference 与 project path
 还必须通过统一 privacy/identity owner。任一 relationship 字段需要 redaction、
-截断或无法保持原 identity/path 时，`attachCcPanesAttribution` 忽略整条 relationship：
+截断或无法保持原 identity/path 时，`attachPaneForgeAttribution` 忽略整条 relationship：
 不生成 evidence/reason，也不提升或降低 Codex session relation。federation builder
 直接消费外部 snapshot 时对同一问题以
 `CODEX_SESSION_FEDERATION_INVARIANT` 失败；两处不维护第二套 secret/path 规则。
 
 未提供 snapshot 时，命令使用 Codex-only projection。`scan` 的 `warnings` 会包含
-`CC-Panes snapshot not supplied`，graph 会给出 `ccpanes-snapshot-missing`
-diagnostic；这不把 Codex 投影提升为 CC-Panes authority。
+`PaneForge snapshot not supplied`，graph 会给出 `paneforge-snapshot-missing`
+diagnostic；这不把 Codex 投影提升为 PaneForge authority。
 
-`scan`、`resolve`、`retention`、`graph` 均可消费 `--ccpanes-snapshot`。snapshot JSON
+`scan`、`resolve`、`retention`、`graph` 均可消费 `--paneforge-snapshot`。snapshot JSON
 不合法、schema 不匹配或文件不可读时，命令在创建或覆盖 `--out` 之前失败。
 
 ## Federation graph
@@ -150,9 +150,9 @@ diagnostic；这不把 Codex 投影提升为 CC-Panes authority。
 
 `diagnostics` 记录 snapshot freshness：
 
-- `ccpanes-snapshot-missing`：未提供 CC-Panes snapshot。
-- `ccpanes-snapshot-stale`：包含 `ageMs` 与 `maxAgeMs`。
-- `ccpanes-snapshot-future`：snapshot 超出允许的未来时钟偏差，包含
+- `paneforge-snapshot-missing`：未提供 PaneForge snapshot。
+- `paneforge-snapshot-stale`：包含 `ageMs` 与 `maxAgeMs`。
+- `paneforge-snapshot-future`：snapshot 超出允许的未来时钟偏差，包含
   `futureByMs` 与 `maxFutureSkewMs`。
 
 默认 freshness threshold 是 24 小时，默认 future clock skew 是 5 分钟。stale 或
@@ -162,9 +162,9 @@ derived projection，不作为新鲜运行事实使用。
 节点类型：
 
 - `codex-thread`
-- `ccpanes-launch`
-- `ccpanes-session`
-- `ccpanes-task`
+- `paneforge-launch`
+- `paneforge-session`
+- `paneforge-task`
 
 边类型：
 
@@ -176,7 +176,7 @@ derived projection，不作为新鲜运行事实使用。
 - `controller-for`
 
 graph 只连接 typed evidence 或 snapshot 中的显式 ID 引用，不按 title 或时间接近程度
-猜测 join。它不替代 Codex 的 thread/state authority，也不替代 CC-Panes 的
+猜测 join。它不替代 Codex 的 thread/state authority，也不替代 PaneForge 的
 Pane/Session/PTY 与任务 authority。
 
 graph boundary 会重新验证外部 Codex thread ID、snapshot identity/reference ID
@@ -349,12 +349,12 @@ node dist/src/cli.js codex-sessions scan `
   --out live/codex-session-index-v2.json
 ```
 
-可选地显式加入 CC-Panes snapshot：
+可选地显式加入 PaneForge snapshot：
 
 ```powershell
 node dist/src/cli.js codex-sessions scan `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --out live/codex-session-index-v2.json
 ```
 
@@ -366,7 +366,7 @@ node dist/src/cli.js codex-sessions resolve `
 
 node dist/src/cli.js codex-sessions resolve `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --json
 ```
 
@@ -376,7 +376,7 @@ node dist/src/cli.js codex-sessions resolve `
 New-Item -ItemType Directory -Force -Path live | Out-Null
 node dist/src/cli.js codex-sessions resolve `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --json | Set-Content -LiteralPath live/codex-session-resolution-v2.json -Encoding utf8
 ```
 
@@ -385,7 +385,7 @@ node dist/src/cli.js codex-sessions resolve `
 ```powershell
 node dist/src/cli.js codex-sessions resolve `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --include-archived `
   --include-subagents `
   --include-related `
@@ -398,7 +398,7 @@ node dist/src/cli.js codex-sessions resolve `
 ```powershell
 node dist/src/cli.js codex-sessions retention `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --out live/session-retention-manifest.json
 ```
 
@@ -407,7 +407,7 @@ node dist/src/cli.js codex-sessions retention `
 ```powershell
 node dist/src/cli.js codex-sessions graph `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json
+  --paneforge-snapshot live/paneforge-session-snapshot.json
 ```
 
 也可以显式指定 graph 输出：
@@ -415,7 +415,7 @@ node dist/src/cli.js codex-sessions graph `
 ```powershell
 node dist/src/cli.js codex-sessions graph `
   --project {workspace-root}\tool\repos\hooks `
-  --ccpanes-snapshot live/ccpanes-session-snapshot.json `
+  --paneforge-snapshot live/paneforge-session-snapshot.json `
   --out live/session-federation.json
 ```
 
@@ -423,7 +423,7 @@ node dist/src/cli.js codex-sessions graph `
 
 ```powershell
 node dist/src/cli.js handoff generate `
-  --mode ccpanes-worker `
+  --mode paneforge-worker `
   --project {workspace-root}\tool\repos\hooks `
   --index live/codex-session-index-v2.json
 
@@ -455,5 +455,5 @@ typed fail；仅显示用的 index/thread/cwd 不安全时显示 `unknown`，不
 SQLite 使用只读连接；JSONL 仅读取有界首段和尾段，坏行与缺失来源进入 projection
 warnings。
 
-`ccpanes-worker` 面向终端、测试和批量工程改动；`codex-app-visual` 面向浏览器、截图和
+`paneforge-worker` 面向终端、测试和批量工程改动；`codex-app-visual` 面向浏览器、截图和
 前端视觉验证。两种模式共享相同的窄 session scope、项目边界与验证文案。

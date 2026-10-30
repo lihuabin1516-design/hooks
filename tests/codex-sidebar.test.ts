@@ -267,7 +267,7 @@ describe('createSidebarPlan selection', () => {
       actions: [{
         threadId: 'cli-hidden',
         currentName: null,
-        desiredName: '[CC-Panes] Run task',
+        desiredName: '[PaneForge] Run task',
         currentPinned: false,
         desiredPinned: true,
         nameAdapter: 'app-server',
@@ -387,7 +387,7 @@ describe('createSidebarPlan names and digest', () => {
       {
         threadId: 'renamed',
         currentName: 'My old custom thread',
-        desiredName: '[CC-Panes] Generated title',
+        desiredName: '[PaneForge] Generated title',
         desiredPinned: true
       }
     ]);
@@ -422,7 +422,7 @@ describe('createSidebarPlan names and digest', () => {
       {
         threadId: 'empty-name',
         currentName: null,
-        desiredName: '[CC-Panes] Generated title'
+        desiredName: '[PaneForge] Generated title'
       },
       {
         threadId: 'name-121',
@@ -490,7 +490,7 @@ describe('createSidebarPlan names and digest', () => {
     const desiredName = plan.actions[0]?.desiredName ?? '';
 
     expect(Array.from(desiredName)).toHaveLength(120);
-    expect(desiredName).toBe(`[CC-Panes] ${'😀'.repeat(109)}`);
+    expect(desiredName).toBe(`[PaneForge] ${'😀'.repeat(109)}`);
     expect(desiredName).not.toContain('\uFFFD');
   });
 
@@ -503,7 +503,7 @@ describe('createSidebarPlan names and digest', () => {
     });
 
     expect(plan.actions[0]?.desiredName)
-      .toBe('[CC-Panes] Codex CLI thread');
+      .toBe('[PaneForge] Codex CLI thread');
     expect(JSON.stringify(plan)).not.toContain(secret);
   });
 
@@ -525,7 +525,7 @@ describe('createSidebarPlan names and digest', () => {
       });
 
       expect(plan.actions[0]?.desiredName)
-        .toBe('[CC-Panes] Codex CLI thread');
+        .toBe('[PaneForge] Codex CLI thread');
       expect(JSON.stringify(plan)).not.toContain(marker);
       expect(validateSidebarPlan(plan)).toEqual(plan);
     }
@@ -790,7 +790,7 @@ describe('validateSidebarPlan', () => {
     expect(validateSidebarPlan(value)).toMatchObject({
       actions: [{
         currentName: null,
-        desiredName: '[CC-Panes] Run task'
+        desiredName: '[PaneForge] Run task'
       }]
     });
   });
@@ -1066,9 +1066,9 @@ describe('applySidebarPlan', () => {
     });
 
     expect(calls).toEqual([
-      'set:thread-a:[CC-Panes] Alpha',
+      'set:thread-a:[PaneForge] Alpha',
       'read:thread-a',
-      'set:thread-z:[CC-Panes] Zulu',
+      'set:thread-z:[PaneForge] Zulu',
       'read:thread-z'
     ]);
     expect(result).toMatchObject({
@@ -1079,8 +1079,8 @@ describe('applySidebarPlan', () => {
           threadId: 'thread-a',
           previousName: null,
           previousPinned: false,
-          desiredName: '[CC-Panes] Alpha',
-          finalName: '[CC-Panes] Alpha',
+          desiredName: '[PaneForge] Alpha',
+          finalName: '[PaneForge] Alpha',
           status: 'name-applied',
           error: null
         },
@@ -1088,8 +1088,8 @@ describe('applySidebarPlan', () => {
           threadId: 'thread-z',
           previousName: null,
           previousPinned: false,
-          desiredName: '[CC-Panes] Zulu',
-          finalName: '[CC-Panes] Zulu',
+          desiredName: '[PaneForge] Zulu',
+          finalName: '[PaneForge] Zulu',
           status: 'name-applied',
           error: null
         }
@@ -1145,7 +1145,7 @@ describe('applySidebarPlan', () => {
     const tampered = clonePlan(plan);
     tampered.actions = [{
       ...plan.actions[0],
-      desiredName: '[CC-Panes] Tampered'
+      desiredName: '[PaneForge] Tampered'
     }];
     await expect(applySidebarPlan({
       plan: tampered as unknown as SidebarPlan,
@@ -3125,7 +3125,7 @@ describe('SidebarApplyResult execution binding', () => {
       confirmDigest: plan.digest,
       currentNames: new Map([['thread-1', null]]),
       setName: async () => {},
-      readName: async () => '[CC-Panes] Run task'
+      readName: async () => '[PaneForge] Run task'
     });
     const executionDigest = (result as unknown as {
       executionDigest: string;

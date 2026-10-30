@@ -18,7 +18,7 @@ async function writeGoLiveManifest(approved = true): Promise<string> {
   await fs.writeFile(configPath, configText, 'utf8');
   await fs.mkdir(path.dirname(manifestPath), { recursive: true });
   await fs.writeFile(manifestPath, `${JSON.stringify({
-    schema: 'ccpanes.hook-go-live-approval-package.v1',
+    schema: 'paneforge.hook-go-live-approval-package.v1',
     mode: 'manual-approval-package',
     createdAt: '2026-08-06T00:00:00.000Z',
     outDir: path.dirname(manifestPath),
@@ -51,7 +51,7 @@ async function writeGoLiveManifest(approved = true): Promise<string> {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-final-runbook-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-final-runbook-'));
 });
 
 afterEach(async () => {
@@ -69,7 +69,7 @@ describe('createHookFinalRunbook', () => {
       now: '2026-08-06T00:00:01.000Z'
     });
 
-    expect(manifest.schema).toBe('ccpanes.hook-final-runbook.v1');
+    expect(manifest.schema).toBe('paneforge.hook-final-runbook.v1');
     expect(manifest.mode).toBe('manual-execution-runbook');
     expect(manifest.goLive.manualApproval.approved).toBe(true);
     await expect(fs.stat(path.join(outDir, 'manifest.json'))).resolves.toBeTruthy();

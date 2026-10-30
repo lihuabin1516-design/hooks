@@ -9,8 +9,8 @@ import type { RuntimeIdentity } from '../src/runtime-identity.js';
 let tempRoot: string;
 
 const runtimeIdentity: RuntimeIdentity = {
-  schema: 'ccpanes.runtime-identity.v1',
-  packageName: 'ccpanes-hooks-tooling',
+  schema: 'paneforge.runtime-identity.v1',
+  packageName: 'paneforge-hooks-tooling',
   packageVersion: '0.1.0',
   gitCommit: 'abc123',
   gitDirty: false,
@@ -21,9 +21,9 @@ const runtimeIdentity: RuntimeIdentity = {
 
 function task(root: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -39,7 +39,7 @@ function task(root: string): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-post-audit-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-post-audit-'));
 });
 
 afterEach(async () => {
@@ -58,7 +58,7 @@ describe('createPostToolUseAuditRecord', () => {
     }, runtimeIdentity);
 
     expect(record).toMatchObject({
-      schema: 'ccpanes.post-tool-use-audit.v1',
+      schema: 'paneforge.post-tool-use-audit.v1',
       taskId: 'task-alpha',
       cwd: tempRoot,
       toolName: 'Bash',

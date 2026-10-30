@@ -62,7 +62,7 @@
 - Modify: `src/host-adapter-registry.ts`
 - Modify: `tests/host-adapter-registry.test.ts`
 - Modify: `scripts/smoke.mjs`
-- Modify: `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`
+- Modify: `docs/PANEFORGE-HOOK-HOST-ADAPTER-MATRIX.md`
 - Modify: `docs/PONYTAIL-ADOPTION.md`
 - Modify: `README.md`
 - Modify: `PROJECT-DIRECTORY.md`
@@ -78,7 +78,7 @@
 - [ ] Run `npm run build`.
 - [ ] Run `npm run smoke`.
 - [ ] Run `git diff --check`.
-- [ ] Inspect task diff and status without touching `.ccpanes/` or `CLAUDE.md`.
+- [ ] Inspect task diff and status without touching `.paneforge/` or `CLAUDE.md`.
 
 ### Task 6: Publish repository change
 
@@ -94,7 +94,7 @@
   `{user-home}\.codex\config.toml`.
 - [ ] Snapshot `hooks.json` to the task audit directory.
 - [ ] Synchronize the committed runtime files from the repo into
-  `{workspace-root}\tool\experiments\ccpanes-task-probe`.
+  `{workspace-root}\tool\experiments\paneforge-task-probe`.
 - [ ] Install dependencies only if the existing live dependency tree is
   insufficient; otherwise reuse it.
 - [ ] Build and test in the live root.
@@ -111,6 +111,6 @@
 - [ ] Submit a synthetic official Codex `UserPromptSubmit` event to the live
   command and verify bounded additional context and an audit record.
 - [ ] Start a fresh Codex task in the project and verify a code prompt produces
-  `ccpanes.workflow-advisory.v1` context while a documentation prompt does not.
+  `paneforge.workflow-advisory.v1` context while a documentation prompt does not.
 - [ ] Record and verify final acceptance evidence with artifact hashes and all
   required truth layers.

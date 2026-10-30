@@ -11,7 +11,7 @@ export interface ProductionToolkitFile {
 }
 
 export interface ProductionToolkitManifest {
-  schema: 'ccpanes.production-toolkit-manifest.v1';
+  schema: 'paneforge.production-toolkit-manifest.v1';
   mode: 'reviewable-production-toolkit';
   createdAt: string;
   outDir: string;
@@ -45,9 +45,9 @@ export interface CreateProductionToolkitInput {
 const forbiddenToolkitOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeToolkitOutDir(outDir: string): void {
@@ -143,12 +143,12 @@ function createRollbackScript(input: CreateProductionToolkitInput): string {
 
 function createReadme(input: CreateProductionToolkitInput): string {
   return [
-    '# CC-Panes Hook Production Toolkit',
+    '# PaneForge Hook Production Toolkit',
     '',
-    'This package installs and verifies the CC-Panes task hook stack:',
+    'This package installs and verifies the PaneForge task hook stack:',
     '',
     '- SessionStart: inject task lifecycle context.',
-    '- UserPromptSubmit: chain skills-hub routing, CC-Panes plan lifecycle intake, and the production workflow advisory.',
+    '- UserPromptSubmit: chain skills-hub routing, PaneForge plan lifecycle intake, and the production workflow advisory.',
     '- PreToolUse: block out-of-bound writes before tool execution.',
     '- PermissionRequest: deny risky escalation requests.',
     '- PostToolUse: append per-task audit JSONL.',
@@ -158,7 +158,7 @@ function createReadme(input: CreateProductionToolkitInput): string {
     '',
     '- `INSTALL-HOOKS.ps1`: backs up and merges hook entries into hooks.json.',
     '- `VERIFY-INSTALLED.ps1`: runs read-only installed hook verification.',
-    '- `BOOTSTRAP-PROJECT.ps1`: runs `bootstrap-project`, which writes `<project>/.ccpanes-task/current-task.json`, injects the managed `AGENTS.md` hook entry, initializes `policy.md` / `policy.json`, and records `bootstrap-report.json`.',
+    '- `BOOTSTRAP-PROJECT.ps1`: runs `bootstrap-project`, which writes `<project>/.paneforge-task/current-task.json`, injects the managed `AGENTS.md` hook entry, initializes `policy.md` / `policy.json`, and records `bootstrap-report.json`.',
     '- `ROLLBACK-HOOKS.ps1`: restores hooks.json from a captured backup.',
     '',
     '## Required review order',
@@ -195,7 +195,7 @@ export async function createProductionToolkit(input: CreateProductionToolkitInpu
   files.push(await writeTextFile(path.join(input.outDir, 'PRODUCTION-README.md'), createReadme(input), 'production-readme'));
 
   const manifestWithoutFile: Omit<ProductionToolkitManifest, 'files'> = {
-    schema: 'ccpanes.production-toolkit-manifest.v1',
+    schema: 'paneforge.production-toolkit-manifest.v1',
     mode: 'reviewable-production-toolkit',
     createdAt: now,
     outDir: input.outDir,

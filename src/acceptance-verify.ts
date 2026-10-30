@@ -27,7 +27,7 @@ export interface CheckVerifyResult {
 }
 
 export interface AcceptanceVerifyResult {
-  schema: 'ccpanes.acceptance.verify.v1';
+  schema: 'paneforge.acceptance.verify.v1';
   taskId: string;
   passed: boolean;
   artifactResults: ArtifactVerifyResult[];
@@ -108,7 +108,7 @@ export async function verifyAcceptanceEvidence(evidence: AcceptanceEvidence, ver
   }
 
   return {
-    schema: 'ccpanes.acceptance.verify.v1',
+    schema: 'paneforge.acceptance.verify.v1',
     taskId: evidence.taskId,
     passed: failures.length === 0 && summary.completionAllowed,
     artifactResults,

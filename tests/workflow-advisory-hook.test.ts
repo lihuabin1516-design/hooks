@@ -15,7 +15,7 @@ let tempRoot: string;
 
 function task(root: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-advisory',
     workspace: 'hooks',
     projectPath: root,
@@ -33,7 +33,7 @@ function task(root: string): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-workflow-advisory-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-workflow-advisory-'));
 });
 
 afterEach(async () => {
@@ -83,14 +83,14 @@ describe('workflow advisory hook', () => {
       }
     });
     const context = result.output?.hookSpecificOutput.additionalContext ?? '';
-    expect(context).toContain('ccpanes.workflow-advisory.v1');
-    expect(context).toContain('ccpanes.implementation-standard.v1');
+    expect(context).toContain('paneforge.workflow-advisory.v1');
+    expect(context).toContain('paneforge.implementation-standard.v1');
     expect(context).toContain('level: production-grade');
     expect(context).toContain('optimizationTarget: unnecessary-complexity');
     expect(context).toContain('authority: advisory only');
     expect(context.length).toBeLessThanOrEqual(WORKFLOW_ADVISORY_CONTEXT_LIMIT);
     expect(result.audit).toMatchObject({
-      schema: 'ccpanes.workflow-advisory-audit.v1',
+      schema: 'paneforge.workflow-advisory-audit.v1',
       taskId: 'task-advisory',
       routeId: 'production-gate',
       injected: true,

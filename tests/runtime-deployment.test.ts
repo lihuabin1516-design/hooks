@@ -20,7 +20,7 @@ let tempRoot: string;
 const execFileAsync = promisify(execFile);
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-runtime-deployment-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-runtime-deployment-'));
 });
 
 afterEach(async () => {
@@ -48,8 +48,8 @@ async function sourceBuild(name: string, _commit: string, dependencies: Record<s
   await fs.writeFile(path.join(sourceRoot, 'mcp-server.js'), `export const server = '${name}';\n`, 'utf8');
   const buildSha256 = await computeRuntimeBuildSha256(sourceRoot);
   await fs.writeFile(path.join(sourceRoot, 'runtime-identity.json'), `${JSON.stringify({
-    schema: 'ccpanes.runtime-identity.v1',
-    packageName: 'ccpanes-hooks-tooling',
+    schema: 'paneforge.runtime-identity.v1',
+    packageName: 'paneforge-hooks-tooling',
     packageVersion: '0.1.0',
     gitCommit: actualCommit,
     gitDirty: false,
@@ -72,7 +72,7 @@ describe('versioned runtime deployment', () => {
     const first = await deployRuntime({ sourceDir, runtimeRoot, allowRoots: [tempRoot], now: '2026-09-15T00:00:01.000Z' });
     const repeated = await deployRuntime({ sourceDir, runtimeRoot, allowRoots: [tempRoot], now: '2026-09-15T00:00:02.000Z' });
 
-    expect(first).toMatchObject({ schema: 'ccpanes.runtime-deployment.v1', action: 'deploy', changed: true });
+    expect(first).toMatchObject({ schema: 'paneforge.runtime-deployment.v1', action: 'deploy', changed: true });
     expect(repeated).toMatchObject({ action: 'deploy', changed: false, releaseId: first.releaseId });
     expect((await pointer(runtimeRoot, 'current.json')).releaseId).toBe(first.releaseId);
     await expect(fs.readFile(path.join(first.releasePath, 'dist', 'src', 'cli.js'), 'utf8')).resolves.toContain("build = 'one'");
@@ -214,7 +214,7 @@ describe('versioned runtime deployment', () => {
     ]));
 
     expect(report).toMatchObject({
-      schema: 'ccpanes.runtime-deployment.v1',
+      schema: 'paneforge.runtime-deployment.v1',
       action: 'deploy',
       changed: true,
       runtimeRoot
@@ -225,7 +225,7 @@ describe('versioned runtime deployment', () => {
       '--allow-root', tempRoot
     ]));
     expect(recovery).toMatchObject({
-      schema: 'ccpanes.runtime-recovery.v1',
+      schema: 'paneforge.runtime-recovery.v1',
       recoveredAction: 'none',
       changed: false
     });
@@ -238,7 +238,7 @@ describe('versioned runtime deployment', () => {
     const from = await pointer(runtimeRoot, 'current.json');
     const to = await pointer(runtimeRoot, 'previous.json');
     const pending: RuntimeRollbackPending = {
-      schema: 'ccpanes.runtime-rollback-pending.v1',
+      schema: 'paneforge.runtime-rollback-pending.v1',
       from,
       to,
       startedAt: '2026-09-15T00:00:03.000Z'
@@ -282,7 +282,7 @@ describe('versioned runtime deployment', () => {
     const to = await pointer(runtimeRoot, 'current.json');
     await fs.writeFile(path.join(runtimeRoot, 'current.json'), JSON.stringify(from), 'utf8');
     const pending: RuntimeDeployPending = {
-      schema: 'ccpanes.runtime-deploy-pending.v1',
+      schema: 'paneforge.runtime-deploy-pending.v1',
       from,
       to,
       startedAt: '2026-09-15T00:00:04.000Z'

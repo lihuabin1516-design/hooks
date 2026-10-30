@@ -33,34 +33,34 @@ export function probeResume(input: ProbeInput): ResumeProbeResult {
   const checkedAt = input.now ?? new Date().toISOString();
 
   if (isExplicitNewWork(input.utterance)) {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'out_of_scope', reason: 'explicit_new_unrelated_work', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'out_of_scope', reason: 'explicit_new_unrelated_work', candidates, checkedAt };
   }
 
   if (!hasResumeIntent(input.utterance) && candidates.length === 0) {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'none', reason: 'no_resume_intent', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'none', reason: 'no_resume_intent', candidates, checkedAt };
   }
 
   if (candidates.length === 0) {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'none', reason: 'no_candidates', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'none', reason: 'no_candidates', candidates, checkedAt };
   }
 
   if (candidates.length > 1) {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'ask_user', reason: 'multiple_candidates', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'ask_user', reason: 'multiple_candidates', candidates, checkedAt };
   }
 
   const only = candidates[0];
   if (!only) {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'none', reason: 'no_candidates', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'none', reason: 'no_candidates', candidates, checkedAt };
   }
   if (only.status === 'missing') {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'ask_user', reason: 'missing_worktree', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'ask_user', reason: 'missing_worktree', candidates, checkedAt };
   }
   if (!only.ownerMatches) {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'ask_user', reason: 'owner_mismatch', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'ask_user', reason: 'owner_mismatch', candidates, checkedAt };
   }
   if (only.status === 'dirty') {
-    return { schema: 'ccpanes.resume-probe.v1', action: 'ask_user', reason: 'dirty_worktree', candidates, checkedAt };
+    return { schema: 'paneforge.resume-probe.v1', action: 'ask_user', reason: 'dirty_worktree', candidates, checkedAt };
   }
 
-  return { schema: 'ccpanes.resume-probe.v1', action: 'auto_resume', reason: 'single_clean_matching_candidate', candidates, checkedAt };
+  return { schema: 'paneforge.resume-probe.v1', action: 'auto_resume', reason: 'single_clean_matching_candidate', candidates, checkedAt };
 }

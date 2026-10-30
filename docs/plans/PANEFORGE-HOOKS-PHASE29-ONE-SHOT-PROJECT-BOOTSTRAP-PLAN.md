@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 29 — One-shot Project Bootstrap Plan
+# PaneForge Hooks Phase 29 — One-shot Project Bootstrap Plan
 
 日期：2026-08-07
 目标仓库：`{workspace-root}\tool\repos\hooks`
@@ -6,7 +6,7 @@
 
 ## Change Contract
 
-Intent: 将新项目接入收敛为一个 `bootstrap-project` 命令，避免用户或 CC-Panes 分别调用多条 setup 命令。
+Intent: 将新项目接入收敛为一个 `bootstrap-project` 命令，避免用户或 PaneForge 分别调用多条 setup 命令。
 Authorized Mutation:
 - 修改 hooks 仓库源码、测试、模板、README、smoke、production toolkit。
 - commit 并 push 到远端 `main`。
@@ -15,15 +15,15 @@ In Scope:
 - 新增 `src/project-bootstrap.ts`。
 - 新增 CLI：`bootstrap-project --root <project-root> --task-id <task-id> --phase <phase>`。
 - 一键写入/维护：
-  - `.ccpanes-task/current-task.json`
+  - `.paneforge-task/current-task.json`
   - `AGENTS.md` managed block
-  - `.ccpanes-task/policy.md`
-  - `.ccpanes-task/policy.json`
-  - `.ccpanes-task/bootstrap-report.json`
+  - `.paneforge-task/policy.md`
+  - `.paneforge-task/policy.json`
+  - `.paneforge-task/bootstrap-report.json`
 - `BOOTSTRAP-PROJECT.ps1` 委托给 `bootstrap-project`。
 Out of Scope:
 - 不批量扫描或改写所有项目。
-- 不写用户级 Codex / CC-Panes 配置。
+- 不写用户级 Codex / PaneForge 配置。
 - 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 Expected Behavior:

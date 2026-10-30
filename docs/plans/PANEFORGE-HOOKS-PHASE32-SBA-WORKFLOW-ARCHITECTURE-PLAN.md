@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 32 — SBA Workflow Architecture Plan
+# PaneForge Hooks Phase 32 — SBA Workflow Architecture Plan
 
 日期：2026-08-07
 目标仓库：`{workspace-root}\tool\repos\hooks`
@@ -6,7 +6,7 @@
 
 ## Change Contract
 
-Intent: 将 skill-based-architecture 的长期工作流思想本地化到 CC-Panes hooks
+Intent: 将 skill-based-architecture 的长期工作流思想本地化到 PaneForge hooks
 工具层：保留当前可执行 hook 门禁主轴，同时增加可机器读取的任务路由、渐进严格度、
 闭环强度和验收检查建议。
 
@@ -17,16 +17,16 @@ Authorized Mutation:
 In Scope:
 - 新增 `src/workflow-profile.ts` 作为 SBA 适配 owner。
 - 新增 CLI：`classify-workflow --prompt <text> --cwd <project-root> --changed-path <path>`。
-- 输出 schema：`ccpanes.workflow-profile.v1`。
+- 输出 schema：`paneforge.workflow-profile.v1`。
 - 将任务分到 read-only review、project bootstrap、project policy、hook runtime、
   production gate、implementation、documentation、other。
 - 将闭环强度分为 none / light / full / production，并给出本地、审计、生产检查建议。
-- 更新 `templates/AGENTS.ccpanes-hooks.md`，让新项目的托管块指向 workflow profile。
+- 更新 `templates/AGENTS.paneforge-hooks.md`，让新项目的托管块指向 workflow profile。
 
 Out of Scope:
 - 不把外部仓库作为运行时依赖。
 - 不整体迁移到 `skills/<name>/` 目录树。
-- 不写 `{user-home}\.codex`、`{user-home}\.claude`、`{user-home}\.cc-panes`。
+- 不写 `{user-home}\.codex`、`{user-home}\.claude`、`{user-home}\.paneforge`。
 - 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `{workspace-root}\tool\repos\comet` / `{workspace-root}\tool\repos\fastctx` 内容。
 
@@ -67,11 +67,11 @@ Owners:
 - `task-risk.ts`：prompt 级 Light / Standard / Heavy 事实信号。
 - `workflow-profile.ts`：路由、闭环强度和检查建议。
 - `hook-enforce` / `permission-enforce`：实际写入和权限 hard gate。
-- `.ccpanes-task/current-task.json`：任务 scope authority。
-- `.ccpanes-task/policy.json`：机械 policy authority。
+- `.paneforge-task/current-task.json`：任务 scope authority。
+- `.paneforge-task/policy.json`：机械 policy authority。
 
 Rejected Alternatives:
-- 全量迁移到 `skills/ccpanes-hooks/`：当前工具层已有清晰 TypeScript owner 和长期
+- 全量迁移到 `skills/paneforge-hooks/`：当前工具层已有清晰 TypeScript owner 和长期
   文档，不应为了形态完整引入重复权威源。
 - 只更新文档不加 CLI：长期工作流会停留在提示词层，不能被 smoke / UI / hook 输出复用。
 - 把 workflow profile 变成阻断门禁：会和现有 hard gate authority 冲突。

@@ -5,7 +5,7 @@ import { describe, expect, test } from 'vitest';
 
 function runNpmScript(scriptName: string): string {
   const env = { ...process.env };
-  delete env.CCPANES_TASK_SEARCH_ROOT;
+  delete env.PANEFORGE_TASK_SEARCH_ROOT;
   if (process.platform === 'win32') {
     return execFileSync('cmd.exe', ['/d', '/s', '/c', `npm run ${scriptName}`], { encoding: 'utf8', env });
   }

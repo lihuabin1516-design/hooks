@@ -13,7 +13,7 @@
 
 本轮唯一目标：只读评估外部项目，判断它应该：
 A. 吸收到 `hooks`；
-B. 吸收到 `{workspace-root}\tool\repos\ccpanes-skills`；
+B. 吸收到 `{workspace-root}\tool\repos\paneforge-skills`；
 C. 新建独立仓库；
 D. 只记录参考，暂不吸收。
 
@@ -21,14 +21,14 @@ D. 只记录参考，暂不吸收。
 1. {workspace-root}\tool\repos\hooks\README.md
 2. {workspace-root}\tool\repos\hooks\PROJECT-DIRECTORY.md
 3. {workspace-root}\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
-4. {workspace-root}\tool\repos\hooks\docs\CCPANES-SKILLS-REPO-RELATION.md
+4. {workspace-root}\tool\repos\hooks\docs\PANEFORGE-SKILLS-REPO-RELATION.md
 5. 如涉及现有能力，读取对应 `src/` owner、`tests/`、已有 `docs/*-ADOPTION.md`
 
 授权：
 - 默认只读。
 - 可以把外部仓库 clone 到系统临时目录进行检查。
 - 可以运行只读 Git / 文件检查和公开仓库元数据检查。
-- 不修改 `hooks`、`ccpanes-skills`、用户全局配置、reference repo、远端仓库或 Git staging。
+- 不修改 `hooks`、`paneforge-skills`、用户全局配置、reference repo、远端仓库或 Git staging。
 
 执行顺序：
 1. 记录 `hooks` 的 git root、branch、HEAD、status，说明已有未提交改动。
@@ -36,7 +36,7 @@ D. 只记录参考，暂不吸收。
 3. 判断项目性质：机器权威层、agent 行为层、独立运行时/产品、纯参考资料，或混合。
 4. 对照路由矩阵：
    - 影响 hook runtime、task scope、policy、permission、audit、acceptance、CLI schema、live verification => `hooks`。
-   - 价值是 prompt、skill、workflow、review、triage、handoff、domain glossary、agent 协作方法 => `ccpanes-skills`。
+   - 价值是 prompt、skill、workflow、review、triage、handoff、domain glossary、agent 协作方法 => `paneforge-skills`。
    - 有独立 runtime、benchmark、数据集、UI、插件、服务、发布生命周期 => 新建仓库。
    - 当前没有明确 owner 或收益不足 => 只记录参考。
 5. 给出采纳边界：采纳点、排除点、不得外推的能力、license/引用注意事项。
@@ -48,7 +48,7 @@ D. 只记录参考，暂不吸收。
 - 路由矩阵：为什么进入该 owner，为什么不进入另外两个 owner。
 - 采纳计划：最小 artifact、owner 文件、验证方式、回退方式。
 - 风险：license、依赖、运行时、配置写入、scope creep、维护成本。
-- 下一步提示词：如果进入 `ccpanes-skills`，引用 `{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-INTO-SKILLS-REPO.md`；如果进入 `hooks`，写出 hooks 内部实施目标；如果新建仓库，写出新仓库初始化目标；如果只记录参考，写出记录路径和触发条件。
+- 下一步提示词：如果进入 `paneforge-skills`，引用 `{workspace-root}\tool\repos\paneforge-skills\prompts\ABSORB-INTO-SKILLS-REPO.md`；如果进入 `hooks`，写出 hooks 内部实施目标；如果新建仓库，写出新仓库初始化目标；如果只记录参考，写出记录路径和触发条件。
 
 停止条件：
 - 无法获取外部项目内容。

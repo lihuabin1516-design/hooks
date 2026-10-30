@@ -9,14 +9,14 @@ import { deployRuntime } from '../dist/src/runtime-deployment.js';
 
 const auditRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'gzl-hooks-mcp-smoke-'));
 const projectRoot = path.join(auditRoot, 'project-alpha');
-const taskDir = path.join(projectRoot, '.ccpanes-task');
+const taskDir = path.join(projectRoot, '.paneforge-task');
 const currentTaskPath = path.join(taskDir, 'current-task.json');
 const acceptancePath = path.join(taskDir, 'acceptance.json');
 const trustedCliPath = path.resolve('dist/src/cli.js');
 const runtimeIdentity = JSON.parse(await fs.readFile(path.resolve('dist/src/runtime-identity.json'), 'utf8'));
 const taskAuditDir = path.join(auditRoot, Buffer.from('mcp-smoke', 'utf8').toString('base64url'));
 const task = {
-  schema: 'ccpanes.task-selection.v1',
+  schema: 'paneforge.task-selection.v1',
   taskId: 'mcp-smoke',
   workspace: 'mcp-smoke-workspace',
   projectPath: projectRoot,

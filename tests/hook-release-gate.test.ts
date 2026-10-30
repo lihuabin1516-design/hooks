@@ -11,9 +11,9 @@ let tempRoot: string;
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: path.join(tempRoot, 'project-alpha'),
     worktreeRoot: path.join(tempRoot, 'project-alpha'),
     mainRepoRoot: null,
@@ -29,7 +29,7 @@ function task(): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-release-gate-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-release-gate-'));
 });
 
 afterEach(async () => {
@@ -49,7 +49,7 @@ describe('createHookReleaseGate', () => {
 
     const manifest = await createHookPackage({
       task: task(),
-      prototypeRoot: 'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      prototypeRoot: 'D:/paneforge/tool/experiments/paneforge-task-probe',
       target: 'both',
       upstreamHookPath: upstreamHook,
       outDir,
@@ -65,7 +65,7 @@ describe('createHookReleaseGate', () => {
       now: '2026-08-06T00:00:08.000Z'
     });
 
-    expect(gate.schema).toBe('ccpanes.hook-release-gate.v1');
+    expect(gate.schema).toBe('paneforge.hook-release-gate.v1');
     expect(gate.mode).toBe('final-preflight');
     expect(gate.passed).toBe(true);
     expect(gate.failures).toEqual([]);

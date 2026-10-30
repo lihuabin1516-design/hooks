@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { isPathInside } from './paths.js';
 
 export interface AgentsInstallResult {
-  schema: 'ccpanes.agents-entry-result.v1';
+  schema: 'paneforge.agents-entry-result.v1';
   path: string;
   changed: boolean;
   action: 'created' | 'updated' | 'unchanged';
@@ -13,15 +13,15 @@ export interface AgentsInstallResult {
 }
 
 export interface AgentsValidateResult {
-  schema: 'ccpanes.agents-entry-validate.v1';
+  schema: 'paneforge.agents-entry-validate.v1';
   path: string;
   exists: boolean;
   markerPresent: boolean;
   valid: boolean;
 }
 
-export const AGENTS_BEGIN_MARKER = '<!-- ccpanes-hooks:begin -->';
-export const AGENTS_END_MARKER = '<!-- ccpanes-hooks:end -->';
+export const AGENTS_BEGIN_MARKER = '<!-- paneforge-hooks:begin -->';
+export const AGENTS_END_MARKER = '<!-- paneforge-hooks:end -->';
 
 function agentsPath(projectRoot: string): string {
   return path.join(projectRoot, 'AGENTS.md');
@@ -30,8 +30,8 @@ function agentsPath(projectRoot: string): string {
 function defaultTemplateCandidates(): string[] {
   const here = path.dirname(fileURLToPath(import.meta.url));
   return [
-    path.resolve(here, '..', '..', 'templates', 'AGENTS.ccpanes-hooks.md'),
-    path.resolve(here, '..', 'templates', 'AGENTS.ccpanes-hooks.md')
+    path.resolve(here, '..', '..', 'templates', 'AGENTS.paneforge-hooks.md'),
+    path.resolve(here, '..', 'templates', 'AGENTS.paneforge-hooks.md')
   ];
 }
 
@@ -99,7 +99,7 @@ export async function installAgentsEntry(projectRoot: string, templatePath?: str
   const { text, markerPresent } = mergeManagedBlock(existingText, renderManagedBlock(template.text));
   if (existingText === text) {
     return {
-      schema: 'ccpanes.agents-entry-result.v1',
+      schema: 'paneforge.agents-entry-result.v1',
       path: targetPath,
       changed: false,
       action: 'unchanged',
@@ -112,7 +112,7 @@ export async function installAgentsEntry(projectRoot: string, templatePath?: str
   await writeFile(tempPath, text, 'utf8');
   await rename(tempPath, targetPath);
   return {
-    schema: 'ccpanes.agents-entry-result.v1',
+    schema: 'paneforge.agents-entry-result.v1',
     path: targetPath,
     changed: true,
     action: existingText === null ? 'created' : 'updated',
@@ -130,7 +130,7 @@ export async function validateAgentsEntry(projectRoot: string): Promise<AgentsVa
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
       return {
-        schema: 'ccpanes.agents-entry-validate.v1',
+        schema: 'paneforge.agents-entry-validate.v1',
         path: targetPath,
         exists: false,
         markerPresent: false,
@@ -143,7 +143,7 @@ export async function validateAgentsEntry(projectRoot: string): Promise<AgentsVa
   const end = text.indexOf(AGENTS_END_MARKER);
   const markerPresent = begin !== -1 && end !== -1 && end > begin;
   return {
-    schema: 'ccpanes.agents-entry-validate.v1',
+    schema: 'paneforge.agents-entry-validate.v1',
     path: targetPath,
     exists: true,
     markerPresent,

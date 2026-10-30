@@ -12,9 +12,9 @@ let tempRoot: string;
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: path.join(tempRoot, 'project-alpha'),
     worktreeRoot: path.join(tempRoot, 'project-alpha'),
     mainRepoRoot: null,
@@ -30,7 +30,7 @@ function task(): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-apply-plan-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-apply-plan-'));
 });
 
 afterEach(async () => {
@@ -51,7 +51,7 @@ describe('createHookApplyPlan', () => {
     execFileSync('git', ['init'], { cwd: repoPath, stdio: 'ignore' });
     const manifest = await createHookPackage({
       task: task(),
-      prototypeRoot: 'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      prototypeRoot: 'D:/paneforge/tool/experiments/paneforge-task-probe',
       target: 'both',
       upstreamHookPath: upstreamHook,
       outDir: packageDir,
@@ -73,7 +73,7 @@ describe('createHookApplyPlan', () => {
       now: '2026-08-06T00:00:11.000Z'
     });
 
-    expect(plan.schema).toBe('ccpanes.hook-apply-plan.v1');
+    expect(plan.schema).toBe('paneforge.hook-apply-plan.v1');
     expect(plan.mode).toBe('staged-review');
     expect(plan.releaseGatePassed).toBe(true);
     expect(plan.artifacts.map((artifact) => artifact.kind)).toEqual([

@@ -10,7 +10,7 @@ export interface HookProductionReadinessCheck {
 }
 
 export interface HookProductionReadinessReport {
-  schema: 'ccpanes.hook-production-readiness.v1';
+  schema: 'paneforge.hook-production-readiness.v1';
   mode: 'final-readiness';
   createdAt: string;
   ready: boolean;
@@ -35,9 +35,9 @@ export interface CreateHookProductionReadinessInput {
 const forbiddenReadinessOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -80,31 +80,31 @@ export async function createHookProductionReadiness(input: CreateHookProductionR
   addCheck(
     checks,
     'release gate',
-    releaseGate.schema === 'ccpanes.hook-release-gate.v1' && releaseGate.mode === 'final-preflight' && releaseGate.passed === true,
+    releaseGate.schema === 'paneforge.hook-release-gate.v1' && releaseGate.mode === 'final-preflight' && releaseGate.passed === true,
     `schema=${String(releaseGate.schema)} mode=${String(releaseGate.mode)} passed=${String(releaseGate.passed)}`
   );
   addCheck(
     checks,
     'approval check',
-    approvalCheck.schema === 'ccpanes.hook-approval-check.v1' && approvalCheck.mode === 'approval-preflight' && approvalCheck.passed === true,
+    approvalCheck.schema === 'paneforge.hook-approval-check.v1' && approvalCheck.mode === 'approval-preflight' && approvalCheck.passed === true,
     `schema=${String(approvalCheck.schema)} mode=${String(approvalCheck.mode)} passed=${String(approvalCheck.passed)}`
   );
   addCheck(
     checks,
     'write preview',
-    writePreview.schema === 'ccpanes.hook-write-preview.v1' && writePreview.mode === 'dry-run-write-preview' && writePreview.approvalCheckPassed === true,
+    writePreview.schema === 'paneforge.hook-write-preview.v1' && writePreview.mode === 'dry-run-write-preview' && writePreview.approvalCheckPassed === true,
     `schema=${String(writePreview.schema)} mode=${String(writePreview.mode)} approvalCheckPassed=${String(writePreview.approvalCheckPassed)}`
   );
   addCheck(
     checks,
     'synthetic apply',
-    applyReport.schema === 'ccpanes.hook-write-apply.v1' && applyReport.mode === 'guarded-apply' && applyReport.passed === true,
+    applyReport.schema === 'paneforge.hook-write-apply.v1' && applyReport.mode === 'guarded-apply' && applyReport.passed === true,
     `schema=${String(applyReport.schema)} mode=${String(applyReport.mode)} passed=${String(applyReport.passed)}`
   );
   addCheck(
     checks,
     'synthetic restore',
-    restoreReport.schema === 'ccpanes.hook-write-restore.v1' && restoreReport.mode === 'guarded-restore' && restoreReport.passed === true,
+    restoreReport.schema === 'paneforge.hook-write-restore.v1' && restoreReport.mode === 'guarded-restore' && restoreReport.passed === true,
     `schema=${String(restoreReport.schema)} mode=${String(restoreReport.mode)} passed=${String(restoreReport.passed)}`
   );
 
@@ -142,7 +142,7 @@ export async function createHookProductionReadiness(input: CreateHookProductionR
 
   const failures = checks.filter((check) => check.result === 'fail').map((check) => `${check.name}: ${check.evidence}`);
   return {
-    schema: 'ccpanes.hook-production-readiness.v1',
+    schema: 'paneforge.hook-production-readiness.v1',
     mode: 'final-readiness',
     createdAt: input.now ?? new Date().toISOString(),
     ready: failures.length === 0,

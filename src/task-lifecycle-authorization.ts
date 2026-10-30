@@ -110,7 +110,7 @@ function authorizeVerify(
   parsed: ParsedShellCommand
 ): HookCall | null {
   if (parsed.redirectTarget || parsed.tokens.length !== 5 || parsed.tokens[3] !== '--input') return null;
-  const acceptancePath = path.join(task.worktreeRoot, '.ccpanes-task', 'acceptance.json');
+  const acceptancePath = path.join(task.worktreeRoot, '.paneforge-task', 'acceptance.json');
   if (!pathEquals(resolveFromTask(task, parsed.tokens[4] ?? ''), acceptancePath)) return null;
   return {
     ...call,
@@ -126,14 +126,14 @@ function authorizeRecord(
   parsed: ParsedShellCommand
 ): HookCall | null {
   if (task.phase !== 'archive' || !parsed.redirectTarget) return null;
-  const acceptancePath = path.join(task.worktreeRoot, '.ccpanes-task', 'acceptance.json');
+  const acceptancePath = path.join(task.worktreeRoot, '.paneforge-task', 'acceptance.json');
   if (!pathEquals(resolveFromTask(task, parsed.redirectTarget), acceptancePath)) return null;
   if (!call.targetPath || !pathEquals(call.targetPath, acceptancePath)) return null;
 
   const flags = parseFlagPairs(parsed.tokens, new Set(['--task', '--artifact', '--check', '--truth']));
   if (!flags) return null;
   const taskPath = one(flags, '--task');
-  if (!taskPath || !pathEquals(resolveFromTask(task, taskPath), path.join(task.worktreeRoot, '.ccpanes-task', 'current-task.json'))) return null;
+  if (!taskPath || !pathEquals(resolveFromTask(task, taskPath), path.join(task.worktreeRoot, '.paneforge-task', 'current-task.json'))) return null;
   const artifacts = flags.get('--artifact') ?? [];
   if (artifacts.length === 0 || artifacts.some((artifact) => !isPathInside(task.worktreeRoot, resolveFromTask(task, artifact)))) return null;
   return {

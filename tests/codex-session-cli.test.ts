@@ -16,8 +16,8 @@ const codexSessionIoMocks = vi.hoisted(() => ({
 }));
 
 const sessionFederationMocks = vi.hoisted(() => ({
-  attachCcPanesAttribution: vi.fn<
-    typeof import('../src/session-federation.js').attachCcPanesAttribution
+  attachPaneForgeAttribution: vi.fn<
+    typeof import('../src/session-federation.js').attachPaneForgeAttribution
   >()
 }));
 
@@ -57,12 +57,12 @@ vi.mock('../src/session-federation.js', async (importOriginal) => {
   const actual = await importOriginal<
     typeof import('../src/session-federation.js')
   >();
-  sessionFederationMocks.attachCcPanesAttribution
-    .mockImplementation(actual.attachCcPanesAttribution);
+  sessionFederationMocks.attachPaneForgeAttribution
+    .mockImplementation(actual.attachPaneForgeAttribution);
   return {
     ...actual,
-    attachCcPanesAttribution:
-      sessionFederationMocks.attachCcPanesAttribution
+    attachPaneForgeAttribution:
+      sessionFederationMocks.attachPaneForgeAttribution
   };
 });
 
@@ -136,7 +136,7 @@ function clearCodexSessionIoMocks(): void {
   codexSessionIoMocks.snapshotReadFile.mockClear();
   codexSessionIoMocks.buildCodexSessionIndex.mockClear();
   codexSessionIoMocks.writeCodexSessionJson.mockClear();
-  sessionFederationMocks.attachCcPanesAttribution.mockClear();
+  sessionFederationMocks.attachPaneForgeAttribution.mockClear();
   resolverMocks.resolveCodexSessions.mockClear();
   handoffMocks.createRetentionManifest.mockClear();
 }
@@ -215,9 +215,9 @@ function validTaskContext(
   overrides: Record<string, unknown> = {}
 ): Record<string, unknown> {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: project,
     worktreeRoot: project,
     mainRepoRoot: null,
@@ -292,9 +292,9 @@ async function writeRollout(input: {
 }
 
 async function writeSnapshot(threadId = 'thread-1'): Promise<string> {
-  const snapshotPath = path.join(root, 'ccpanes-snapshot.json');
+  const snapshotPath = path.join(root, 'paneforge-snapshot.json');
   await fs.writeFile(snapshotPath, `${JSON.stringify({
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: '2026-08-15T00:10:00.000Z',
     launches: [{
       launchId: 'launch-1',
@@ -316,7 +316,7 @@ async function writeThreadBoundarySnapshot(input: {
 }): Promise<string> {
   const snapshotPath = path.join(root, input.filename);
   await fs.writeFile(snapshotPath, `${JSON.stringify({
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: '2026-08-15T00:10:00.000Z',
     launches: [{
       launchId: 'launch-thread-boundary',
@@ -373,8 +373,8 @@ function federationGraph(input: {
       updatedAt: '2026-08-15T08:00:00.000Z'
     }
   }, {
-    id: 'ccpanes-launch:launch-1',
-    type: 'ccpanes-launch',
+    id: 'paneforge-launch:launch-1',
+    type: 'paneforge-launch',
     externalId: 'launch-1',
     attributes: {
       projectPathNorm: 'd:/repo',
@@ -406,9 +406,9 @@ function federationGraph(input: {
     project,
     nodes,
     edges: input.linked === false ? [] : [{
-      id: 'resumed-from:ccpanes-launch:launch-1->codex-thread:thread-1',
+      id: 'resumed-from:paneforge-launch:launch-1->codex-thread:thread-1',
       type: 'resumed-from',
-      from: 'ccpanes-launch:launch-1',
+      from: 'paneforge-launch:launch-1',
       to: 'codex-thread:thread-1',
       confidence: 1,
       evidence: [{
@@ -496,7 +496,7 @@ async function expectPrivacySafeClientFailure(input: {
 function applyResultWithPreviousName(
   previousName: string | null
 ): SidebarApplyResult {
-  const desiredName = '[CC-Panes] Preview thread-1';
+  const desiredName = '[PaneForge] Preview thread-1';
   const core = {
     schemaVersion: 'hooks.codex-sidebar-apply/v1' as const,
     generatedAt: '2026-08-15T09:02:00.000Z',
@@ -588,7 +588,7 @@ test('scan, resolve, retention, and handoff commands expose the session bridge',
   await expect(fs.stat(retentionPath)).resolves.toBeTruthy();
 
   const handoff = await runCli([
-    'handoff', 'generate', ...common, '--mode', 'ccpanes-worker',
+    'handoff', 'generate', ...common, '--mode', 'paneforge-worker',
     '--project', project, '--index', indexPath
   ]);
   expect(handoff).toContain('sessionIndex:');
@@ -608,7 +608,7 @@ const handoffGenerateValueFlags = [
 function validHandoffGenerateArgs(): string[] {
   return [
     'handoff', 'generate',
-    '--mode', 'ccpanes-worker',
+    '--mode', 'paneforge-worker',
     '--project', project,
     '--sessions-dir', path.join(root, 'missing', 'sessions'),
     '--state-db', path.join(root, 'missing', 'state.sqlite'),
@@ -804,7 +804,7 @@ test('handoff keeps the first three owned or supporting active user sessions fro
   };
 
   const handoff = await generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: 'D:\\live\\codex-session-index.json',
     resolution
@@ -869,7 +869,7 @@ test.each([
     };
 
     const error = await rejectedError(generateCodexHandoff({
-      mode: 'ccpanes-worker',
+      mode: 'paneforge-worker',
       project,
       indexPath: path.join(root, 'index.json'),
       taskContextPath,
@@ -931,7 +931,7 @@ test.each([
 
     const error = await rejectedError(runCli([
       'handoff', 'generate',
-      '--mode', 'ccpanes-worker',
+      '--mode', 'paneforge-worker',
       '--project', project,
       '--sessions-dir', sessionsDir,
       '--state-db', stateDb,
@@ -958,7 +958,7 @@ test.each([
 
 test('handoff direct API treats an explicit empty task context path as invalid', async () => {
   const error = await rejectedError(generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: path.join(root, 'index.json'),
     taskContextPath: '',
@@ -1001,7 +1001,7 @@ test.each([
     );
 
     const error = await rejectedError(generateCodexHandoff({
-      mode: 'ccpanes-worker',
+      mode: 'paneforge-worker',
       project,
       indexPath: path.join(root, 'index.json'),
       taskContextPath,
@@ -1055,7 +1055,7 @@ test.each([
 
     const error = await rejectedError(runCli([
       'handoff', 'generate',
-      '--mode', 'ccpanes-worker',
+      '--mode', 'paneforge-worker',
       '--project', project,
       '--sessions-dir', sessionsDir,
       '--state-db', stateDb,
@@ -1090,7 +1090,7 @@ test('handoff accepts a linked worktree outside the canonical main repository', 
   );
 
   const directHandoff = await generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: path.join(root, 'index.json'),
     taskContextPath,
@@ -1119,7 +1119,7 @@ test('handoff accepts a linked worktree outside the canonical main repository', 
   });
   const cliHandoff = await runCli([
     'handoff', 'generate',
-    '--mode', 'ccpanes-worker',
+    '--mode', 'paneforge-worker',
     '--project', project,
     '--sessions-dir', sessionsDir,
     '--state-db', stateDb,
@@ -1140,7 +1140,7 @@ test('handoff fails closed for unsafe task authority without serializing raw pat
   );
 
   const error = await rejectedError(generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: path.join(root, 'index.json'),
     taskContextPath,
@@ -1181,7 +1181,7 @@ test('handoff rejects an unsafe taskId without echoing it', async () => {
   );
 
   const error = await rejectedError(generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: path.join(root, 'index.json'),
     taskContextPath,
@@ -1228,7 +1228,7 @@ test('handoff sanitizes display-only index and resolution fields without pseudo 
   unsafeSession.cwdNorm = `d:/repo/${secret}`;
 
   const handoff = await generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: `${root}\\index-${secret}.json`,
     taskContextPath,
@@ -1278,7 +1278,7 @@ test('handoff generate CLI passes absent only when the default task context is m
   try {
     const handoff = await runCli([
       'handoff', 'generate',
-      '--mode', 'ccpanes-worker',
+      '--mode', 'paneforge-worker',
       '--project', project,
       '--sessions-dir', sessionsDir,
       '--state-db', stateDb,
@@ -1289,7 +1289,7 @@ test('handoff generate CLI passes absent only when the default task context is m
     expect(handoff).toContain('taskId: unknown');
     expect(handoff).toContain('phase: unknown');
     expect(existsSyncSpy).toHaveBeenCalledWith(
-      path.join(project, '.ccpanes-task', 'current-task.json')
+      path.join(project, '.paneforge-task', 'current-task.json')
     );
     expect(codexSessionIoMocks.buildCodexSessionIndex)
       .toHaveBeenCalledWith(expect.objectContaining({
@@ -1302,7 +1302,7 @@ test('handoff generate CLI passes absent only when the default task context is m
 
 test('handoff has an explicit safe absent state only when no task context is provided', async () => {
   const handoff = await generateCodexHandoff({
-    mode: 'ccpanes-worker',
+    mode: 'paneforge-worker',
     project,
     indexPath: path.join(root, 'index.json'),
     taskContextPath: null,
@@ -1371,7 +1371,7 @@ test('resolve wires all four inclusion flags while defaults exclude ambient and 
   expect(await threadIds('--include-subagents')).toEqual(['subagent', 'thread-1']);
 });
 
-test('scan validates and applies a CC-Panes snapshot before writing output', async () => {
+test('scan validates and applies a PaneForge snapshot before writing output', async () => {
   const snapshotPath = await writeSnapshot();
   const indexPath = path.join(root, 'live', 'snapshot-index.json');
   const scan = JSON.parse(await runCli([
@@ -1380,7 +1380,7 @@ test('scan validates and applies a CC-Panes snapshot before writing output', asy
     '--state-db', stateDb,
     '--thread-history-db', historyDb,
     '--project', project,
-    '--ccpanes-snapshot', path.relative(process.cwd(), snapshotPath),
+    '--paneforge-snapshot', path.relative(process.cwd(), snapshotPath),
     '--out', indexPath
   ]));
 
@@ -1391,7 +1391,7 @@ test('scan validates and applies a CC-Panes snapshot before writing output', asy
     relationConfidence: 1
   });
   expect(scan.sessions[0].evidence).toEqual(expect.arrayContaining([{
-    kind: 'ccpanes-launch',
+    kind: 'paneforge-launch',
     projectPath: 'd:/repo',
     launchId: 'launch-1'
   }]));
@@ -1404,7 +1404,7 @@ test.each(['resolve', 'retention', 'graph'] as const)(
     const secret = `AKIA${'P'.repeat(16)}`;
     const unsafeRolloutPath =
       `${project}\\${secret}\\rollout.jsonl`;
-    sessionFederationMocks.attachCcPanesAttribution
+    sessionFederationMocks.attachPaneForgeAttribution
       .mockImplementationOnce((input) => input.sessions.map((session) => ({
         ...session,
         updatedAt: '2026-08-17T08:00:00+08:00',
@@ -1457,7 +1457,7 @@ test('scan, resolve, and retention ignore unsafe snapshot relationships without 
   });
   const snapshotPath = path.join(root, 'unsafe-relationship-snapshot.json');
   await fs.writeFile(snapshotPath, `${JSON.stringify({
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v1',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v1',
     generatedAt: '2026-08-15T00:10:00.000Z',
     launches: [{
       launchId: secret,
@@ -1474,7 +1474,7 @@ test('scan, resolve, and retention ignore unsafe snapshot relationships without 
     '--state-db', stateDb,
     '--thread-history-db', historyDb,
     '--project', project,
-    '--ccpanes-snapshot', snapshotPath
+    '--paneforge-snapshot', snapshotPath
   ];
 
   const scan = JSON.parse(await runCli([
@@ -1535,7 +1535,7 @@ test('resolve uses snapshot enrichment to include an otherwise unrelated thread'
   const snapshotPath = await writeSnapshot('snapshot-only');
   const withSnapshot = JSON.parse(await runCli([
     ...common,
-    '--ccpanes-snapshot', snapshotPath
+    '--paneforge-snapshot', snapshotPath
   ]));
   expect(withSnapshot.sessions.find(
     (session: { threadId: string }) => session.threadId === 'snapshot-only'
@@ -1543,7 +1543,7 @@ test('resolve uses snapshot enrichment to include an otherwise unrelated thread'
     projectRelation: 'owned',
     relationConfidence: 1,
     evidence: expect.arrayContaining([{
-      kind: 'ccpanes-launch',
+      kind: 'paneforge-launch',
       projectPath: 'd:/repo',
       launchId: 'launch-1'
     }])
@@ -1559,7 +1559,7 @@ test('graph writes and returns the enriched session federation', async () => {
     '--state-db', stateDb,
     '--thread-history-db', historyDb,
     '--project', project,
-    '--ccpanes-snapshot', snapshotPath,
+    '--paneforge-snapshot', snapshotPath,
     '--out', graphPath
   ]));
 
@@ -1585,7 +1585,7 @@ test('graph accepts trimmed 512-character thread IDs through snapshot validation
     '--state-db', stateDb,
     '--thread-history-db', historyDb,
     '--project', project,
-    '--ccpanes-snapshot', snapshotPath,
+    '--paneforge-snapshot', snapshotPath,
     '--out', graphPath
   ]));
 
@@ -1632,11 +1632,11 @@ test.each([
       '--state-db', stateDb,
       '--thread-history-db', historyDb,
       '--project', project,
-      '--ccpanes-snapshot', snapshotPath,
+      '--paneforge-snapshot', snapshotPath,
       '--out', graphPath
     ]));
 
-    expect(error.message).toBe(`invalid CC-Panes snapshot: ${field}`);
+    expect(error.message).toBe(`invalid PaneForge snapshot: ${field}`);
     expect(error.message).not.toContain(overlong);
     expect(JSON.stringify(error)).not.toContain(overlong);
     expect(codexSessionIoMocks.buildCodexSessionIndex).not.toHaveBeenCalled();
@@ -1657,7 +1657,7 @@ test('graph defaults output to the temporary cwd live directory', async () => {
       '--state-db', stateDb,
       '--thread-history-db', historyDb,
       '--project', project,
-      '--ccpanes-snapshot', snapshotPath
+      '--paneforge-snapshot', snapshotPath
     ]);
     const graphPath = path.join(temporaryCwd, 'live', 'session-federation.json');
     expect(JSON.parse(stdout).schemaVersion).toBe('hooks.session-federation/v1');
@@ -1670,7 +1670,7 @@ test('graph defaults output to the temporary cwd live directory', async () => {
 test.each([
   ['invalid JSON', '{not-json'],
   ['invalid schema', JSON.stringify({
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v2',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v2',
     generatedAt: '2026-08-15T00:10:00.000Z',
     launches: [],
     sessions: []
@@ -1691,7 +1691,7 @@ test.each([
     '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
     '--project', project,
     '--task-context', path.join(root, 'missing-task-context.json'),
-    '--ccpanes-snapshot', snapshotPath,
+    '--paneforge-snapshot', snapshotPath,
     '--out', indexPath
   ]));
   expect(codexSessionIoMocks.snapshotReadFile).toHaveBeenCalledTimes(1);
@@ -1716,7 +1716,7 @@ test.each([
     '--state-db', path.join(root, 'missing', 'state.sqlite'),
     '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
     '--project', project,
-    '--ccpanes-snapshot', snapshotPath
+    '--paneforge-snapshot', snapshotPath
   ], 'unknown codex-sessions command: unknown-action');
 });
 
@@ -1745,9 +1745,9 @@ test.each(['scan', 'resolve', 'retention', 'graph'])(
       '--state-db', path.join(root, 'missing', 'state.sqlite'),
       '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
       '--task-context', path.join(root, 'missing-task-context.json'),
-      '--ccpanes-snapshot', path.join(root, 'missing-snapshot.json'),
+      '--paneforge-snapshot', path.join(root, 'missing-snapshot.json'),
       ...(action === 'resolve' ? [] : ['--out', outPath])
-    ], '--ccpanes-snapshot requires --project', outPath);
+    ], '--paneforge-snapshot requires --project', outPath);
   }
 );
 
@@ -1762,7 +1762,7 @@ test.each(['scan', 'resolve', 'retention', 'graph'] as const)(
       '--state-db', path.join(root, 'missing', 'state.sqlite'),
       '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
       '--project', `${project}\\${secret}`,
-      '--ccpanes-snapshot', path.join(root, 'missing-snapshot.json'),
+      '--paneforge-snapshot', path.join(root, 'missing-snapshot.json'),
       ...(action === 'resolve' ? [] : ['--out', outPath])
     ], 'CODEX_SESSION_FEDERATION_INVARIANT: project: unsafe-project', outPath);
   }
@@ -1771,8 +1771,8 @@ test.each(['scan', 'resolve', 'retention', 'graph'] as const)(
 test.each([
   ['empty', '--sessions-dir', ''],
   ['whitespace-only', '--sessions-dir', ' \t '],
-  ['empty', '--ccpanes-snapshot', ''],
-  ['whitespace-only', '--ccpanes-snapshot', ' \t '],
+  ['empty', '--paneforge-snapshot', ''],
+  ['whitespace-only', '--paneforge-snapshot', ' \t '],
   ['empty', '--out', ''],
   ['whitespace-only', '--out', ' \t ']
 ])('%s %s value is rejected before any I/O', async (_kind, flag, value) => {
@@ -1791,13 +1791,13 @@ test.each([
   if (flag === '--sessions-dir') {
     args.splice(args.indexOf('--sessions-dir'), 2);
   }
-  if (flag === '--ccpanes-snapshot') {
+  if (flag === '--paneforge-snapshot') {
     args.push(flag, value);
   } else if (flag === '--out') {
     args.splice(args.indexOf('--out'), 2, flag, value);
-    args.push('--ccpanes-snapshot', snapshotPath);
+    args.push('--paneforge-snapshot', snapshotPath);
   } else {
-    args.push('--ccpanes-snapshot', snapshotPath, flag, value);
+    args.push('--paneforge-snapshot', snapshotPath, flag, value);
   }
 
   await expectCliErrorBeforeIo(args, `missing value for ${flag}`, outPath);
@@ -1809,7 +1809,7 @@ test.each([
     (outPath: string, snapshotPath: string) => [
       'codex-sessions', 'scan',
       '--out', outPath,
-      '--ccpanes-snapshot', snapshotPath,
+      '--paneforge-snapshot', snapshotPath,
       '--sessions-dir'
     ],
     'missing value for --sessions-dir'
@@ -1821,7 +1821,7 @@ test.each([
       '--sessions-dir', path.join(root, 'missing', 'sessions'),
       '--state-db', path.join(root, 'missing', 'state.sqlite'),
       '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
-      '--ccpanes-snapshot', snapshotPath,
+      '--paneforge-snapshot', snapshotPath,
       '--project', '--out', outPath
     ],
     'missing value for --project'
@@ -1862,7 +1862,7 @@ test.each([
     '--sessions-dir', path.join(root, 'missing', 'sessions'),
     '--state-db', path.join(root, 'missing', 'state.sqlite'),
     '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
-    '--ccpanes-snapshot', path.join(root, 'missing-snapshot.json'),
+    '--paneforge-snapshot', path.join(root, 'missing-snapshot.json'),
     ...optionArgs
   ], expectedError);
 });
@@ -1903,7 +1903,7 @@ test.each([
     '--sessions-dir', path.join(root, 'missing', 'sessions'),
     '--state-db', path.join(root, 'missing', 'state.sqlite'),
     '--thread-history-db', path.join(root, 'missing', 'history.sqlite'),
-    '--ccpanes-snapshot', snapshotPath
+    '--paneforge-snapshot', snapshotPath
   ], expectedError, outPath);
 });
 
@@ -1948,7 +1948,7 @@ test('sidebar-plan resolves relative paths, selects linked and explicit concrete
     expect(plan.actions[1]).toMatchObject({
       threadId: 'thread-2',
       currentName: 'Custom name',
-      desiredName: '[CC-Panes] Preview thread-2'
+      desiredName: '[PaneForge] Preview thread-2'
     });
     expect(await fs.readFile(outPath, 'utf8')).toBe(stdout);
     expect(codexSessionIoMocks.writeCodexSessionJson)
@@ -2051,7 +2051,7 @@ test('sidebar-plan reads an explicitly selected hidden thread by ID when list om
   expect(JSON.parse(stdout).actions).toMatchObject([{
     threadId: 'thread-2',
     currentName: null,
-    desiredName: '[CC-Panes] Hidden explicit thread'
+    desiredName: '[PaneForge] Hidden explicit thread'
   }]);
   expect(client.readThread).toHaveBeenCalledWith('thread-2');
 });
@@ -2101,8 +2101,8 @@ test('sidebar-plan rejects a second hosts edge before client or output I/O', asy
     linked: false
   });
   (graph.nodes as Array<Record<string, unknown>>).push({
-    id: 'ccpanes-session:pty-1',
-    type: 'ccpanes-session',
+    id: 'paneforge-session:pty-1',
+    type: 'paneforge-session',
     externalId: 'pty-1',
     attributes: {
       status: 'active',
@@ -2112,9 +2112,9 @@ test('sidebar-plan rejects a second hosts edge before client or output I/O', asy
   });
   graph.edges = [
     {
-      id: 'hosts:ccpanes-session:pty-1->codex-thread:thread-1',
+      id: 'hosts:paneforge-session:pty-1->codex-thread:thread-1',
       type: 'hosts',
-      from: 'ccpanes-session:pty-1',
+      from: 'paneforge-session:pty-1',
       to: 'codex-thread:thread-1',
       confidence: 1,
       evidence: [{
@@ -2125,9 +2125,9 @@ test('sidebar-plan rejects a second hosts edge before client or output I/O', asy
       observedAt: '2026-08-15T09:00:00.000Z'
     },
     {
-      id: 'hosts:ccpanes-session:pty-1->codex-thread:thread-2',
+      id: 'hosts:paneforge-session:pty-1->codex-thread:thread-2',
       type: 'hosts',
-      from: 'ccpanes-session:pty-1',
+      from: 'paneforge-session:pty-1',
       to: 'codex-thread:thread-2',
       confidence: 1,
       evidence: [{

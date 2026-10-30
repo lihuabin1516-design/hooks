@@ -9,9 +9,9 @@ let tempRoot: string;
 
 function task(): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: path.join(tempRoot, 'project-alpha'),
     worktreeRoot: path.join(tempRoot, 'project-alpha'),
     mainRepoRoot: null,
@@ -27,7 +27,7 @@ function task(): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-hook-package-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-hook-package-'));
 });
 
 afterEach(async () => {
@@ -42,14 +42,14 @@ describe('createHookPackage', () => {
 
     const manifest = await createHookPackage({
       task: task(),
-      prototypeRoot: 'D:/cc-pane/tool/experiments/ccpanes-task-probe',
+      prototypeRoot: 'D:/paneforge/tool/experiments/paneforge-task-probe',
       target: 'both',
       upstreamHookPath: upstreamHook,
       outDir,
       now: '2026-08-06T00:00:04.000Z'
     });
 
-    expect(manifest.schema).toBe('ccpanes.hook-package-manifest.v1');
+    expect(manifest.schema).toBe('paneforge.hook-package-manifest.v1');
     expect(manifest.mode).toBe('review-only');
     expect(manifest.target).toBe('both');
     expect(manifest.files.map((file) => file.kind)).toEqual([
@@ -63,11 +63,11 @@ describe('createHookPackage', () => {
     await expect(fs.stat(path.join(outDir, 'install-plan.json'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'rollback-plan.json'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'patches', 'codex.patch'))).resolves.toBeTruthy();
-    await expect(fs.stat(path.join(outDir, 'patches', 'ccpanes.patch'))).resolves.toBeTruthy();
+    await expect(fs.stat(path.join(outDir, 'patches', 'paneforge.patch'))).resolves.toBeTruthy();
     await expect(fs.stat(path.join(outDir, 'ACCEPTANCE-CHECKLIST.md'))).resolves.toBeTruthy();
 
     const rollback = JSON.parse(await fs.readFile(path.join(outDir, 'rollback-plan.json'), 'utf8'));
-    expect(rollback.schema).toBe('ccpanes.hook-rollback-plan.v1');
+    expect(rollback.schema).toBe('paneforge.hook-rollback-plan.v1');
     expect(rollback.steps[0]).toContain('Capture pre-change config hashes');
   });
 });

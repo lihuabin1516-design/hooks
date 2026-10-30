@@ -54,7 +54,7 @@ async function realPath(candidate: string): Promise<string> {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-git-state-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-git-state-'));
 });
 
 afterEach(async () => {

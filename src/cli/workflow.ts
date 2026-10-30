@@ -100,7 +100,7 @@ export async function handleWorkflowCommands(
     if (host) {
       const adapter = getHostAdapter(host);
       if (!adapter) throw new Error(`unknown host adapter: ${host}`);
-      return `${JSON.stringify({ schema: 'ccpanes.host-adapter.v1', adapter }, null, 2)}\n`;
+      return `${JSON.stringify({ schema: 'paneforge.host-adapter.v1', adapter }, null, 2)}\n`;
     }
     return `${JSON.stringify(createHostAdapterRegistry(), null, 2)}\n`;
   }

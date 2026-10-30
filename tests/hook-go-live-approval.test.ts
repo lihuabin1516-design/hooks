@@ -26,7 +26,7 @@ async function writeApprovalFixture(ready = true): Promise<string> {
   const configText = 'original = true\n';
   await fs.writeFile(configPath, configText, 'utf8');
   const releaseGatePath = await writeJson(path.join(tempRoot, 'release-gate.json'), {
-    schema: 'ccpanes.hook-release-gate.v1',
+    schema: 'paneforge.hook-release-gate.v1',
     mode: 'final-preflight',
     passed: true,
     configSnapshots: [{ path: configPath, exists: true, size: configText.length, lastWriteUtc: '2026-08-06T00:00:00.000Z', sha256: sha256Text(configText) }],
@@ -35,7 +35,7 @@ async function writeApprovalFixture(ready = true): Promise<string> {
     failures: []
   });
   const approvalCheckPath = await writeJson(path.join(tempRoot, 'approval-check.json'), {
-    schema: 'ccpanes.hook-approval-check.v1',
+    schema: 'paneforge.hook-approval-check.v1',
     mode: 'approval-preflight',
     passed: true,
     applyPlanPath: path.join(tempRoot, 'apply-plan.json'),
@@ -43,7 +43,7 @@ async function writeApprovalFixture(ready = true): Promise<string> {
     failures: []
   });
   const writePreviewPath = await writeJson(path.join(tempRoot, 'write-preview.json'), {
-    schema: 'ccpanes.hook-write-preview.v1',
+    schema: 'paneforge.hook-write-preview.v1',
     mode: 'dry-run-write-preview',
     approvalCheckPath,
     approvalCheckPassed: true,
@@ -51,21 +51,21 @@ async function writeApprovalFixture(ready = true): Promise<string> {
     artifacts: []
   });
   const applyReportPath = await writeJson(path.join(tempRoot, 'apply-report.json'), {
-    schema: 'ccpanes.hook-write-apply.v1',
+    schema: 'paneforge.hook-write-apply.v1',
     mode: 'guarded-apply',
     passed: true,
     entries: [],
     failures: []
   });
   const restoreReportPath = await writeJson(path.join(tempRoot, 'restore-report.json'), {
-    schema: 'ccpanes.hook-write-restore.v1',
+    schema: 'paneforge.hook-write-restore.v1',
     mode: 'guarded-restore',
     passed: true,
     entries: [],
     failures: []
   });
   return writeJson(path.join(tempRoot, 'production-readiness.json'), {
-    schema: 'ccpanes.hook-production-readiness.v1',
+    schema: 'paneforge.hook-production-readiness.v1',
     mode: 'final-readiness',
     createdAt: '2026-08-06T00:00:00.000Z',
     ready,
@@ -80,7 +80,7 @@ async function writeApprovalFixture(ready = true): Promise<string> {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-go-live-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-go-live-'));
 });
 
 afterEach(async () => {
@@ -101,7 +101,7 @@ describe('createHookGoLiveApprovalPackage', () => {
       now: '2026-08-06T00:00:01.000Z'
     });
 
-    expect(manifest.schema).toBe('ccpanes.hook-go-live-approval-package.v1');
+    expect(manifest.schema).toBe('paneforge.hook-go-live-approval-package.v1');
     expect(manifest.mode).toBe('manual-approval-package');
     expect(manifest.manualApproval.approved).toBe(true);
     expect(manifest.manualApproval.approvedBy).toBe('AI001');

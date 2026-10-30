@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export interface RuntimeIdentity {
-  schema: 'ccpanes.runtime-identity.v1';
+  schema: 'paneforge.runtime-identity.v1';
   packageName: string;
   packageVersion: string;
   gitCommit: string | null;
@@ -20,7 +20,7 @@ export interface RuntimeTaskHeadComparison {
 }
 
 export interface RuntimeIdentityReport {
-  schema: 'ccpanes.runtime-identity-report.v1';
+  schema: 'paneforge.runtime-identity-report.v1';
   runtimeIdentity: RuntimeIdentity;
   taskHeadComparison: RuntimeTaskHeadComparison;
   process: {
@@ -46,7 +46,7 @@ function nullableString(record: Record<string, unknown>, key: string): string | 
 
 export function validateRuntimeIdentity(value: unknown): RuntimeIdentity {
   const record = asRecord(value);
-  if (record.schema !== 'ccpanes.runtime-identity.v1') throw new Error('invalid runtime identity: schema');
+  if (record.schema !== 'paneforge.runtime-identity.v1') throw new Error('invalid runtime identity: schema');
   if (typeof record.packageName !== 'string' || record.packageName.length === 0) throw new Error('invalid runtime identity: packageName');
   if (typeof record.packageVersion !== 'string' || record.packageVersion.length === 0) throw new Error('invalid runtime identity: packageVersion');
   const gitCommit = nullableString(record, 'gitCommit');
@@ -57,7 +57,7 @@ export function validateRuntimeIdentity(value: unknown): RuntimeIdentity {
   if (buildSha256 !== null && !/^[A-Fa-f0-9]{64}$/.test(buildSha256)) throw new Error('invalid runtime identity: buildSha256');
   if (gitCommit !== null && !/^[A-Fa-f0-9]{6,64}$/.test(gitCommit)) throw new Error('invalid runtime identity: gitCommit');
   return {
-    schema: 'ccpanes.runtime-identity.v1',
+    schema: 'paneforge.runtime-identity.v1',
     packageName: record.packageName,
     packageVersion: record.packageVersion,
     gitCommit,
@@ -74,8 +74,8 @@ export async function loadRuntimeIdentity(manifestPath = defaultManifestPath): P
 
 export function unavailableRuntimeIdentity(): RuntimeIdentity {
   return {
-    schema: 'ccpanes.runtime-identity.v1',
-    packageName: 'ccpanes-hooks-tooling',
+    schema: 'paneforge.runtime-identity.v1',
+    packageName: 'paneforge-hooks-tooling',
     packageVersion: '0.1.0',
     gitCommit: null,
     gitDirty: null,
@@ -111,7 +111,7 @@ export function compareRuntimeIdentityToTaskHead(identity: RuntimeIdentity, task
 
 export function createRuntimeIdentityReport(identity = getRuntimeIdentity(), expectedTaskHead: string | null = null): RuntimeIdentityReport {
   return {
-    schema: 'ccpanes.runtime-identity-report.v1',
+    schema: 'paneforge.runtime-identity-report.v1',
     runtimeIdentity: identity,
     taskHeadComparison: compareRuntimeIdentityToTaskHead(identity, expectedTaskHead),
     process: { pid: process.pid, execPath: process.execPath, startedAt: processStartedAt }

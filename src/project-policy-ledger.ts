@@ -9,12 +9,12 @@ export interface ProjectPolicyLedgerEntry {
 }
 
 export function projectPolicyLedgerPath(projectRoot: string): string {
-  return path.join(projectRoot, '.ccpanes-task', 'policy.md');
+  return path.join(projectRoot, '.paneforge-task', 'policy.md');
 }
 
 export function defaultProjectPolicyLedger(): string {
   return [
-    '# CC-Panes Project Policy Ledger',
+    '# PaneForge Project Policy Ledger',
     '',
     'This file is project-local. It records conversation-level constraints that Codex should apply alongside mechanical hooks.',
     '',
@@ -30,7 +30,7 @@ export function defaultProjectPolicyLedger(): string {
     '',
     '## Mechanical counterpart',
     '',
-    '- Executable rules live in `.ccpanes-task/policy.json`.',
+    '- Executable rules live in `.paneforge-task/policy.json`.',
     '- Use `policy-capture-plan` for clear plan-stage rules, `policy-capture` for exact conversation rules, and `policy-add`, `policy-disable`, `policy-clear`, `policy-list`, and `policy-validate` for mechanical rule management.',
     ''
   ].join('\n');

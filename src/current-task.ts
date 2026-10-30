@@ -53,7 +53,7 @@ interface TaskDirectoryBoundary {
 }
 
 export function currentTaskPath(worktreeRoot: string): string {
-  return path.join(worktreeRoot, '.ccpanes-task', 'current-task.json');
+  return path.join(worktreeRoot, '.paneforge-task', 'current-task.json');
 }
 
 async function lstatIfExists(candidate: string): Promise<Stats | null> {
@@ -76,7 +76,7 @@ async function inspectTaskDirectoryBoundary(
   create: boolean
 ): Promise<TaskDirectoryBoundary | null> {
   const resolvedRoot = path.resolve(worktreeRoot);
-  const dir = path.join(resolvedRoot, '.ccpanes-task');
+  const dir = path.join(resolvedRoot, '.paneforge-task');
   if (create) {
     await fs.mkdir(dir, { recursive: true });
   }
@@ -201,7 +201,7 @@ export function validateCurrentTask(value: unknown): CurrentTask {
   }
   const record = value as Record<string, unknown>;
   assertKnownFields(record, CURRENT_TASK_ROOT_FIELDS, 'root');
-  if (record.schema !== 'ccpanes.task-selection.v1') throw new Error('invalid current task: schema');
+  if (record.schema !== 'paneforge.task-selection.v1') throw new Error('invalid current task: schema');
   assertString(record.taskId, 'taskId', CURRENT_TASK_STRING_LIMITS.taskId);
   assertString(
     record.workspace,
@@ -412,9 +412,9 @@ export function createCurrentTask(input: CreateCurrentTaskInput): CurrentTask {
   const now = input.now ?? new Date().toISOString();
 
   return validateCurrentTask({
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: input.taskId,
-    workspace: input.workspace ?? 'cc-pane',
+    workspace: input.workspace ?? 'paneforge',
     projectPath,
     worktreeRoot,
     mainRepoRoot: topology?.mainRepoRoot ?? null,
@@ -429,7 +429,7 @@ export function createCurrentTask(input: CreateCurrentTaskInput): CurrentTask {
     createdAt: now,
     updatedAt: now,
     source: input.source ?? 'manual-import',
-    notes: input.notes ?? 'task binding written by CC-Panes hooks'
+    notes: input.notes ?? 'task binding written by PaneForge hooks'
   });
 }
 
@@ -484,7 +484,7 @@ function taskBindingCheck(
   candidate: ResolvedCurrentTask | null
 ): TaskBindingCheck {
   return {
-    schema: 'ccpanes.task-binding-check.v1',
+    schema: 'paneforge.task-binding-check.v1',
     status,
     reason,
     cwd: path.resolve(cwd),
@@ -611,7 +611,7 @@ export async function resolveCurrentTaskBindingFromCwd(
   cwd: string
 ): Promise<CurrentTaskBindingResolution> {
   const resolvedCwd = path.resolve(cwd);
-  const configuredSearchRoot = process.env.CCPANES_TASK_SEARCH_ROOT;
+  const configuredSearchRoot = process.env.PANEFORGE_TASK_SEARCH_ROOT;
   const searchRoot = configuredSearchRoot
     ? path.resolve(configuredSearchRoot)
     : null;

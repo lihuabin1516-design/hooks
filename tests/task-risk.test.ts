@@ -5,7 +5,7 @@ describe('classifyTaskRisk', () => {
   test('keeps explanatory questions light', () => {
     const result = classifyTaskRisk({ prompt: '解释一下这个 hooks 项目怎么工作？' });
 
-    expect(result.schema).toBe('ccpanes.task-risk.v1');
+    expect(result.schema).toBe('paneforge.task-risk.v1');
     expect(result.tier).toBe('light');
     expect(result.reason).toBe('explanatory_question');
     expect(result.signals).toContain('explanatory-question');

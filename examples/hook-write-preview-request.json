@@ -1,7 +1,7 @@
 {
   "command": "preview-hook-write",
-  "approvalCheck": "./examples/example-task/.ccpanes-task/hook-approval-check.json",
-  "outDir": "./examples/example-task/.ccpanes-task/hook-write-preview",
+  "approvalCheck": "./examples/example-task/.paneforge-task/hook-approval-check.json",
+  "outDir": "./examples/example-task/.paneforge-task/hook-write-preview",
   "expectedArtifacts": [
     "write-preview.json",
     "backup-manifest.json",

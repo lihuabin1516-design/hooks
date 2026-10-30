@@ -25,7 +25,7 @@
 - Create `docs/PONYTAIL-ADOPTION.md`: reference boundary and benchmark isolation rules.
 - Modify `tests/plan-intake.test.ts`: nested workflow compatibility assertions.
 - Modify `src/host-adapter-registry.ts`, `tests/host-adapter-registry.test.ts`, and
-  `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`: correct the mechanical policy
+  `docs/PANEFORGE-HOOK-HOST-ADAPTER-MATRIX.md`: correct the mechanical policy
   authority path discovered during review.
 - Keep `docs/superpowers/specs/2026-08-14-production-grade-solution-economy-design.md` as the approved design.
 
@@ -40,7 +40,7 @@
 Add tests that import `createImplementationStandard` and assert:
 
 ```ts
-expect(result.schema).toBe('ccpanes.implementation-standard.v1');
+expect(result.schema).toBe('paneforge.implementation-standard.v1');
 expect(result.level).toBe('production-grade');
 expect(result.optimizationTarget).toBe('unnecessary-complexity');
 expect(result.nonNegotiables).toEqual(expect.arrayContaining([
@@ -81,7 +81,7 @@ Create exported interfaces:
 
 ```ts
 export interface ImplementationStandardSourceModel {
-  name: 'ccpanes.production-grade-solution-economy.v1';
+  name: 'paneforge.production-grade-solution-economy.v1';
   adaptedFrom: string;
   referenceHead: string;
   adoptedIdeas: string[];
@@ -89,7 +89,7 @@ export interface ImplementationStandardSourceModel {
 }
 
 export interface ImplementationStandard {
-  schema: 'ccpanes.implementation-standard.v1';
+  schema: 'paneforge.implementation-standard.v1';
   level: 'production-grade';
   optimizationTarget: 'unnecessary-complexity';
   principles: string[];
@@ -139,7 +139,7 @@ Update existing tests to assert:
 expect(readOnlyResult.implementationStandard).toBeNull();
 expect(documentationResult.implementationStandard).toBeNull();
 expect(hookResult.implementationStandard).toMatchObject({
-  schema: 'ccpanes.implementation-standard.v1',
+  schema: 'paneforge.implementation-standard.v1',
   level: 'production-grade',
   optimizationTarget: 'unnecessary-complexity'
 });
@@ -274,7 +274,7 @@ In the existing `classify-workflow` CLI test, assert:
 
 ```ts
 expect(parsed.implementationStandard).toMatchObject({
-  schema: 'ccpanes.implementation-standard.v1',
+  schema: 'paneforge.implementation-standard.v1',
   level: 'production-grade'
 });
 ```
@@ -379,7 +379,7 @@ git status --short --branch
 Expected:
 
 - Only authorized files changed.
-- Existing untracked `.ccpanes/` and `CLAUDE.md` remain untouched.
+- Existing untracked `.paneforge/` and `CLAUDE.md` remain untouched.
 - No staged changes.
 - No live, user-config, dependency, or reference-repository changes.
 

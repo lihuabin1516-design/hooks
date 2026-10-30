@@ -38,7 +38,7 @@ async function writeReadinessFixture(overrides: {
   const applyReportPath = path.join(tempRoot, 'apply-report.json');
   const restoreReportPath = path.join(tempRoot, 'restore-report.json');
   await writeJson(releaseGatePath, {
-    schema: 'ccpanes.hook-release-gate.v1',
+    schema: 'paneforge.hook-release-gate.v1',
     mode: 'final-preflight',
     passed: overrides.releasePassed ?? true,
     configSnapshots: [{
@@ -56,7 +56,7 @@ async function writeReadinessFixture(overrides: {
     failures: []
   });
   await writeJson(approvalCheckPath, {
-    schema: 'ccpanes.hook-approval-check.v1',
+    schema: 'paneforge.hook-approval-check.v1',
     mode: 'approval-preflight',
     passed: true,
     applyPlanPath: path.join(tempRoot, 'apply-plan.json'),
@@ -65,7 +65,7 @@ async function writeReadinessFixture(overrides: {
     failures: []
   });
   await writeJson(writePreviewPath, {
-    schema: 'ccpanes.hook-write-preview.v1',
+    schema: 'paneforge.hook-write-preview.v1',
     mode: 'dry-run-write-preview',
     approvalCheckPath,
     approvalCheckPassed: true,
@@ -73,14 +73,14 @@ async function writeReadinessFixture(overrides: {
     artifacts: []
   });
   await writeJson(applyReportPath, {
-    schema: 'ccpanes.hook-write-apply.v1',
+    schema: 'paneforge.hook-write-apply.v1',
     mode: 'guarded-apply',
     passed: true,
     entries: [{ configPath, beforeSha256: sha256Text(before), afterSha256: sha256Text(`${before}# preview\n`), verifiedAfterSha256: sha256Text(`${before}# preview\n`) }],
     failures: []
   });
   await writeJson(restoreReportPath, {
-    schema: 'ccpanes.hook-write-restore.v1',
+    schema: 'paneforge.hook-write-restore.v1',
     mode: 'guarded-restore',
     passed: overrides.restorePassed ?? true,
     entries: [{ configPath, beforeSha256: sha256Text(before), afterSha256: sha256Text(`${before}# preview\n`), restoredSha256: sha256Text(before) }],
@@ -90,7 +90,7 @@ async function writeReadinessFixture(overrides: {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-readiness-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-readiness-'));
 });
 
 afterEach(async () => {
@@ -103,7 +103,7 @@ describe('createHookProductionReadiness', () => {
 
     const report = await createHookProductionReadiness({ ...fixture, now: '2026-08-06T00:00:01.000Z' });
 
-    expect(report.schema).toBe('ccpanes.hook-production-readiness.v1');
+    expect(report.schema).toBe('paneforge.hook-production-readiness.v1');
     expect(report.mode).toBe('final-readiness');
     expect(report.ready).toBe(true);
     expect(report.checks.every((check) => check.result === 'pass')).toBe(true);

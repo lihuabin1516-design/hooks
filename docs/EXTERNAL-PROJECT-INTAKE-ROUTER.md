@@ -2,11 +2,11 @@
 
 日期：2026-08-14
 当前权威仓库：`{workspace-root}\tool\repos\hooks`
-Companion 仓库：`{workspace-root}\tool\repos\ccpanes-skills`
+Companion 仓库：`{workspace-root}\tool\repos\paneforge-skills`
 
 ## 一句话判断
 
-新的外部项目统一先在 `hooks` 新会话做只读评估；评估后再决定进入 `hooks`、进入 `ccpanes-skills`、另建新仓库，或仅记录暂不采纳。
+新的外部项目统一先在 `hooks` 新会话做只读评估；评估后再决定进入 `hooks`、进入 `paneforge-skills`、另建新仓库，或仅记录暂不采纳。
 
 ## 两条线的职责
 
@@ -14,18 +14,18 @@ Companion 仓库：`{workspace-root}\tool\repos\ccpanes-skills`
 hooks
   = task scope / project policy / hook hard gate / audit / acceptance / live gates
 
-ccpanes-skills
+paneforge-skills
   = agent workflow / prompt pack / external adoption lab / sidecar specs
 ```
 
 `hooks` 继续保持硬权威：
 
-- `.ccpanes-task/current-task.json` 是 task scope authority。
-- `.ccpanes-task/policy.json` 是 executable project-policy authority。
+- `.paneforge-task/current-task.json` 是 task scope authority。
+- `.paneforge-task/policy.json` 是 executable project-policy authority。
 - `hook-enforce` / `permission-enforce` 是 allow/block hard-gate authority。
 - `post-enforce`、acceptance artifact 和 live verification 是证据链。
 
-`ccpanes-skills` 只做软流程和孵化：
+`paneforge-skills` 只做软流程和孵化：
 
 - prompt、skill、agent brief、handoff、review/debug/TDD/domain modeling。
 - 外部项目 adoption 记录。
@@ -39,7 +39,7 @@ flowchart TD
   P["发现外部项目"] --> E["在 hooks 新会话只读评估"]
   E --> Q{"应该进入哪里？"}
   Q -->|"权限/边界/审计/验收"| H["吸收到 hooks"]
-  Q -->|"prompt/skill/workflow"| S["吸收到 ccpanes-skills"]
+  Q -->|"prompt/skill/workflow"| S["吸收到 paneforge-skills"]
   Q -->|"runtime/MCP/daemon/DB/UI/重依赖"| R["另建新仓库"]
   Q -->|"证据不足/质量不合适"| N["仅记录暂不采纳"]
   S --> A["必要时产出 advisory artifact 给 hooks 只读消费"]
@@ -65,7 +65,7 @@ flowchart TD
 4. 不运行上游 installer，不写用户配置。
 5. 先写 adoption 记录，再写计划和测试。
 
-## 进入 ccpanes-skills 的条件
+## 进入 paneforge-skills 的条件
 
 适合进入 companion 仓库的内容：
 
@@ -77,12 +77,12 @@ flowchart TD
 
 典型例子：
 
-- `mattpocock/skills`：进入 `ccpanes-skills`，作为 agent workflow 方法源。
-- `code-review-graph`：先进入 `ccpanes-skills` 的 adoption + sidecar spec；未来若要运行，再另建独立 sidecar 仓库。
+- `mattpocock/skills`：进入 `paneforge-skills`，作为 agent workflow 方法源。
+- `code-review-graph`：先进入 `paneforge-skills` 的 adoption + sidecar spec；未来若要运行，再另建独立 sidecar 仓库。
 
 ## 另建新仓库的条件
 
-当外部项目能力需要以下任一项时，先在 `ccpanes-skills/sidecar-specs` 写 spec，再由用户批准新建仓库：
+当外部项目能力需要以下任一项时，先在 `paneforge-skills/sidecar-specs` 写 spec，再由用户批准新建仓库：
 
 - 独立 CLI / MCP server / daemon。
 - 数据库、索引、缓存或项目级生成物。
@@ -94,7 +94,7 @@ flowchart TD
 
 ```json
 {
-  "schema": "ccpanes.<capability>.report.v1",
+  "schema": "paneforge.<capability>.report.v1",
   "status": "pass|blocked|not-run",
   "worktreeRoot": "D:/path/to/worktree",
   "evidence": []
@@ -106,14 +106,14 @@ flowchart TD
 在 `hooks` 新会话中使用：
 
 ```text
-请只读评估 <TARGET_URL> 对 {workspace-root}\tool\repos\hooks 的作用，并按 docs/EXTERNAL-PROJECT-INTAKE-ROUTER.md 判断：吸收到 hooks、吸收到 {workspace-root}\tool\repos\ccpanes-skills、另建新仓库，或仅记录暂不采纳。不要修改仓库、不要安装依赖、不要运行上游 installer、不要写用户配置。输出证据、adopted ideas、rejected ideas、推荐落点和下一步最小 artifact。
+请只读评估 <TARGET_URL> 对 {workspace-root}\tool\repos\hooks 的作用，并按 docs/EXTERNAL-PROJECT-INTAKE-ROUTER.md 判断：吸收到 hooks、吸收到 {workspace-root}\tool\repos\paneforge-skills、另建新仓库，或仅记录暂不采纳。不要修改仓库、不要安装依赖、不要运行上游 installer、不要写用户配置。输出证据、adopted ideas、rejected ideas、推荐落点和下一步最小 artifact。
 ```
 
 更完整提示词维护在：
 
 ```text
-{workspace-root}\tool\repos\ccpanes-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
-{workspace-root}\tool\repos\ccpanes-skills\prompts\NEW-REPO-CONTROLLER.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\NEW-REPO-CONTROLLER.md
 ```
 
 ## 停止条件

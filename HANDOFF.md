@@ -2,7 +2,7 @@
 
 ## 一句话状态
 
-`hooks` 是 CC-Panes / Codex 的项目上下文与 Hook 治理工具层，当前远端主仓库固定为 `https://github.com/lihuabin1516-design/hooks.git`，本机维护仓库位于 `{workspace-root}\tool\repos\hooks`，live 验证路径位于 `{workspace-root}\tool\experiments\ccpanes-task-probe`。
+`hooks` 是 PaneForge / Codex 的项目上下文与 Hook 治理工具层，当前远端主仓库固定为 `https://github.com/lihuabin1516-design/hooks.git`，本机维护仓库位于 `{workspace-root}\tool\repos\hooks`，live 验证路径位于 `{workspace-root}\tool\experiments\paneforge-task-probe`。
 
 ## 先决必读
 
@@ -11,9 +11,9 @@
 3. `PROJECT-DIRECTORY.md`：长期目录职责、边界和放置规则。
 4. `REMOTE.md`：远端仓库、本地维护路径、live 路径明文记录。
 5. `docs/plans/`：Phase 24 到 Phase 51 的分阶段设计与实施计划。
-6. `docs/CCPANES-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
+6. `docs/PANEFORGE-HOOK-HOST-ADAPTER-MATRIX.md`：多宿主 hook 能力和边界。
 7. `docs/CODEX-PLUGIN-DISTRIBUTION-NOTES.md`：Codex plugin 分发后续设计。
-8. `templates/AGENTS.ccpanes-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
+8. `templates/AGENTS.paneforge-hooks.md`：注入项目 `AGENTS.md` 的托管块模板。
 
 ## 当前基线
 
@@ -21,7 +21,7 @@
 仓库根：{workspace-root}\tool\repos\hooks
 分支：main
 远端：origin https://github.com/lihuabin1516-design/hooks.git
-live：{workspace-root}\tool\experiments\ccpanes-task-probe
+live：{workspace-root}\tool\experiments\paneforge-task-probe
 Node：>=22
 测试：vitest
 构建：tsc -p tsconfig.json
@@ -89,7 +89,7 @@ git diff --check
 ```text
 {user-home}\.codex\hooks.json
 {user-home}\.codex\config.toml
-{user-home}\.cc-panes\config.toml
+{user-home}\.paneforge\config.toml
 ```
 
 上游 hook exe 只做哈希记录：
@@ -145,13 +145,13 @@ git status --short
 live 路径：
 
 ```powershell
-cd {workspace-root}\tool\experiments\ccpanes-task-probe
+cd {workspace-root}\tool\experiments\paneforge-task-probe
 npm test
 npm run typecheck
 npm run build
 npm run smoke
-node dist/src/cli.js verify-installed-hooks --hooks-json {user-home}\.codex\hooks.json --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config {user-home}\.codex\config.toml
-node dist/src/cli.js verify-live-consistency --repo-root {workspace-root}\tool\repos\hooks --live-root {workspace-root}\tool\experiments\ccpanes-task-probe
+node dist/src/cli.js verify-installed-hooks --hooks-json {user-home}\.codex\hooks.json --prototype-root {workspace-root}\tool\experiments\paneforge-task-probe --audit-root {workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits --config {user-home}\.codex\config.toml
+node dist/src/cli.js verify-live-consistency --repo-root {workspace-root}\tool\repos\hooks --live-root {workspace-root}\tool\experiments\paneforge-task-probe
 ```
 
 ## 停止条件

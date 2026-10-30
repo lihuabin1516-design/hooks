@@ -14,7 +14,7 @@ export interface UpstreamHookMetadata {
 }
 
 export interface HookShadowAudit {
-  schema: 'ccpanes.hook-shadow-audit.v1';
+  schema: 'paneforge.hook-shadow-audit.v1';
   mode: 'shadow';
   createdAt: string;
   taskId: string;
@@ -32,9 +32,9 @@ export interface CreateHookShadowAuditInput {
 const forbiddenAuditOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 export async function readUpstreamHookMetadata(upstreamHookPath: string | null | undefined): Promise<UpstreamHookMetadata | null> {
@@ -67,7 +67,7 @@ export async function createHookShadowAudit(input: CreateHookShadowAuditInput): 
   const runner = runHookEventDryRun(input.task, input.event);
   const upstreamHook = await readUpstreamHookMetadata(input.upstreamHookPath);
   return {
-    schema: 'ccpanes.hook-shadow-audit.v1',
+    schema: 'paneforge.hook-shadow-audit.v1',
     mode: 'shadow',
     createdAt: input.now ?? new Date().toISOString(),
     taskId: input.task.taskId,

@@ -16,7 +16,7 @@ import { verifyLiveConsistency } from '../live-consistency.js';
 import { createProductionToolkit } from '../production-toolkit.js';
 import { createAcceptanceEvidence } from '../acceptance.js';
 import { verifyAcceptanceEvidence } from '../acceptance-verify.js';
-import { CCPANES_RUNTIME_PROFILE } from '../runtime-profile.js';
+import { PANEFORGE_RUNTIME_PROFILE } from '../runtime-profile.js';
 import { deployRuntime, recoverRuntime, rollbackRuntime } from '../runtime-deployment.js';
 import { validateCurrentTask } from '../current-task.js';
 import type { RunCliOptions } from '../cli-types.js';
@@ -201,7 +201,7 @@ export async function handleReleaseCommands(
     const outDir = valueAfter(args, '--out-dir');
     const approvedBy = valueAfter(args, '--approved-by');
     const approvalNote = valueAfter(args, '--approval-note') ?? '';
-    const upstreamHookPath = valueAfter(args, '--upstream-hook') ?? CCPANES_RUNTIME_PROFILE.skillsHubHookPath;
+    const upstreamHookPath = valueAfter(args, '--upstream-hook') ?? PANEFORGE_RUNTIME_PROFILE.skillsHubHookPath;
     if (!readinessPath) throw new Error('missing --readiness');
     if (!outDir) throw new Error('missing --out-dir');
     if (!approvedBy) throw new Error('missing --approved-by');

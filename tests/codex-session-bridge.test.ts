@@ -1709,7 +1709,7 @@ describe('buildCodexSessionIndex', () => {
             content: [{
               type: 'input_text',
               text: [
-                'ccpanes-task-probe lifecycle context',
+                'paneforge-task-probe lifecycle context',
                 `taskId: task-${secret}`,
                 `projectPath: ${taskProjectPath}`,
                 `worktreeRoot: ${worktreeRoot}`
@@ -1741,12 +1741,12 @@ describe('buildCodexSessionIndex', () => {
         generatedAt: '2026-08-16T00:00:00.000Z',
         project,
         codexSessions: resolution.sessions,
-        ccpanes: null
+        paneforge: null
       });
       for (const artifact of [index, resolution, graph]) {
         expect(JSON.stringify(artifact)).not.toContain(secret);
       }
-      expect(graph.nodes.some((node) => node.type === 'ccpanes-task'))
+      expect(graph.nodes.some((node) => node.type === 'paneforge-task'))
         .toBe(false);
       expect(graph.edges.some((edge) => edge.type === 'belongs-to-task'))
         .toBe(false);
@@ -1776,7 +1776,7 @@ describe('buildCodexSessionIndex', () => {
           content: [{
             type: 'input_text',
             text: [
-              'ccpanes-task-probe lifecycle context',
+              'paneforge-task-probe lifecycle context',
               'taskId: bounded-task',
               `projectPath: ${overlongPath}`,
               `worktreeRoot: ${overlongPath}`
@@ -1828,7 +1828,7 @@ describe('buildCodexSessionIndex', () => {
           content: [{
             type: 'input_text',
             text: [
-              'ccpanes-task-probe lifecycle context',
+              'paneforge-task-probe lifecycle context',
               'taskId: safe-task',
               `projectPath: ${project}\\packages\\${projectSecret}`,
               `worktreeRoot: ${project}\\worktrees\\${worktreeSecret}`
@@ -1859,14 +1859,14 @@ describe('buildCodexSessionIndex', () => {
       generatedAt: '2026-08-16T00:00:00.000Z',
       project,
       codexSessions: resolution.sessions,
-      ccpanes: null
+      paneforge: null
     });
     for (const artifact of [index, resolution, graph]) {
       const serialized = JSON.stringify(artifact);
       expect(serialized).not.toContain(projectSecret);
       expect(serialized).not.toContain(worktreeSecret);
     }
-    expect(graph.nodes.some((node) => node.type === 'ccpanes-task'))
+    expect(graph.nodes.some((node) => node.type === 'paneforge-task'))
       .toBe(false);
     expect(graph.edges.some((edge) => edge.type === 'belongs-to-task'))
       .toBe(false);
@@ -2654,7 +2654,7 @@ describe('buildCodexSessionIndex', () => {
           content: [{
             type: 'input_text',
             text: [
-              'ccpanes-task-probe lifecycle context',
+              'paneforge-task-probe lifecycle context',
               'taskId: owned-task',
               'projectPath: D:\\Repo',
               'worktreeRoot: D:\\Repo'
@@ -2736,7 +2736,7 @@ describe('buildCodexSessionIndex', () => {
           content: [{
             type: 'input_text',
             text: [
-              'ccpanes-task-probe lifecycle context',
+              'paneforge-task-probe lifecycle context',
               'taskId: bridge-task',
               'projectPath: D:\\Work\\Repo',
               'worktreeRoot: D:\\Work\\Repo'
@@ -2955,7 +2955,7 @@ describe('buildCodexSessionIndex', () => {
           content: [{
             type: 'input_text',
             text: [
-              'ccpanes-task-probe lifecycle context',
+              'paneforge-task-probe lifecycle context',
               'taskId: project-unknown-task',
               'projectPath: D:\\Repo',
               'worktreeRoot: D:\\Repo'
@@ -3582,7 +3582,7 @@ describe('Task 3 quality fixes', () => {
       'D:\\Repo'
     );
     const caught = await generateCodexHandoff({
-      mode: 'ccpanes-worker',
+      mode: 'paneforge-worker',
       project: 'D:\\Repo',
       indexPath: 'D:\\Repo\\live\\index.json',
       taskContextPath: null,

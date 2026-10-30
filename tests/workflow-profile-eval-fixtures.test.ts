@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest';
 import { classifyWorkflowProfile } from '../src/workflow-profile.js';
 
 interface WorkflowProfileEvalFixture {
-  schema: 'ccpanes.workflow-profile-eval-cases.v1';
+  schema: 'paneforge.workflow-profile-eval-cases.v1';
   cases: WorkflowProfileEvalCase[];
 }
 
@@ -47,7 +47,7 @@ describe('workflow profile eval fixtures', () => {
   const fixture = readFixture();
 
   test('uses the expected fixture schema', () => {
-    expect(fixture.schema).toBe('ccpanes.workflow-profile-eval-cases.v1');
+    expect(fixture.schema).toBe('paneforge.workflow-profile-eval-cases.v1');
     expect(fixture.cases.length).toBeGreaterThanOrEqual(6);
   });
 
@@ -68,11 +68,11 @@ describe('workflow profile eval fixtures', () => {
   test.each(fixture.cases)('$id: $description', (evalCase) => {
     const result = classifyWorkflowProfile({
       prompt: evalCase.prompt,
-      cwd: 'D:/cc-pane/tool/repos/hooks',
+      cwd: 'D:/paneforge/tool/repos/hooks',
       changedPaths: evalCase.changedPaths
     });
 
-    expect(result.schema).toBe('ccpanes.workflow-profile.v1');
+    expect(result.schema).toBe('paneforge.workflow-profile.v1');
     expect(result.route.id).toBe(evalCase.expected.routeId);
     expect(result.rigor).toBe(evalCase.expected.rigor);
     expect(result.closure.bucket).toBe(evalCase.expected.closureBucket);

@@ -7,7 +7,7 @@ import { AGENTS_BEGIN_MARKER, AGENTS_END_MARKER, installAgentsEntry, validateAge
 let tempRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-agents-entry-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-agents-entry-'));
 });
 
 afterEach(async () => {
@@ -21,12 +21,12 @@ describe('agents entry installer', () => {
     const validation = await validateAgentsEntry(tempRoot);
 
     expect(result).toMatchObject({
-      schema: 'ccpanes.agents-entry-result.v1',
+      schema: 'paneforge.agents-entry-result.v1',
       changed: true,
       action: 'created'
     });
     expect(text).toContain(AGENTS_BEGIN_MARKER);
-    expect(text).toContain('CC-Panes Hooks Project Entry');
+    expect(text).toContain('PaneForge Hooks Project Entry');
     expect(text).toContain(AGENTS_END_MARKER);
     expect(validation).toMatchObject({ exists: true, markerPresent: true, valid: true });
   });

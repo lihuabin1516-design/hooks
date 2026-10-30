@@ -8,7 +8,7 @@ import { captureProjectPolicyInstruction } from '../src/project-policy-capture.j
 let tempRoot: string;
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-plan-policy-capture-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-plan-policy-capture-'));
 });
 
 afterEach(async () => {
@@ -45,11 +45,11 @@ describe('capturePlanPolicyInstructions', () => {
       text: '计划阶段规则：禁止运行 deploy-artifact，除非我明确解除。',
       now: '2026-08-07T06:00:00.000Z'
     });
-    const ledger = await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.md'), 'utf8');
-    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const ledger = await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(result).toMatchObject({
-      schema: 'ccpanes.plan-policy-capture-result.v1',
+      schema: 'paneforge.plan-policy-capture-result.v1',
       changed: true,
       capturedCount: 1,
       clearedCount: 0,
@@ -82,8 +82,8 @@ describe('capturePlanPolicyInstructions', () => {
       text: '清除所有限制。',
       now: '2026-08-07T06:00:00.000Z'
     });
-    const ledger = await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.md'), 'utf8');
-    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const ledger = await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.md'), 'utf8');
+    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(result).toMatchObject({
       changed: true,
@@ -111,7 +111,7 @@ describe('capturePlanPolicyInstructions', () => {
       text,
       now: '2026-08-07T06:01:00.000Z'
     });
-    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.ccpanes-task', 'policy.json'), 'utf8'));
+    const policy = JSON.parse(await fs.readFile(path.join(tempRoot, '.paneforge-task', 'policy.json'), 'utf8'));
 
     expect(second.actions[0].id).toBe(first.actions[0].id);
     expect(policy.rules).toHaveLength(1);
@@ -131,6 +131,6 @@ describe('capturePlanPolicyInstructions', () => {
       clearedCount: 0,
       skippedCount: 1
     });
-    await expect(fs.stat(path.join(tempRoot, '.ccpanes-task', 'policy.json'))).rejects.toThrow();
+    await expect(fs.stat(path.join(tempRoot, '.paneforge-task', 'policy.json'))).rejects.toThrow();
   });
 });

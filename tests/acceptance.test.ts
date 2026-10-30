@@ -14,9 +14,9 @@ function sha256(text: string): string {
 
 function task(root: string): CurrentTask {
   return {
-    schema: 'ccpanes.task-selection.v1',
+    schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
-    workspace: 'cc-pane',
+    workspace: 'paneforge',
     projectPath: root,
     worktreeRoot: root,
     mainRepoRoot: null,
@@ -32,7 +32,7 @@ function task(root: string): CurrentTask {
 }
 
 beforeEach(async () => {
-  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'ccpanes-acceptance-'));
+  tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-acceptance-'));
 });
 
 afterEach(async () => {
@@ -52,7 +52,7 @@ describe('createAcceptanceEvidence', () => {
     });
 
     expect(evidence).toMatchObject({
-      schema: 'ccpanes.acceptance.v1',
+      schema: 'paneforge.acceptance.v1',
       taskId: 'task-alpha',
       worktreeRoot: tempRoot,
       branch: 'feature/task-alpha',

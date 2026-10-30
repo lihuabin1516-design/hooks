@@ -8,7 +8,7 @@ import { readGitTopology } from './git-state.js';
 import { withFileLock, writeTextFileAtomic } from './atomic-file.js';
 
 export interface RuntimeDeploymentPointer {
-  schema: 'ccpanes.runtime-deployment-pointer.v1';
+  schema: 'paneforge.runtime-deployment-pointer.v1';
   releaseId: string;
   releasePath: string;
   identity: RuntimeIdentity;
@@ -17,28 +17,28 @@ export interface RuntimeDeploymentPointer {
 }
 
 export interface RuntimePackageIdentity {
-  schema: 'ccpanes.runtime-package-identity.v1';
+  schema: 'paneforge.runtime-package-identity.v1';
   payloadSha256: string;
   fileCount: number;
   generatedAt: string;
 }
 
 export interface RuntimeRollbackPending {
-  schema: 'ccpanes.runtime-rollback-pending.v1';
+  schema: 'paneforge.runtime-rollback-pending.v1';
   from: RuntimeDeploymentPointer;
   to: RuntimeDeploymentPointer;
   startedAt: string;
 }
 
 export interface RuntimeDeployPending {
-  schema: 'ccpanes.runtime-deploy-pending.v1';
+  schema: 'paneforge.runtime-deploy-pending.v1';
   from: RuntimeDeploymentPointer | null;
   to: RuntimeDeploymentPointer;
   startedAt: string;
 }
 
 export interface RuntimeDeploymentReport {
-  schema: 'ccpanes.runtime-deployment.v1';
+  schema: 'paneforge.runtime-deployment.v1';
   action: 'deploy' | 'rollback';
   changed: boolean;
   runtimeRoot: string;
@@ -55,7 +55,7 @@ export interface RuntimeDeploymentReport {
 }
 
 export interface RuntimeRecoveryReport {
-  schema: 'ccpanes.runtime-recovery.v1';
+  schema: 'paneforge.runtime-recovery.v1';
   action: 'recover';
   recoveredAction: 'deploy' | 'rollback' | 'none';
   changed: boolean;
@@ -229,14 +229,14 @@ function releaseId(identity: RuntimeIdentity, packageIdentity: RuntimePackageIde
 
 function validatePackageIdentityValue(value: unknown): RuntimePackageIdentity {
   const record = value as Partial<RuntimePackageIdentity>;
-  if (!record || record.schema !== 'ccpanes.runtime-package-identity.v1'
+  if (!record || record.schema !== 'paneforge.runtime-package-identity.v1'
     || typeof record.payloadSha256 !== 'string' || !/^[A-Fa-f0-9]{64}$/.test(record.payloadSha256)
     || !Number.isSafeInteger(record.fileCount) || (record.fileCount ?? -1) < 0
     || typeof record.generatedAt !== 'string' || record.generatedAt.length === 0) {
     throw new Error('invalid runtime package identity');
   }
   return {
-    schema: 'ccpanes.runtime-package-identity.v1',
+    schema: 'paneforge.runtime-package-identity.v1',
     payloadSha256: record.payloadSha256.toUpperCase(),
     fileCount: record.fileCount,
     generatedAt: record.generatedAt
@@ -271,7 +271,7 @@ async function readPointer(runtimeRoot: string, name: 'current' | 'previous'): P
 
 async function validatePointerValue(runtimeRoot: string, raw: unknown, label: string): Promise<RuntimeDeploymentPointer> {
   const value = raw as Partial<RuntimeDeploymentPointer>;
-  if (!value || value.schema !== 'ccpanes.runtime-deployment-pointer.v1' || typeof value.releaseId !== 'string' || typeof value.releasePath !== 'string' || typeof value.switchedAt !== 'string') {
+  if (!value || value.schema !== 'paneforge.runtime-deployment-pointer.v1' || typeof value.releaseId !== 'string' || typeof value.releasePath !== 'string' || typeof value.switchedAt !== 'string') {
     throw new Error(`invalid runtime ${label} pointer`);
   }
   const expectedReleasePath = path.join(runtimeRoot, 'releases', value.releaseId);
@@ -317,11 +317,11 @@ async function readRollbackPending(runtimeRoot: string): Promise<RuntimeRollback
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw error;
   }
-  if (value.schema !== 'ccpanes.runtime-rollback-pending.v1' || !value.from || !value.to || typeof value.startedAt !== 'string') {
+  if (value.schema !== 'paneforge.runtime-rollback-pending.v1' || !value.from || !value.to || typeof value.startedAt !== 'string') {
     throw new Error('invalid runtime rollback pending record');
   }
   return {
-    schema: 'ccpanes.runtime-rollback-pending.v1',
+    schema: 'paneforge.runtime-rollback-pending.v1',
     from: await validatePointerValue(runtimeRoot, value.from, 'rollback from'),
     to: await validatePointerValue(runtimeRoot, value.to, 'rollback to'),
     startedAt: value.startedAt
@@ -346,11 +346,11 @@ async function readDeployPending(runtimeRoot: string): Promise<RuntimeDeployPend
     if ((error as NodeJS.ErrnoException).code === 'ENOENT') return null;
     throw error;
   }
-  if (value.schema !== 'ccpanes.runtime-deploy-pending.v1' || !value.to || typeof value.startedAt !== 'string') {
+  if (value.schema !== 'paneforge.runtime-deploy-pending.v1' || !value.to || typeof value.startedAt !== 'string') {
     throw new Error('invalid runtime deploy pending record');
   }
   return {
-    schema: 'ccpanes.runtime-deploy-pending.v1',
+    schema: 'paneforge.runtime-deploy-pending.v1',
     from: value.from ? await validatePointerValue(runtimeRoot, value.from, 'deploy from') : null,
     to: await validatePointerValue(runtimeRoot, value.to, 'deploy to'),
     startedAt: value.startedAt
@@ -365,15 +365,15 @@ function launcherPrelude(): string[] {
     "import { fileURLToPath, pathToFileURL } from 'node:url';",
     'const runtimeRoot = path.dirname(fileURLToPath(import.meta.url));',
     "const pointer = JSON.parse(await fs.readFile(path.join(runtimeRoot, 'current.json'), 'utf8'));",
-    "if (pointer.schema !== 'ccpanes.runtime-deployment-pointer.v1') throw new Error('invalid runtime current pointer schema');",
+    "if (pointer.schema !== 'paneforge.runtime-deployment-pointer.v1') throw new Error('invalid runtime current pointer schema');",
     "if (typeof pointer.releaseId !== 'string' || !/^[a-f0-9]{6,64}-[a-f0-9]{64}-[a-f0-9]{64}$/.test(pointer.releaseId)) throw new Error('invalid runtime release id');",
     "const releaseRoot = path.join(runtimeRoot, 'releases', pointer.releaseId);",
     "const moduleRoot = path.join(releaseRoot, 'dist', 'src');",
     "const identity = JSON.parse(await fs.readFile(path.join(moduleRoot, 'runtime-identity.json'), 'utf8'));",
-    "if (identity.schema !== 'ccpanes.runtime-identity.v1') throw new Error('invalid runtime identity schema');",
+    "if (identity.schema !== 'paneforge.runtime-identity.v1') throw new Error('invalid runtime identity schema');",
     "for (const key of ['schema', 'packageName', 'packageVersion', 'gitCommit', 'gitDirty', 'buildSha256', 'builtAt', 'source']) if (pointer.identity?.[key] !== identity[key]) throw new Error('runtime pointer embedded identity mismatch');",
     "const packageIdentity = JSON.parse(await fs.readFile(path.join(releaseRoot, 'runtime-package-identity.json'), 'utf8'));",
-    "if (packageIdentity.schema !== 'ccpanes.runtime-package-identity.v1') throw new Error('invalid runtime package identity schema');",
+    "if (packageIdentity.schema !== 'paneforge.runtime-package-identity.v1') throw new Error('invalid runtime package identity schema');",
     "for (const key of ['schema', 'payloadSha256', 'fileCount', 'generatedAt']) if (pointer.packageIdentity?.[key] !== packageIdentity[key]) throw new Error('runtime pointer package identity mismatch');",
     "if (`${identity.gitCommit}-${identity.buildSha256}-${packageIdentity.payloadSha256}`.toLowerCase() !== pointer.releaseId) throw new Error('runtime pointer identity mismatch');",
     'async function payloadFiles(root, current = root) {',
@@ -526,7 +526,7 @@ async function stageRuntimePackage(sourceDir: string, stagingPath: string): Prom
 async function writePackageIdentity(stagingPath: string, generatedAt: string): Promise<RuntimePackageIdentity> {
   const payload = await computeRuntimePayload(stagingPath);
   const identity: RuntimePackageIdentity = {
-    schema: 'ccpanes.runtime-package-identity.v1',
+    schema: 'paneforge.runtime-package-identity.v1',
     ...payload,
     generatedAt
   };
@@ -542,7 +542,7 @@ function createPointer(
 ): RuntimeDeploymentPointer {
   const id = releaseId(identity, packageIdentity);
   return {
-    schema: 'ccpanes.runtime-deployment-pointer.v1',
+    schema: 'paneforge.runtime-deployment-pointer.v1',
     releaseId: id,
     releasePath: path.join(runtimeRoot, 'releases', id),
     identity,
@@ -622,14 +622,14 @@ export async function deployRuntime(input: DeployRuntimeInput): Promise<RuntimeD
       const current = await readPointer(input.runtimeRoot, 'current');
       if (current?.releaseId === next.releaseId) {
         return {
-          schema: 'ccpanes.runtime-deployment.v1', action: 'deploy', changed: false,
+          schema: 'paneforge.runtime-deployment.v1', action: 'deploy', changed: false,
           runtimeRoot: input.runtimeRoot, releaseId: next.releaseId, releasePath: next.releasePath,
           previousReleaseId: (await readPointer(input.runtimeRoot, 'previous'))?.releaseId ?? null,
           identity: next.identity, packageIdentity: next.packageIdentity, launcherPaths, completedAt: now
         };
       }
       await writeDeployPendingAtomic(input.runtimeRoot, {
-        schema: 'ccpanes.runtime-deploy-pending.v1',
+        schema: 'paneforge.runtime-deploy-pending.v1',
         from: current,
         to: next,
         startedAt: now
@@ -638,7 +638,7 @@ export async function deployRuntime(input: DeployRuntimeInput): Promise<RuntimeD
       if (current) await writePointerAtomic(input.runtimeRoot, 'previous', { ...current, switchedAt: now });
       await fs.rm(deployPendingPath(input.runtimeRoot));
       return {
-        schema: 'ccpanes.runtime-deployment.v1', action: 'deploy', changed: true,
+        schema: 'paneforge.runtime-deployment.v1', action: 'deploy', changed: true,
         runtimeRoot: input.runtimeRoot, releaseId: next.releaseId, releasePath: next.releasePath,
         previousReleaseId: current?.releaseId ?? null, identity: next.identity,
         packageIdentity: next.packageIdentity, launcherPaths, completedAt: now
@@ -698,7 +698,7 @@ async function recoverRuntimeLocked(input: RecoverRuntimeInput, allowEmpty = fal
   if (!current && !allowEmpty) throw new Error('runtime current pointer is missing');
   const launcherPaths = await writeLaunchers(input.runtimeRoot);
   return {
-    schema: 'ccpanes.runtime-recovery.v1',
+    schema: 'paneforge.runtime-recovery.v1',
     action: 'recover',
     recoveredAction,
     changed: recoveredAction !== 'none',
@@ -722,7 +722,7 @@ async function rollbackRuntimeLocked(input: RollbackRuntimeInput): Promise<Runti
     await writePointerAtomic(input.runtimeRoot, 'previous', { ...pending.from, switchedAt: now });
     await fs.rm(rollbackPendingPath(input.runtimeRoot));
     return {
-      schema: 'ccpanes.runtime-deployment.v1', action: 'rollback', changed: true,
+      schema: 'paneforge.runtime-deployment.v1', action: 'rollback', changed: true,
       runtimeRoot: input.runtimeRoot, releaseId: pending.to.releaseId, releasePath: pending.to.releasePath,
       previousReleaseId: pending.from.releaseId, identity: pending.to.identity,
       packageIdentity: pending.to.packageIdentity, launcherPaths, completedAt: now
@@ -737,14 +737,14 @@ async function rollbackRuntimeLocked(input: RollbackRuntimeInput): Promise<Runti
   if (!previous) throw new Error('runtime previous pointer is missing');
   if (current.releaseId === previous.releaseId) {
     return {
-      schema: 'ccpanes.runtime-deployment.v1', action: 'rollback', changed: false,
+      schema: 'paneforge.runtime-deployment.v1', action: 'rollback', changed: false,
       runtimeRoot: input.runtimeRoot, releaseId: current.releaseId, releasePath: current.releasePath,
       previousReleaseId: previous.releaseId, identity: current.identity,
       packageIdentity: current.packageIdentity, launcherPaths, completedAt: now
     };
   }
   await writeRollbackPendingAtomic(input.runtimeRoot, {
-    schema: 'ccpanes.runtime-rollback-pending.v1',
+    schema: 'paneforge.runtime-rollback-pending.v1',
     from: current,
     to: previous,
     startedAt: now
@@ -753,7 +753,7 @@ async function rollbackRuntimeLocked(input: RollbackRuntimeInput): Promise<Runti
   await writePointerAtomic(input.runtimeRoot, 'previous', { ...current, switchedAt: now });
   await fs.rm(rollbackPendingPath(input.runtimeRoot));
   return {
-    schema: 'ccpanes.runtime-deployment.v1', action: 'rollback', changed: true,
+    schema: 'paneforge.runtime-deployment.v1', action: 'rollback', changed: true,
     runtimeRoot: input.runtimeRoot, releaseId: previous.releaseId, releasePath: previous.releasePath,
     previousReleaseId: current.releaseId, identity: previous.identity,
     packageIdentity: previous.packageIdentity, launcherPaths, completedAt: now

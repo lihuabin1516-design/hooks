@@ -7,7 +7,7 @@ describe('classifyWorkflowProfile', () => {
       prompt: '这个公开项目对于我们有没有参考价值？'
     });
 
-    expect(result.schema).toBe('ccpanes.workflow-profile.v1');
+    expect(result.schema).toBe('paneforge.workflow-profile.v1');
     expect(result.route.id).toBe('read-only-review');
     expect(result.rigor).toBe('light');
     expect(result.closure.bucket).toBe('none');
@@ -27,7 +27,7 @@ describe('classifyWorkflowProfile', () => {
     expect(result.checks.map((check) => check.command)).toContain('npm run smoke');
     expect(result.gates).toContain('new host payloads need synthetic fixture tests before real hook configuration changes');
     expect(result.implementationStandard).toMatchObject({
-      schema: 'ccpanes.implementation-standard.v1',
+      schema: 'paneforge.implementation-standard.v1',
       level: 'production-grade',
       optimizationTarget: 'unnecessary-complexity'
     });
@@ -75,7 +75,7 @@ describe('classifyWorkflowProfile', () => {
     expect(result.route.id).toBe('project-policy');
     expect(result.closure.bucket).toBe('full');
     expect(result.gates).toContain('policy.md is the human-readable ledger; policy.json is the mechanical matcher');
-    expect(result.gates).toContain('.ccpanes-task/policy.json remains the executable allow/block authority');
+    expect(result.gates).toContain('.paneforge-task/policy.json remains the executable allow/block authority');
     expect(result.implementationStandard?.level).toBe('production-grade');
   });
 
@@ -138,7 +138,7 @@ describe('classifyWorkflowProfile', () => {
 
     expect(result.route.id).toBe(id);
     if (present) {
-      expect(result.implementationStandard?.schema).toBe('ccpanes.implementation-standard.v1');
+      expect(result.implementationStandard?.schema).toBe('paneforge.implementation-standard.v1');
     } else {
       expect(result.implementationStandard).toBeNull();
     }

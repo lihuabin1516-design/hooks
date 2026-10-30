@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node.js 22 `child_process`, `readline`, `crypto`, TypeScript, Vitest, official Codex App Server JSONL protocol, Codex App thread tools for host pinning.
 
-**Dependency:** Complete and verify `2026-08-15-codex-ccpanes-session-federation-core.md` first.
+**Dependency:** Complete and verify `2026-08-15-codex-paneforge-session-federation-core.md` first.
 
 **Authorization note:** Current authorization permits official name/pin metadata updates but excludes stage, commit, and push. The checkpoints below do not authorize Git commits.
 
@@ -128,13 +128,13 @@ test('sets a thread name through thread/name/set', async () => {
   const transport = new FakeTransport();
   const client = new CodexAppServerClient(transport, 1_000);
   await client.initialize();
-  await client.setThreadName('thread-cli', '[CC-Panes] Run task');
+  await client.setThreadName('thread-cli', '[PaneForge] Run task');
 
   expect(transport.writes).toContainEqual(expect.objectContaining({
     method: 'thread/name/set',
     params: {
       threadId: 'thread-cli',
-      name: '[CC-Panes] Run task'
+      name: '[PaneForge] Run task'
     }
   }));
 });
@@ -432,7 +432,7 @@ test('selects active user CLI threads absent from the App sidebar snapshot', () 
   expect(plan.actions).toEqual([{
     threadId: 'cli-hidden',
     currentName: null,
-    desiredName: '[CC-Panes] Run task',
+    desiredName: '[PaneForge] Run task',
     currentPinned: false,
     desiredPinned: true,
     nameAdapter: 'app-server',
@@ -500,7 +500,7 @@ export interface SidebarPlan {
 
 function boundedName(title: string): string {
   const normalized = title.replace(/\s+/g, ' ').trim() || 'Codex CLI thread';
-  return `[CC-Panes] ${normalized}`.slice(0, 120);
+  return `[PaneForge] ${normalized}`.slice(0, 120);
 }
 
 export function digestSidebarPlan(
@@ -601,7 +601,7 @@ test('applies changed names and emits pending host pin actions', async () => {
       actions: [{
         threadId: 'cli-hidden',
         currentName: null,
-        desiredName: '[CC-Panes] Run task',
+        desiredName: '[PaneForge] Run task',
         currentPinned: false,
         desiredPinned: true,
         nameAdapter: 'app-server',
@@ -615,10 +615,10 @@ test('applies changed names and emits pending host pin actions', async () => {
     setName: async (threadId, name) => {
       calls.push([threadId, name]);
     },
-    readName: async () => '[CC-Panes] Run task'
+    readName: async () => '[PaneForge] Run task'
   });
 
-  expect(calls).toEqual([['cli-hidden', '[CC-Panes] Run task']]);
+  expect(calls).toEqual([['cli-hidden', '[PaneForge] Run task']]);
   expect(result.pendingHostActions).toEqual([{
     action: 'set-pinned',
     threadId: 'cli-hidden',

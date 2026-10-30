@@ -98,11 +98,11 @@ function adaptCall(value: unknown, fallbackCwd: string | null): HookCall[] {
 }
 
 function adaptGenericEvent(task: CurrentTask, record: Record<string, unknown>): HookDryRunBatchInput | null {
-  if (record.schema !== 'ccpanes.hook-event.v1') return null;
+  if (record.schema !== 'paneforge.hook-event.v1') return null;
   if (!Array.isArray(record.calls)) throw new Error('unsupported hook event: calls must be array');
   const fallbackCwd = typeof record.cwd === 'string' ? record.cwd : task.worktreeRoot;
   return {
-    schema: 'ccpanes.hook-dry-run-batch.v1',
+    schema: 'paneforge.hook-dry-run-batch.v1',
     task,
     calls: record.calls.flatMap((call) => adaptCall(call, fallbackCwd))
   };
@@ -114,7 +114,7 @@ function adaptSingleToolEvent(task: CurrentTask, record: Record<string, unknown>
   const input = asRecord(record.tool_input ?? record.arguments ?? record.input ?? record);
   if (tool === 'shell' && typeof input.command === 'string') {
     return {
-      schema: 'ccpanes.hook-dry-run-batch.v1',
+      schema: 'paneforge.hook-dry-run-batch.v1',
       task,
       calls: analyzeShellCommand({
         command: input.command,
@@ -128,7 +128,7 @@ function adaptSingleToolEvent(task: CurrentTask, record: Record<string, unknown>
     ? [{ tool, targetPath: null, writes: inferWrites(tool, input.writes), ...(command ? { command } : {}) }]
     : targetPaths.map((targetPath) => ({ tool, targetPath, writes: inferWrites(tool, input.writes), ...(command ? { command } : {}) }));
   return {
-    schema: 'ccpanes.hook-dry-run-batch.v1',
+    schema: 'paneforge.hook-dry-run-batch.v1',
     task,
     calls
   };

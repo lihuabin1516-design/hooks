@@ -111,7 +111,7 @@ hard gate 和 audit 继续由本仓库的 canonical owner 管理。
 current-task.json
   = task scope authority
 
-.ccpanes-task/policy.json
+.paneforge-task/policy.json
   = executable project-policy authority
 
 hook-enforce / permission-enforce
@@ -197,14 +197,14 @@ git diff --check
 git status --short --branch
 ```
 
-`implementationStandard` 是 `ccpanes.workflow-profile.v1` 的 additive field。
-代码类 route 返回 `ccpanes.implementation-standard.v1`；read-only、
+`implementationStandard` 是 `paneforge.workflow-profile.v1` 的 additive field。
+代码类 route 返回 `paneforge.implementation-standard.v1`；read-only、
 documentation 和 other route 返回 `null`。现有 hard gate、closure 和验收语义
 保持不变。
 
 ### 嵌套消费者兼容性
 
-`WorkflowProfileResult` 还被 `ccpanes.plan-intake.v1` 的 `workflow` 字段直接
+`WorkflowProfileResult` 还被 `paneforge.plan-intake.v1` 的 `workflow` 字段直接
 嵌入，因此新增字段同时出现在：
 
 - `classify-workflow` CLI 输出。
@@ -222,7 +222,7 @@ repo 测试外推为外部消费者兼容证据。
 
 Codex `UserPromptSubmit` 通过独立 `workflow-advisory` 命令读取当前 prompt，
 解析最近的 task binding，并只对代码类 route 注入有界
-`ccpanes.workflow-advisory.v1` additional context。skills-hub 与 CC-Panes
+`paneforge.workflow-advisory.v1` additional context。skills-hub 与 PaneForge
 prompt-before 保持原顺序和职责。advisory 失败时不阻断 prompt；PreToolUse、
 PermissionRequest、project policy 与 acceptance 继续拥有原有权威。
 

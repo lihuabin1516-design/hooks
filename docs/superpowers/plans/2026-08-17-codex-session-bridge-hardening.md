@@ -4,13 +4,13 @@
 
 **Goal:** Harden the Codex session federation and Codex App sidebar projection so only live, project-scoped CLI threads can be mutated and every native side effect has durable, privacy-safe, execution-bound evidence.
 
-**Architecture:** Move the Codex thread ID contract and index artifact projection into core-owned modules, then upgrade the session index, CC-Panes snapshot, and federation graph with clean-break schemas. Build sidebar selection on fresh graph/host evidence plus one shared live-thread validator. Execute name changes through a durable apply journal, preserve ambiguous outcomes as `unknown`, and bind reconciliation to one exact plan, apply execution, host action set, receipt, and fresh host snapshot.
+**Architecture:** Move the Codex thread ID contract and index artifact projection into core-owned modules, then upgrade the session index, PaneForge snapshot, and federation graph with clean-break schemas. Build sidebar selection on fresh graph/host evidence plus one shared live-thread validator. Execute name changes through a durable apply journal, preserve ambiguous outcomes as `unknown`, and bind reconciliation to one exact plan, apply execution, host action set, receipt, and fresh host snapshot.
 
 **Tech Stack:** Node.js 22 standard library, TypeScript, `node:sqlite` read-only access, Vitest, Codex App Server JSONL protocol, SHA-256 canonical digests, atomic same-directory JSON replacement.
 
-**Authorization note:** Current authorization excludes stage, commit, push, integration, release, native Codex store edits, CC-Panes store edits, and global configuration changes. Every Git checkpoint below is inspection-only.
+**Authorization note:** Current authorization excludes stage, commit, push, integration, release, native Codex store edits, PaneForge store edits, and global configuration changes. Every Git checkpoint below is inspection-only.
 
-**Baseline note:** The approved design and live Git inspection use `main` at `53ae96a737d51c7ab7c02998c2320ea5f723408b`. `.ccpanes-task/current-task.json` still records `e5e4fbd81a4c7870d1f1569de842f4ef9dc5b6f0`; implementation must report that stale metadata mismatch and must not rewrite it without separate authorization.
+**Baseline note:** The approved design and live Git inspection use `main` at `53ae96a737d51c7ab7c02998c2320ea5f723408b`. `.paneforge-task/current-task.json` still records `e5e4fbd81a4c7870d1f1569de842f4ef9dc5b6f0`; implementation must report that stale metadata mismatch and must not rewrite it without separate authorization.
 
 ---
 
@@ -42,7 +42,7 @@
   - keep handoff selection based on validated records.
 - `src/current-task.ts`
   - compare pre-open, open-handle, and post-read file identity.
-- `src/ccpanes-session-snapshot.ts`
+- `src/paneforge-session-snapshot.ts`
   - require snapshot v2 lifecycle;
   - validate `active | historical | unknown`.
 - `src/session-federation.ts`
@@ -72,7 +72,7 @@
 - `tests/current-task.test.ts`
 - `tests/codex-session-bridge.test.ts`
 - `tests/codex-session-cli.test.ts`
-- `tests/ccpanes-session-snapshot.test.ts`
+- `tests/paneforge-session-snapshot.test.ts`
 - `tests/session-federation.test.ts`
 - `tests/session-federation-artifact.test.ts`
 - `tests/codex-app-server-client.test.ts`
@@ -411,7 +411,7 @@ test('uses v3 resolution and v2 retention with no legacy reader', async () => {
   expect(createRetentionManifest(records).schemaVersion)
     .toBe('hooks.codex-session-retention/v2');
   await expect(runCli(['codex-sessions', 'graph', '--project', project,
-    '--ccpanes-snapshot', oldSnapshotPath]))
+    '--paneforge-snapshot', oldSnapshotPath]))
     .rejects.toThrow(/unsupported-schema/);
 });
 ```
@@ -598,13 +598,13 @@ git diff --check
 git status --short
 ```
 
-Expected: only the pre-existing task-scoped current-task files changed by this task; `.ccpanes-task/current-task.json` remains untouched.
+Expected: only the pre-existing task-scoped current-task files changed by this task; `.paneforge-task/current-task.json` remains untouched.
 
-### Task 5: Require CC-Panes Snapshot v2 Lifecycle
+### Task 5: Require PaneForge Snapshot v2 Lifecycle
 
 **Files:**
-- Modify: `src/ccpanes-session-snapshot.ts`
-- Modify: `tests/ccpanes-session-snapshot.test.ts`
+- Modify: `src/paneforge-session-snapshot.ts`
+- Modify: `tests/paneforge-session-snapshot.test.ts`
 - Modify: `tests/codex-session-cli.test.ts`
 
 - [ ] **Step 1: Add failing lifecycle and old-schema rejection tests**
@@ -613,9 +613,9 @@ Expected: only the pre-existing task-scoped current-task files changed by this t
 test.each(['active', 'historical', 'unknown'] as const)(
   'accepts normalized lifecycle %s',
   (lifecycle) => {
-    const snapshot = validateCcPanesSessionSnapshot({
+    const snapshot = validatePaneForgeSessionSnapshot({
       ...validSnapshot(),
-      schemaVersion: 'hooks.ccpanes-session-snapshot/v2',
+      schemaVersion: 'hooks.paneforge-session-snapshot/v2',
       sessions: [{
         ...validSnapshot().sessions[0],
         lifecycle
@@ -626,11 +626,11 @@ test.each(['active', 'historical', 'unknown'] as const)(
 );
 
 test('rejects v1 and refuses to infer lifecycle from status or title', () => {
-  expect(() => validateCcPanesSessionSnapshot(validSnapshot()))
+  expect(() => validatePaneForgeSessionSnapshot(validSnapshot()))
     .toThrow(/unsupported-schema/);
-  expect(() => validateCcPanesSessionSnapshot({
+  expect(() => validatePaneForgeSessionSnapshot({
     ...validSnapshot(),
-    schemaVersion: 'hooks.ccpanes-session-snapshot/v2',
+    schemaVersion: 'hooks.paneforge-session-snapshot/v2',
     sessions: validSnapshot().sessions
   })).toThrow(/lifecycle/);
 });
@@ -641,7 +641,7 @@ test('rejects v1 and refuses to infer lifecycle from status or title', () => {
 Run:
 
 ```powershell
-npx vitest run tests/ccpanes-session-snapshot.test.ts tests/codex-session-cli.test.ts
+npx vitest run tests/paneforge-session-snapshot.test.ts tests/codex-session-cli.test.ts
 ```
 
 Expected: `FAIL` because snapshot v1 has no lifecycle field.
@@ -651,28 +651,28 @@ Expected: `FAIL` because snapshot v1 has no lifecycle field.
 Add:
 
 ```ts
-export type CcPanesSessionLifecycle =
+export type PaneForgeSessionLifecycle =
   | 'active'
   | 'historical'
   | 'unknown';
 
-export interface CcPanesRuntimeSessionSnapshot {
+export interface PaneForgeRuntimeSessionSnapshot {
   sessionId: string;
   launchId: string | null;
   taskId: string | null;
   projectPath: string | null;
   projectPathNorm: string | null;
   status: string;
-  lifecycle: CcPanesSessionLifecycle;
+  lifecycle: PaneForgeSessionLifecycle;
   title: string | null;
   observedCodexThreadId: string | null;
 }
 
-export interface CcPanesSessionSnapshot {
-  schemaVersion: 'hooks.ccpanes-session-snapshot/v2';
+export interface PaneForgeSessionSnapshot {
+  schemaVersion: 'hooks.paneforge-session-snapshot/v2';
   generatedAt: string;
-  launches: CcPanesLaunchSnapshot[];
-  sessions: CcPanesRuntimeSessionSnapshot[];
+  launches: PaneForgeLaunchSnapshot[];
+  sessions: PaneForgeRuntimeSessionSnapshot[];
 }
 ```
 
@@ -683,7 +683,7 @@ Require `lifecycle` as a known session field and validate it only against the th
 Run:
 
 ```powershell
-npx vitest run tests/ccpanes-session-snapshot.test.ts tests/codex-session-cli.test.ts
+npx vitest run tests/paneforge-session-snapshot.test.ts tests/codex-session-cli.test.ts
 ```
 
 Expected: `PASS`.
@@ -724,7 +724,7 @@ test.each([
       generatedAt: '2026-08-17T10:01:00.000Z',
       project,
       codexSessions: [ownedCliSession()],
-      ccpanes: snapshot
+      paneforge: snapshot
     });
     const node = graph.nodes.find((item) =>
       item.type === 'codex-thread' && item.attributes.inferred !== true
@@ -738,7 +738,7 @@ test('requires an exact active Session join, not a launch-only edge', () => {
     generatedAt,
     project,
     codexSessions: [ownedCliSession()],
-    ccpanes: freshLaunchOnlySnapshot()
+    paneforge: freshLaunchOnlySnapshot()
   });
   expect(concreteThread(graph).attributes.automaticSidebarEligible).toBe(false);
 });
@@ -761,7 +761,7 @@ Expected: `FAIL` because graph v1 only emits snapshot diagnostics and launch/ses
 Add:
 
 ```ts
-export interface FederationCcPanesSourceState {
+export interface FederationPaneForgeSourceState {
   availability: 'missing' | 'present';
   freshness: 'fresh' | 'stale' | 'future' | 'unknown';
   generatedAt: string | null;
@@ -772,7 +772,7 @@ export interface SessionFederation {
   schemaVersion: 'hooks.session-federation/v2';
   generatedAt: string;
   project: string;
-  ccpanesSource: FederationCcPanesSourceState;
+  paneforgeSource: FederationPaneForgeSourceState;
   nodes: FederationNode[];
   edges: FederationEdge[];
   diagnostics: FederationDiagnostic[];
@@ -800,7 +800,7 @@ Do not grant eligibility from launches, historical sessions, unknown lifecycle, 
 
 Update `validateSessionFederationArtifact` to:
 
-- require schema v2 and root `ccpanesSource`;
+- require schema v2 and root `paneforgeSource`;
 - strictly reconstruct source state;
 - require `automaticSidebarEligible` on concrete thread attributes;
 - reject that field on inferred nodes and non-thread nodes;
@@ -839,7 +839,7 @@ Expected: core changes remain separable from sidebar side-effect changes and no 
 Run:
 
 ```powershell
-npx vitest run tests/current-task.test.ts tests/codex-session-bridge.test.ts tests/codex-session-cli.test.ts tests/ccpanes-session-snapshot.test.ts tests/session-federation.test.ts tests/session-federation-artifact.test.ts tests/codex-app-server-client.test.ts
+npx vitest run tests/current-task.test.ts tests/codex-session-bridge.test.ts tests/codex-session-cli.test.ts tests/paneforge-session-snapshot.test.ts tests/session-federation.test.ts tests/session-federation-artifact.test.ts tests/codex-app-server-client.test.ts
 npm run typecheck
 ```
 
@@ -867,7 +867,7 @@ Expected: every assertion is directly covered by a passing test.
 Run:
 
 ```powershell
-git diff -- src/codex-session-identity.ts src/codex-session-index-artifact.ts src/codex-session-index.ts src/codex-session-resolver.ts src/codex-session-handoff.ts src/current-task.ts src/ccpanes-session-snapshot.ts src/session-federation.ts src/session-federation-artifact.ts tests/current-task.test.ts tests/codex-session-bridge.test.ts tests/codex-session-cli.test.ts tests/ccpanes-session-snapshot.test.ts tests/session-federation.test.ts tests/session-federation-artifact.test.ts
+git diff -- src/codex-session-identity.ts src/codex-session-index-artifact.ts src/codex-session-index.ts src/codex-session-resolver.ts src/codex-session-handoff.ts src/current-task.ts src/paneforge-session-snapshot.ts src/session-federation.ts src/session-federation-artifact.ts tests/current-task.test.ts tests/codex-session-bridge.test.ts tests/codex-session-cli.test.ts tests/paneforge-session-snapshot.test.ts tests/session-federation.test.ts tests/session-federation-artifact.test.ts
 git diff --check
 git status --short
 ```
@@ -2016,7 +2016,7 @@ Expected: required CLI breaks are explicit and no side effect happens before pla
 Document this order:
 
 ```text
-CC-Panes snapshot v2
+PaneForge snapshot v2
   -> session index v3
   -> resolution v3 / retention v2
   -> federation graph v2
@@ -2032,10 +2032,10 @@ CC-Panes snapshot v2
 
 State explicitly:
 
-- Codex App, Codex CLI, and CC-Panes remain separate authorities;
+- Codex App, Codex CLI, and PaneForge remain separate authorities;
 - the bridge is a derived federation and controlled projection;
 - `threadHistoryDb` is availability-only;
-- automatic selection requires a fresh active exact-project CC-Panes Session join;
+- automatic selection requires a fresh active exact-project PaneForge Session join;
 - explicit selection still requires live CLI source and project scope;
 - timeout/transport ambiguity remains `unknown`;
 - journal/result paths must be different files in the same directory;
@@ -2048,12 +2048,12 @@ Use these concrete examples:
 ```powershell
 node dist/src/cli.js codex-sessions scan `
   --project "{workspace-root}\tool\repos\hooks" `
-  --ccpanes-snapshot "live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json" `
+  --paneforge-snapshot "live\codex-session-bridge-hardening-20260817\paneforge-session-snapshot-v2.json" `
   --out "live\codex-session-bridge-hardening-20260817\codex-session-index-v3.json"
 
 node dist/src/cli.js codex-sessions graph `
   --project "{workspace-root}\tool\repos\hooks" `
-  --ccpanes-snapshot "live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json" `
+  --paneforge-snapshot "live\codex-session-bridge-hardening-20260817\paneforge-session-snapshot-v2.json" `
   --out "live\codex-session-bridge-hardening-20260817\session-federation-v2.json"
 
 node dist/src/cli.js codex-sessions sidebar-apply `
@@ -2088,7 +2088,7 @@ $files = @(
   "docs/codex-session-bridge.md"
 )
 Select-String -Path $files -Pattern `
-  "hooks\.codex-session-index/v2|hooks\.codex-session-resolution/v2|hooks\.codex-session-retention/v1|hooks\.ccpanes-session-snapshot/v1|hooks\.session-federation/v1|hooks\.codex-sidebar-plan/v1|hooks\.codex-sidebar-apply/v1|hooks\.codex-sidebar-host-receipt/v1|hooks\.codex-sidebar-reconciliation/v1|hooks\.codex-sidebar-rollback-plan/v1"
+  "hooks\.codex-session-index/v2|hooks\.codex-session-resolution/v2|hooks\.codex-session-retention/v1|hooks\.paneforge-session-snapshot/v1|hooks\.session-federation/v1|hooks\.codex-sidebar-plan/v1|hooks\.codex-sidebar-apply/v1|hooks\.codex-sidebar-host-receipt/v1|hooks\.codex-sidebar-reconciliation/v1|hooks\.codex-sidebar-rollback-plan/v1"
 ```
 
 Expected: no active command/contract section uses an old schema. Historical design references may retain old version strings only when explicitly labeled historical.
@@ -2167,9 +2167,9 @@ Expected:
 - no staged changes;
 - no commit;
 - no push;
-- no edits under `.codex`, Codex SQLite/rollouts, CC-Panes application storage, or global configuration;
+- no edits under `.codex`, Codex SQLite/rollouts, PaneForge application storage, or global configuration;
 - task-external pre-existing untracked files remain unchanged;
-- `.ccpanes-task/current-task.json` is not rewritten.
+- `.paneforge-task/current-task.json` is not rewritten.
 
 ### Task 17: Perform a Second Independent Review
 
@@ -2232,7 +2232,7 @@ The review artifact may contain repository-relative paths, finding IDs, test nam
 
 **Files:**
 - Create: `live/codex-session-bridge-hardening-20260817/`
-- Read only: Codex session sources, approved CC-Panes snapshot, App Server state
+- Read only: Codex session sources, approved PaneForge snapshot, App Server state
 - Conditional native metadata actions: official Codex name operation and official Codex App host pin only after exact confirmation
 
 - [ ] **Step 1: Create a non-overwriting evidence directory**
@@ -2246,12 +2246,12 @@ New-Item -ItemType Directory -Path $evidence -ErrorAction Stop
 
 Expected: directory creation succeeds only when it does not already exist. If it exists, stop and choose a new dated/suffixed directory rather than overwriting evidence.
 
-- [ ] **Step 2: Verify the CC-Panes snapshot v2 input**
+- [ ] **Step 2: Verify the PaneForge snapshot v2 input**
 
 Place the official bounded snapshot at:
 
 ```text
-{workspace-root}\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json
+{workspace-root}\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\paneforge-session-snapshot-v2.json
 ```
 
 Run:
@@ -2259,7 +2259,7 @@ Run:
 ```powershell
 node dist/src/cli.js codex-sessions graph `
   --project "{workspace-root}\tool\repos\hooks" `
-  --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
+  --paneforge-snapshot "$evidence\paneforge-session-snapshot-v2.json" `
   --out "$evidence\session-federation-v2.json"
 ```
 
@@ -2272,17 +2272,17 @@ Run:
 ```powershell
 node dist/src/cli.js codex-sessions scan `
   --project "{workspace-root}\tool\repos\hooks" `
-  --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
+  --paneforge-snapshot "$evidence\paneforge-session-snapshot-v2.json" `
   --out "$evidence\codex-session-index-v3.json"
 
 node dist/src/cli.js codex-sessions resolve `
   --project "{workspace-root}\tool\repos\hooks" `
-  --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
+  --paneforge-snapshot "$evidence\paneforge-session-snapshot-v2.json" `
   --json > "$evidence\codex-session-resolution-v3.json"
 
 node dist/src/cli.js codex-sessions retention `
   --project "{workspace-root}\tool\repos\hooks" `
-  --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
+  --paneforge-snapshot "$evidence\paneforge-session-snapshot-v2.json" `
   --out "$evidence\codex-session-retention-v2.json"
 ```
 
@@ -2366,13 +2366,13 @@ Expected: `reconciled` only when the exact confirmed action set is visibly pinne
 
 - [ ] **Step 7: Record and verify acceptance evidence**
 
-First verify that the stale task HEAD metadata issue has been resolved by an authorized task-selection update. If `.ccpanes-task/current-task.json` still records `e5e4fbd...` while Git is `53ae96a...` or later, stop before acceptance recording and report the metadata mismatch.
+First verify that the stale task HEAD metadata issue has been resolved by an authorized task-selection update. If `.paneforge-task/current-task.json` still records `e5e4fbd...` while Git is `53ae96a...` or later, stop before acceptance recording and report the metadata mismatch.
 
 When task authority and Git state agree, run the repository's existing `record-acceptance` and `verify-acceptance` flow using:
 
 - all required gate results;
 - index, graph, plan, journal, apply, receipt, reconciliation, and review artifacts;
-- truth layers for Codex source state, CC-Panes snapshot state, App Server observation, host receipt, and after snapshot.
+- truth layers for Codex source state, PaneForge snapshot state, App Server observation, host receipt, and after snapshot.
 
 Expected: acceptance verification `PASS` without copying raw native store content.
 
@@ -2394,7 +2394,7 @@ git status --short
 git diff --check
 ```
 
-Expected: root is `D:/cc-pane/tool/repos/hooks`, branch is `main`, no staged paths exist, and whitespace check passes.
+Expected: root is `D:/paneforge/tool/repos/hooks`, branch is `main`, no staged paths exist, and whitespace check passes.
 
 - [ ] **Step 2: Present Candidate 1 scope**
 
@@ -2407,13 +2407,13 @@ src/codex-session-index.ts
 src/codex-session-resolver.ts
 src/codex-session-handoff.ts
 src/current-task.ts
-src/ccpanes-session-snapshot.ts
+src/paneforge-session-snapshot.ts
 src/session-federation.ts
 src/session-federation-artifact.ts
 tests/current-task.test.ts
 tests/codex-session-bridge.test.ts
 tests/codex-session-cli.test.ts
-tests/ccpanes-session-snapshot.test.ts
+tests/paneforge-session-snapshot.test.ts
 tests/session-federation.test.ts
 tests/session-federation-artifact.test.ts
 tests/codex-app-server-client.test.ts
@@ -2466,7 +2466,7 @@ Before implementation handoff, verify:
 - [x] Every requirement in `docs/superpowers/specs/2026-08-17-codex-session-bridge-hardening-design.md` maps to a task above.
 - [x] No task introduces a reader for `thread_history_1.sqlite` rows.
 - [x] No task grants automatic eligibility from a launch-only, stale, future, historical, unknown, descendant-project, or inferred relationship.
-- [x] Explicit selection bypasses only the CC-Panes automatic eligibility flag.
+- [x] Explicit selection bypasses only the PaneForge automatic eligibility flag.
 - [x] List, read fallback, apply before-state, resume, and post-write paths use `validateLiveSidebarThread`.
 - [x] Journal `prepared`, `intent-durable`, and `write-dispatched` ordering is tested.
 - [x] Timeout and transport loss after dispatch remain `unknown`.

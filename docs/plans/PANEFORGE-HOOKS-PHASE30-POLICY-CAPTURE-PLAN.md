@@ -1,12 +1,12 @@
-# CC-Panes Hooks Phase 30 Policy Capture Implementation Plan
+# PaneForge Hooks Phase 30 Policy Capture Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a one-shot `policy-capture` CLI that records conversation-level project rules into both `.ccpanes-task/policy.md` and `.ccpanes-task/policy.json`.
+**Goal:** Add a one-shot `policy-capture` CLI that records conversation-level project rules into both `.paneforge-task/policy.md` and `.paneforge-task/policy.json`.
 
 **Architecture:** Keep `policy.json` as the executable source for hooks and `policy.md` as the human/model-readable ledger. Add a small ledger owner module, reuse existing `project-policy` validation/writer functions, and expose one CLI command that combines ledger append plus rule add/replace.
 
-**Tech Stack:** TypeScript ESM, Node fs/promises, Vitest, existing CC-Panes hooks CLI.
+**Tech Stack:** TypeScript ESM, Node fs/promises, Vitest, existing PaneForge hooks CLI.
 
 ---
 
@@ -52,8 +52,8 @@
 - `npm run typecheck`
 - `npm run build`
 - `npm run smoke`
-- `node dist/src/cli.js verify-installed-hooks --hooks-json {user-home}\.codex\hooks.json --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config {user-home}\.codex\config.toml`
+- `node dist/src/cli.js verify-installed-hooks --hooks-json {user-home}\.codex\hooks.json --prototype-root {workspace-root}\tool\experiments\paneforge-task-probe --audit-root {workspace-root}\tool\experiments\paneforge-task-probe\live\dynamic-audits --config {user-home}\.codex\config.toml`
 
 - [ ] Commit and push to `https://github.com/lihuabin1516-design/hooks.git` on `main`.
-- [ ] Sync repo files to `{workspace-root}\tool\experiments\ccpanes-task-probe` after backing up live files.
+- [ ] Sync repo files to `{workspace-root}\tool\experiments\paneforge-task-probe` after backing up live files.
 - [ ] Repeat full live verification and a fixture run that proves `policy-capture` creates ledger + JSON and `hook-enforce` blocks the captured rule.

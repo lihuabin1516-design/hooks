@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 25 — Project Policy Enforcement Plan
+# PaneForge Hooks Phase 25 — Project Policy Enforcement Plan
 
 日期：2026-08-07<br>
 目标仓库：`{workspace-root}\tool\repos\hooks`<br>
@@ -6,12 +6,12 @@
 
 ## Change Contract
 
-Intent: 将项目本地 `.ccpanes-task/policy.json` 从“模型可读 ledger”升级为 `PreToolUse` / `PermissionRequest` 可机械执行的 allow/block 规则源。  
+Intent: 将项目本地 `.paneforge-task/policy.json` 从“模型可读 ledger”升级为 `PreToolUse` / `PermissionRequest` 可机械执行的 allow/block 规则源。  
 Authorized Mutation:
 - 修改 hooks 仓库源码、测试、模板、README、smoke。
 - commit 并 push 到远端 `main`。
 In Scope:
-- 新增 `src/project-policy.ts`，读取/校验 `<worktreeRoot>/.ccpanes-task/policy.json`。
+- 新增 `src/project-policy.ts`，读取/校验 `<worktreeRoot>/.paneforge-task/policy.json`。
 - 支持 `block` / `allow` 两类规则，按顺序或优先级可预测执行。
 - 初版匹配维度：`tool`、`pathContains`、`commandContains`、`phase`、`reason`、`enabled`。
 - `hook-enforce` / `permission-enforce` 在原有边界决策后叠加 policy 决策。

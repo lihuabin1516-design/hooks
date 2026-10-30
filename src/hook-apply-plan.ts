@@ -10,7 +10,7 @@ export interface HookApplyPlanArtifact {
 }
 
 export interface HookApplyPlan {
-  schema: 'ccpanes.hook-apply-plan.v1';
+  schema: 'paneforge.hook-apply-plan.v1';
   mode: 'staged-review';
   createdAt: string;
   releaseGatePath: string;
@@ -30,9 +30,9 @@ export interface CreateHookApplyPlanInput {
 const forbiddenApplyPlanOutRoots = [
   'C:/Users/AI001/.codex',
   'C:/Users/AI001/.claude',
-  'C:/Users/AI001/.cc-panes',
-  'D:/cc-pane/tool/repos/comet',
-  'D:/cc-pane/tool/repos/fastctx'
+  'C:/Users/AI001/.paneforge',
+  'D:/paneforge/tool/repos/comet',
+  'D:/paneforge/tool/repos/fastctx'
 ];
 
 function assertSafeApplyPlanOutDir(outDir: string): void {
@@ -131,7 +131,7 @@ function createRollbackScript(configPaths: string[]): string {
 export async function createHookApplyPlan(input: CreateHookApplyPlanInput): Promise<HookApplyPlan> {
   assertSafeApplyPlanOutDir(input.outDir);
   const gate = asRecord(JSON.parse(await fs.readFile(input.releaseGatePath, 'utf8')));
-  if (gate.schema !== 'ccpanes.hook-release-gate.v1') throw new Error('invalid release gate: schema');
+  if (gate.schema !== 'paneforge.hook-release-gate.v1') throw new Error('invalid release gate: schema');
   if (gate.passed !== true) throw new Error('invalid release gate: passed must be true');
   const packageDir = typeof gate.packageDir === 'string' ? gate.packageDir : '';
   if (!packageDir) throw new Error('invalid release gate: packageDir');
@@ -160,7 +160,7 @@ export async function createHookApplyPlan(input: CreateHookApplyPlanInput): Prom
   }
 
   const plan: HookApplyPlan = {
-    schema: 'ccpanes.hook-apply-plan.v1',
+    schema: 'paneforge.hook-apply-plan.v1',
     mode: 'staged-review',
     createdAt: input.now ?? new Date().toISOString(),
     releaseGatePath: input.releaseGatePath,

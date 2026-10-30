@@ -183,7 +183,7 @@ const DIAGNOSTIC_REASONS = values<CodexSessionDiagnostic['reason']>(
   'capacity-exceeded'
 );
 const SOURCE_AVAILABILITY = values('present', 'missing', 'unreadable');
-const SESSION_SOURCES = values('codex-app', 'codex-cli', 'ccpanes', 'unknown');
+const SESSION_SOURCES = values('codex-app', 'codex-cli', 'paneforge', 'unknown');
 const THREAD_SOURCES = values('user', 'subagent', 'automation', 'unknown');
 const SCOPE_MATCHES = values(
   'exact',
@@ -212,8 +212,8 @@ const PROJECT_RELATIONS = values(
 const APP_VISIBILITIES = values('listed', 'readable-hidden', 'unknown');
 const EVIDENCE_KINDS = values<SessionEvidence['kind']>(
   'task-binding',
-  'ccpanes-launch',
-  'ccpanes-session',
+  'paneforge-launch',
+  'paneforge-session',
   'cwd',
   'primary-target',
   'prompt-mention',
@@ -634,7 +634,7 @@ function projectEvidence(
     );
     return projectPath && taskId ? { kind, projectPath, taskId } : null;
   }
-  if (kind === 'ccpanes-launch') {
+  if (kind === 'paneforge-launch') {
     knownFields(item, fields('kind', 'projectPath', 'launchId'), field);
     const projectPath = projectPathValue(
       item.projectPath,
@@ -650,7 +650,7 @@ function projectEvidence(
     );
     return projectPath && launchId ? { kind, projectPath, launchId } : null;
   }
-  if (kind === 'ccpanes-session') {
+  if (kind === 'paneforge-session') {
     knownFields(item, fields('kind', 'projectPath', 'sessionId'), field);
     const projectPath = projectPathValue(
       item.projectPath,

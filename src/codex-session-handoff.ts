@@ -20,7 +20,7 @@ import {
 } from './current-task.js';
 import type { CurrentTask } from './types.js';
 
-export type HandoffMode = 'ccpanes-worker' | 'codex-app-visual';
+export type HandoffMode = 'paneforge-worker' | 'codex-app-visual';
 
 export type CodexSessionRetentionRisk =
   | 'ok'
@@ -371,7 +371,7 @@ export async function generateCodexHandoff(input: {
       'project-mismatch'
     );
   }
-  const focus = input.mode === 'ccpanes-worker'
+  const focus = input.mode === 'paneforge-worker'
     ? '终端、测试、批量工程改动；以 task worktree 和现有门禁为准。'
     : '浏览器、截图、前端视觉验证；保持人工可见会话和 cwd 解释。';
   const top = filterResolvedSessions(resolution.sessions).slice(0, 3)
@@ -382,7 +382,7 @@ export async function generateCodexHandoff(input: {
     .join('; ') || 'none';
   const displayedTaskContextPath = taskContextPath ??
     requireHandoffPath(
-      path.join(project, '.ccpanes-task', 'current-task.json'),
+      path.join(project, '.paneforge-task', 'current-task.json'),
       'taskContextPath'
     );
   return [
@@ -396,7 +396,7 @@ export async function generateCodexHandoff(input: {
     'sessionScope: owned/supporting user sessions; broader relations require explicit flags',
     `归因摘要: ${top}`,
     '允许: 只在当前项目授权范围内读写，并运行项目现有验证命令。',
-    '禁止: 修改 Codex 原始 sessions/sqlite、用户全局 Codex 配置、CC-Panes/Codex 官方程序。',
+    '禁止: 修改 Codex 原始 sessions/sqlite、用户全局 Codex 配置、PaneForge/Codex 官方程序。',
     '验证: npm test; npm run typecheck; npm run build; npm run smoke; git diff --check; git status --short',
     '交付: 说明变更文件、命令用法、pass/fail/blocked、风险和下一步。'
   ].join('\n');

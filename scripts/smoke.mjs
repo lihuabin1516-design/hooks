@@ -9,7 +9,7 @@ const cli = join(root, 'dist', 'src', 'cli.js');
 const fixture = join(root, '.tmp-smoke');
 const project = join(fixture, 'project-alpha');
 const planPreviewProject = join(fixture, 'project-plan-preview');
-const currentTask = join(project, '.ccpanes-task', 'current-task.json');
+const currentTask = join(project, '.paneforge-task', 'current-task.json');
 const artifact = join(fixture, 'artifact.md');
 const planIntakeAudit = join(fixture, 'plan-intake-audit.json');
 const planLifecycleAuditRoot = join(fixture, 'plan-lifecycle-audits');
@@ -52,9 +52,9 @@ const upstreamHookDir = join(fixture, 'upstream-hooks');
 const upstreamHook = join(upstreamHookDir, 'skills-hub-hook.exe');
 const releaseGateConfigRoot = join(fixture, 'release-gate-configs');
 const releaseGateCodexConfigDir = join(releaseGateConfigRoot, 'codex');
-const releaseGateCcpanesConfigDir = join(releaseGateConfigRoot, 'ccpanes');
+const releaseGatePaneForgeConfigDir = join(releaseGateConfigRoot, 'paneforge');
 const releaseGateCodexConfig = join(releaseGateCodexConfigDir, 'config.toml');
-const releaseGateCcpanesConfig = join(releaseGateCcpanesConfigDir, 'config.toml');
+const releaseGatePaneForgeConfig = join(releaseGatePaneForgeConfigDir, 'config.toml');
 const releaseGateRepoOne = join(fixture, 'release-gate-repo-one');
 const releaseGateRepoTwo = join(fixture, 'release-gate-repo-two');
 
@@ -93,7 +93,7 @@ function sha256Text(text) {
   return createHash('sha256').update(text, 'utf8').digest('hex').toUpperCase();
 }
 
-const upstreamHookFixture = 'ccpanes smoke upstream hook fixture\n';
+const upstreamHookFixture = 'paneforge smoke upstream hook fixture\n';
 const upstreamHookSha256 = sha256Text(upstreamHookFixture);
 
 function cleanFixture() {
@@ -108,16 +108,16 @@ try {
   mkdirSync(upstreamHookDir, { recursive: true });
   writeFileSync(upstreamHook, upstreamHookFixture, 'utf8');
   mkdirSync(releaseGateCodexConfigDir, { recursive: true });
-  mkdirSync(releaseGateCcpanesConfigDir, { recursive: true });
+  mkdirSync(releaseGatePaneForgeConfigDir, { recursive: true });
   writeFileSync(releaseGateCodexConfig, 'profile = "smoke-codex"\n', 'utf8');
-  writeFileSync(releaseGateCcpanesConfig, 'profile = "smoke-ccpanes"\n', 'utf8');
+  writeFileSync(releaseGatePaneForgeConfig, 'profile = "smoke-paneforge"\n', 'utf8');
 
   const bootstrapProject = parseJson(run(['bootstrap-project', '--root', project, '--task-id', 'task-alpha', '--phase', 'verify']));
-  assert(bootstrapProject.schema === 'ccpanes.project-bootstrap-result.v1', 'bootstrap-project schema mismatch');
+  assert(bootstrapProject.schema === 'paneforge.project-bootstrap-result.v1', 'bootstrap-project schema mismatch');
   assert(bootstrapProject.taskId === 'task-alpha', 'bootstrap-project did not return task-alpha');
-  assert(existsSync(join(project, '.ccpanes-task', 'policy.md')), 'bootstrap-project missing policy.md');
-  assert(existsSync(join(project, '.ccpanes-task', 'policy.json')), 'bootstrap-project missing policy.json');
-  assert(existsSync(join(project, '.ccpanes-task', 'bootstrap-report.json')), 'bootstrap-project missing bootstrap-report.json');
+  assert(existsSync(join(project, '.paneforge-task', 'policy.md')), 'bootstrap-project missing policy.md');
+  assert(existsSync(join(project, '.paneforge-task', 'policy.json')), 'bootstrap-project missing policy.json');
+  assert(existsSync(join(project, '.paneforge-task', 'bootstrap-report.json')), 'bootstrap-project missing bootstrap-report.json');
 
   const agentsValidate = parseJson(run(['agents-validate', '--root', project]));
   assert(agentsValidate.valid === true, 'agents-validate expected valid=true');
@@ -139,7 +139,7 @@ try {
     '--command-contains',
     'publish-artifact'
   ]));
-  assert(policyAdd.schema === 'ccpanes.project-policy-cli-result.v1', 'policy-add schema mismatch');
+  assert(policyAdd.schema === 'paneforge.project-policy-cli-result.v1', 'policy-add schema mismatch');
   assert(policyAdd.changed === true, 'policy-add expected changed=true');
   const policyCapture = parseJson(run([
     'policy-capture',
@@ -158,9 +158,9 @@ try {
     '--command-contains',
     'deploy-artifact'
   ]));
-  assert(policyCapture.schema === 'ccpanes.project-policy-capture-result.v1', 'policy-capture schema mismatch');
+  assert(policyCapture.schema === 'paneforge.project-policy-capture-result.v1', 'policy-capture schema mismatch');
   assert(policyCapture.policyRuleCount === 2, 'policy-capture expected two rules');
-  assert(readFileSync(join(project, '.ccpanes-task', 'policy.md'), 'utf8').includes('禁止运行 deploy-artifact'), 'policy-capture ledger missing instruction');
+  assert(readFileSync(join(project, '.paneforge-task', 'policy.md'), 'utf8').includes('禁止运行 deploy-artifact'), 'policy-capture ledger missing instruction');
   const planPolicyCapture = parseJson(run([
     'policy-capture-plan',
     '--root',
@@ -168,9 +168,9 @@ try {
     '--utterance',
     '计划阶段规则：禁止运行 ship-artifact，除非测试显式解除。'
   ]));
-  assert(planPolicyCapture.schema === 'ccpanes.plan-policy-capture-result.v1', 'policy-capture-plan schema mismatch');
+  assert(planPolicyCapture.schema === 'paneforge.plan-policy-capture-result.v1', 'policy-capture-plan schema mismatch');
   assert(planPolicyCapture.capturedCount === 1, 'policy-capture-plan expected one captured rule');
-  assert(readFileSync(join(project, '.ccpanes-task', 'policy.md'), 'utf8').includes('禁止运行 ship-artifact'), 'policy-capture-plan ledger missing instruction');
+  assert(readFileSync(join(project, '.paneforge-task', 'policy.md'), 'utf8').includes('禁止运行 ship-artifact'), 'policy-capture-plan ledger missing instruction');
   const planIntake = parseJson(run([
     'plan-intake',
     '--root',
@@ -184,12 +184,12 @@ try {
     '--audit-out',
     planIntakeAudit
   ]));
-  assert(planIntake.schema === 'ccpanes.plan-intake.v1', 'plan-intake schema mismatch');
+  assert(planIntake.schema === 'paneforge.plan-intake.v1', 'plan-intake schema mismatch');
   assert(planIntake.mode === 'dry-run', 'plan-intake expected dry-run mode');
   assert(planIntake.policyPreview.wouldCaptureCount === 1, 'plan-intake expected one would-capture action');
   assert(planIntake.workflow.route.id === 'project-policy', 'plan-intake expected project-policy route');
   assert(existsSync(planIntakeAudit), 'plan-intake audit missing');
-  assert(!existsSync(join(planPreviewProject, '.ccpanes-task', 'policy.json')), 'plan-intake should not write policy.json');
+  assert(!existsSync(join(planPreviewProject, '.paneforge-task', 'policy.json')), 'plan-intake should not write policy.json');
   const planLifecycleCwd = join(project, 'packages', 'demo');
   mkdirSync(planLifecycleCwd, { recursive: true });
   const planLifecycleIntake = parseJson(run([
@@ -200,14 +200,14 @@ try {
     '--changed-path',
     'src/cli.ts'
   ], JSON.stringify({
-    schema: 'ccpanes.plan-lifecycle-event.v1',
+    schema: 'paneforge.plan-lifecycle-event.v1',
     cwd: planLifecycleCwd,
-    prompt: 'CC-Panes plan lifecycle event',
+    prompt: 'PaneForge plan lifecycle event',
     planText: '计划阶段规则：禁止运行 lifecycle-artifact，除非测试显式解除。',
     changedPaths: ['src/plan-intake.ts'],
-    source: 'cc-panes-plan'
+    source: 'paneforge-plan'
   })));
-  assert(planLifecycleIntake.schema === 'ccpanes.plan-intake.v1', 'plan-lifecycle-intake schema mismatch');
+  assert(planLifecycleIntake.schema === 'paneforge.plan-intake.v1', 'plan-lifecycle-intake schema mismatch');
   assert(planLifecycleIntake.projectRoot === project, 'plan-lifecycle-intake project root mismatch');
   assert(planLifecycleIntake.policyPreview.wouldCaptureCount === 1, 'plan-lifecycle-intake expected one would-capture action');
   assert(existsSync(join(planLifecycleAuditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'plan-intake-audit.json')), 'plan-lifecycle-intake audit missing');
@@ -221,12 +221,12 @@ try {
   assert(policyClear.disabledRuleCount === 3, 'policy-clear expected three disabled rules');
 
   const probe = parseJson(run(['probe', '--utterance', '继续', '--session', 'leader-1', '--workspace-root', fixture]));
-  assert(probe.schema === 'ccpanes.resume-probe.v1', 'probe schema mismatch');
+  assert(probe.schema === 'paneforge.resume-probe.v1', 'probe schema mismatch');
   assert(probe.action === 'auto_resume', `probe expected auto_resume, got ${probe.action}`);
   assert(probe.scanErrors.length === 0, `probe expected zero scanErrors: ${JSON.stringify(probe.scanErrors)}`);
 
   const taskRisk = parseJson(run(['classify-task-risk', '--prompt', '修改 src/foo.ts 并更新 tests/foo.test.ts', '--cwd', project]));
-  assert(taskRisk.schema === 'ccpanes.task-risk.v1', 'task risk schema mismatch');
+  assert(taskRisk.schema === 'paneforge.task-risk.v1', 'task risk schema mismatch');
   assert(taskRisk.tier === 'standard', 'task risk expected standard tier');
   assert(taskRisk.dimensions.touchesCode === true, 'task risk expected touchesCode=true');
   const workflowProfile = parseJson(run([
@@ -240,7 +240,7 @@ try {
     '--changed-path',
     'tests/hook-event-adapter.test.ts'
   ]));
-  assert(workflowProfile.schema === 'ccpanes.workflow-profile.v1', 'workflow profile schema mismatch');
+  assert(workflowProfile.schema === 'paneforge.workflow-profile.v1', 'workflow profile schema mismatch');
   assert(workflowProfile.route.id === 'hook-runtime', 'workflow profile expected hook-runtime route');
   assert(workflowProfile.closure.bucket === 'full', 'workflow profile expected full closure bucket');
   assert(workflowProfile.checks.some((check) => check.command === 'npm run smoke'), 'workflow profile missing smoke check');
@@ -256,22 +256,22 @@ try {
     prompt: '实现生产级 hook runtime 并补充测试'
   })));
   assert(workflowAdvisory.hookSpecificOutput.hookEventName === 'UserPromptSubmit', 'workflow advisory hook event mismatch');
-  assert(workflowAdvisory.hookSpecificOutput.additionalContext.includes('ccpanes.workflow-advisory.v1'), 'workflow advisory schema context missing');
+  assert(workflowAdvisory.hookSpecificOutput.additionalContext.includes('paneforge.workflow-advisory.v1'), 'workflow advisory schema context missing');
   assert(workflowAdvisory.hookSpecificOutput.additionalContext.includes('level: production-grade'), 'workflow advisory production level missing');
   assert(existsSync(join(hookEnforceAuditRoot, Buffer.from('task-alpha', 'utf8').toString('base64url'), 'workflow-advisory-audit.jsonl')), 'workflow advisory audit missing');
   const hostRegistry = parseJson(run(['host-adapter-registry']));
-  assert(hostRegistry.schema === 'ccpanes.host-adapter-registry.v1', 'host adapter registry schema mismatch');
+  assert(hostRegistry.schema === 'paneforge.host-adapter-registry.v1', 'host adapter registry schema mismatch');
   assert(hostRegistry.defaultHost === 'codex', 'host adapter registry expected codex default');
   const codexHost = parseJson(run(['host-adapter-registry', '--host', 'codex']));
-  assert(codexHost.schema === 'ccpanes.host-adapter.v1', 'host adapter filtered schema mismatch');
+  assert(codexHost.schema === 'paneforge.host-adapter.v1', 'host adapter filtered schema mismatch');
   assert(codexHost.adapter.surfaces.some((surface) => surface.kind === 'hard-gate' && surface.name === 'PreToolUse'), 'codex host missing PreToolUse hard gate');
 
   writeFileSync(hookBatch, JSON.stringify({
-    schema: 'ccpanes.hook-dry-run-batch.v1',
+    schema: 'paneforge.hook-dry-run-batch.v1',
     task: {
-      schema: 'ccpanes.task-selection.v1',
+      schema: 'paneforge.task-selection.v1',
       taskId: 'task-alpha',
-      workspace: 'cc-pane',
+      workspace: 'paneforge',
       projectPath: project,
       worktreeRoot: project,
       mainRepoRoot: null,
@@ -292,7 +292,7 @@ try {
   }, null, 2), 'utf8');
 
   const hookResult = parseJson(run(['dry-run-hook', '--input', hookBatch]));
-  assert(hookResult.schema === 'ccpanes.hook-dry-run-batch-result.v1', 'hook batch schema mismatch');
+  assert(hookResult.schema === 'paneforge.hook-dry-run-batch-result.v1', 'hook batch schema mismatch');
   assert(hookResult.decisions.map((item) => item.action).join(',') === 'allow,allow,block', 'hook batch decisions mismatch');
   assert(hookResult.decisions[2].reason === 'forbidden_user_config_path', 'hook batch did not block user config');
 
@@ -304,13 +304,13 @@ try {
     }
   }, null, 2), 'utf8');
   const adapted = parseJson(run(['adapt-hook-event', '--task', currentTask, '--event', hookEvent]));
-  assert(adapted.schema === 'ccpanes.hook-dry-run-batch.v1', 'adapt-hook-event schema mismatch');
+  assert(adapted.schema === 'paneforge.hook-dry-run-batch.v1', 'adapt-hook-event schema mismatch');
   assert(adapted.calls.length === 1, 'adapt-hook-event expected one call');
   assert(adapted.calls[0].tool === 'apply_patch', 'adapt-hook-event tool mismatch');
   assert(adapted.calls[0].writes === true, 'adapt-hook-event writes mismatch');
   writeFileSync(adaptedHookBatch, JSON.stringify(adapted, null, 2), 'utf8');
   const adaptedHookResult = parseJson(run(['dry-run-hook', '--input', adaptedHookBatch]));
-  assert(adaptedHookResult.schema === 'ccpanes.hook-dry-run-batch-result.v1', 'adapted hook batch result schema mismatch');
+  assert(adaptedHookResult.schema === 'paneforge.hook-dry-run-batch-result.v1', 'adapted hook batch result schema mismatch');
   assert(adaptedHookResult.decisions[0].action === 'allow', 'adapted hook batch expected allow');
   assert(adaptedHookResult.decisions[0].reason === 'verify_minimal_fix_inside_worktree', 'adapted hook batch reason mismatch');
 
@@ -319,7 +319,7 @@ try {
     tool_name: 'Edit',
     tool_input: { file_path: join(project, 'src', 'a.ts') }
   })));
-  assert(hookRunner.schema === 'ccpanes.hook-runner-result.v1', 'hook-runner schema mismatch');
+  assert(hookRunner.schema === 'paneforge.hook-runner-result.v1', 'hook-runner schema mismatch');
   assert(hookRunner.mode === 'dry-run', 'hook-runner mode mismatch');
   assert(hookRunner.allowed === true, 'hook-runner expected allowed=true');
   assert(hookRunner.dryRun.decisions[0].reason === 'verify_minimal_fix_inside_worktree', 'hook-runner reason mismatch');
@@ -420,7 +420,7 @@ try {
   const postAuditLines = readFileSync(postAuditPath, 'utf8').trim().split('\n');
   assert(postAuditLines.length === 1, 'post-enforce expected one audit line');
   const postAuditRecord = JSON.parse(postAuditLines[0]);
-  assert(postAuditRecord.schema === 'ccpanes.post-tool-use-audit.v1', 'post-enforce audit schema mismatch');
+  assert(postAuditRecord.schema === 'paneforge.post-tool-use-audit.v1', 'post-enforce audit schema mismatch');
   assert(postAuditRecord.toolUseId === 'toolu-smoke-post-1', 'post-enforce audit toolUseId mismatch');
 
   const sessionStartOutput = parseJson(run(['session-start', '--resolve-task-from-cwd', '--audit-root', hookEnforceAuditRoot], JSON.stringify({
@@ -483,7 +483,7 @@ try {
   assert(matchedBinding.status === 'matched', 'verify-task-binding expected matched linked worktree');
   assert(matchedBinding.canonicalProjectRoot === bindingMainRepo, 'linked canonical project mismatch');
   assert(matchedBinding.declaredWorktreeRoot === bindingLinkedWorktree, 'linked active worktree mismatch');
-  const linkedTaskPath = join(bindingLinkedWorktree, '.ccpanes-task', 'current-task.json');
+  const linkedTaskPath = join(bindingLinkedWorktree, '.paneforge-task', 'current-task.json');
   const falseProjectTask = JSON.parse(readFileSync(linkedTaskPath, 'utf8'));
   falseProjectTask.projectPath = bindingLinkedWorktree;
   falseProjectTask.mainRepoRoot = bindingLinkedWorktree;
@@ -501,11 +501,11 @@ try {
     '--audit-root',
     hookEnforceAuditRoot
   ]));
-  assert(installedHooksReport.schema === 'ccpanes.installed-hooks.verify.v1', 'installed hooks verify schema mismatch');
+  assert(installedHooksReport.schema === 'paneforge.installed-hooks.verify.v1', 'installed hooks verify schema mismatch');
   assert(installedHooksReport.passed === true, 'installed hooks verify expected passed=true');
   assert(installedHooksReport.discovered.length === 8, 'installed hooks verify expected eight hooks');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit skills-hub'), 'installed hooks verify missing skills-hub UserPromptSubmit hook');
-  assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit cc-panes prompt-before'), 'installed hooks verify missing CC-Panes UserPromptSubmit hook');
+  assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit paneforge prompt-before'), 'installed hooks verify missing PaneForge UserPromptSubmit hook');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit workflow advisory'), 'installed hooks verify missing workflow advisory UserPromptSubmit hook');
 
   for (const consistencyRoot of [consistencyRepo, consistencyLive]) {
@@ -524,7 +524,7 @@ try {
     '--live-root',
     consistencyLive
   ]));
-  assert(liveConsistencyReport.schema === 'ccpanes.live-consistency.verify.v1', 'live consistency schema mismatch');
+  assert(liveConsistencyReport.schema === 'paneforge.live-consistency.verify.v1', 'live consistency schema mismatch');
   assert(liveConsistencyReport.passed === true, 'live consistency expected passed=true');
   assert(liveConsistencyReport.summary.sourceCompared > 0, 'live consistency expected source comparisons');
   assert(liveConsistencyReport.summary.distCompared > 0, 'live consistency expected dist comparisons');
@@ -544,7 +544,7 @@ try {
     '--expected-upstream-sha256',
     upstreamHookSha256
   ]));
-  assert(productionToolkitManifest.schema === 'ccpanes.production-toolkit-manifest.v1', 'production toolkit schema mismatch');
+  assert(productionToolkitManifest.schema === 'paneforge.production-toolkit-manifest.v1', 'production toolkit schema mismatch');
   assert(existsSync(join(productionToolkit, 'INSTALL-HOOKS.ps1')), 'production toolkit missing INSTALL-HOOKS.ps1');
   assert(existsSync(join(productionToolkit, 'VERIFY-INSTALLED.ps1')), 'production toolkit missing VERIFY-INSTALLED.ps1');
   assert(existsSync(join(productionToolkit, 'BOOTSTRAP-PROJECT.ps1')), 'production toolkit missing BOOTSTRAP-PROJECT.ps1');
@@ -565,7 +565,7 @@ try {
     tool_name: 'Edit',
     tool_input: { file_path: join(project, 'src', 'a.ts') }
   })));
-  assert(hookShadow.schema === 'ccpanes.hook-shadow-audit.v1', 'hook-shadow schema mismatch');
+  assert(hookShadow.schema === 'paneforge.hook-shadow-audit.v1', 'hook-shadow schema mismatch');
   assert(hookShadow.mode === 'shadow', 'hook-shadow mode mismatch');
   assert(hookShadow.upstreamHook.sha256 === upstreamHookSha256, 'hook-shadow upstream hash mismatch');
   assert(hookShadow.runner.allowed === true, 'hook-shadow runner expected allowed=true');
@@ -584,7 +584,7 @@ try {
     '--out',
     installPlan
   ]));
-  assert(hookInstallPlan.schema === 'ccpanes.hook-install-plan.v1', 'hook install plan schema mismatch');
+  assert(hookInstallPlan.schema === 'paneforge.hook-install-plan.v1', 'hook install plan schema mismatch');
   assert(hookInstallPlan.mode === 'review-only', 'hook install plan mode mismatch');
   assert(hookInstallPlan.target === 'both', 'hook install plan target mismatch');
   assert(hookInstallPlan.upstreamHook.sha256 === upstreamHookSha256, 'hook install plan upstream hash mismatch');
@@ -605,13 +605,13 @@ try {
     '--out-dir',
     hookPackage
   ]));
-  assert(hookPackageManifest.schema === 'ccpanes.hook-package-manifest.v1', 'hook package manifest schema mismatch');
+  assert(hookPackageManifest.schema === 'paneforge.hook-package-manifest.v1', 'hook package manifest schema mismatch');
   assert(hookPackageManifest.mode === 'review-only', 'hook package mode mismatch');
   assert(hookPackageManifest.upstreamHookSha256 === upstreamHookSha256, 'hook package upstream hash mismatch');
   assert(hookPackageManifest.files.some((file) => file.path.endsWith('rollback-plan.json')), 'hook package missing rollback plan');
   assert(existsSync(join(hookPackage, 'manifest.json')), 'hook package missing manifest file');
   assert(existsSync(join(hookPackage, 'patches', 'codex.patch')), 'hook package missing codex patch');
-  assert(existsSync(join(hookPackage, 'patches', 'ccpanes.patch')), 'hook package missing ccpanes patch');
+  assert(existsSync(join(hookPackage, 'patches', 'paneforge.patch')), 'hook package missing paneforge patch');
 
   const packageRehearsal = parseJson(run([
     'rehearse-hook-package',
@@ -622,7 +622,7 @@ try {
     '--out',
     hookPackageRehearsal
   ]));
-  assert(packageRehearsal.schema === 'ccpanes.hook-package-rehearsal.v1', 'hook package rehearsal schema mismatch');
+  assert(packageRehearsal.schema === 'paneforge.hook-package-rehearsal.v1', 'hook package rehearsal schema mismatch');
   assert(packageRehearsal.mode === 'dry-run-rehearsal', 'hook package rehearsal mode mismatch');
   assert(packageRehearsal.passed === true, 'hook package rehearsal expected passed=true');
   assert(packageRehearsal.failures.length === 0, 'hook package rehearsal expected no failures');
@@ -649,7 +649,7 @@ try {
     '--config',
     releaseGateCodexConfig,
     '--config',
-    releaseGateCcpanesConfig,
+    releaseGatePaneForgeConfig,
     '--repo',
     releaseGateRepoOne,
     '--repo',
@@ -659,7 +659,7 @@ try {
     '--out',
     releaseGate
   ]));
-  assert(releaseGateReport.schema === 'ccpanes.hook-release-gate.v1', 'release gate schema mismatch');
+  assert(releaseGateReport.schema === 'paneforge.hook-release-gate.v1', 'release gate schema mismatch');
   assert(releaseGateReport.mode === 'final-preflight', 'release gate mode mismatch');
   assert(releaseGateReport.passed === true, 'release gate expected passed=true');
   assert(releaseGateReport.configSnapshots.length === 2, 'release gate expected two config snapshots');
@@ -674,7 +674,7 @@ try {
     '--out-dir',
     hookApplyPlan
   ]));
-  assert(applyPlan.schema === 'ccpanes.hook-apply-plan.v1', 'apply plan schema mismatch');
+  assert(applyPlan.schema === 'paneforge.hook-apply-plan.v1', 'apply plan schema mismatch');
   assert(applyPlan.mode === 'staged-review', 'apply plan mode mismatch');
   assert(applyPlan.releaseGatePassed === true, 'apply plan expected releaseGatePassed=true');
   assert(applyPlan.artifacts.some((artifact) => artifact.kind === 'backup-script'), 'apply plan missing backup script artifact');
@@ -685,7 +685,7 @@ try {
 
   const applyPlanPath = join(hookApplyPlan, 'apply-plan.json');
   const approvalJson = {
-    schema: 'ccpanes.hook-approval.v1',
+    schema: 'paneforge.hook-approval.v1',
     approved: true,
     applyPlanSha256: sha256File(applyPlanPath),
     releaseGateSha256: sha256File(releaseGate),
@@ -705,7 +705,7 @@ try {
     '--out',
     approvalCheck
   ]));
-  assert(approvalReport.schema === 'ccpanes.hook-approval-check.v1', 'approval check schema mismatch');
+  assert(approvalReport.schema === 'paneforge.hook-approval-check.v1', 'approval check schema mismatch');
   assert(approvalReport.mode === 'approval-preflight', 'approval check mode mismatch');
   assert(approvalReport.passed === true, 'approval check expected passed=true');
   assert(approvalReport.checks.some((check) => check.name === 'config hashes' && check.result === 'pass'), 'approval check config hashes did not pass');
@@ -719,7 +719,7 @@ try {
     '--out-dir',
     hookWritePreview
   ]));
-  assert(writePreview.schema === 'ccpanes.hook-write-preview.v1', 'hook write preview schema mismatch');
+  assert(writePreview.schema === 'paneforge.hook-write-preview.v1', 'hook write preview schema mismatch');
   assert(writePreview.mode === 'dry-run-write-preview', 'hook write preview mode mismatch');
   assert(writePreview.approvalCheckPassed === true, 'hook write preview expected approvalCheckPassed=true');
   assert(existsSync(join(hookWritePreview, 'write-preview.json')), 'hook write preview missing write-preview.json');
@@ -731,11 +731,11 @@ try {
   mkdirSync(join(syntheticApplyPlanDir, 'staged-patches'), { recursive: true });
   const syntheticBefore = 'original = true\n';
   const syntheticPatch = '[hooks]\npreview = "node hook-runner.js"\n';
-  const syntheticAfter = `${syntheticBefore}\n# ccpanes-hook-preview:begin\n${syntheticPatch.trimEnd()}\n# ccpanes-hook-preview:end\n`;
+  const syntheticAfter = `${syntheticBefore}\n# paneforge-hook-preview:begin\n${syntheticPatch.trimEnd()}\n# paneforge-hook-preview:end\n`;
   writeFileSync(syntheticApplyConfig, syntheticBefore, 'utf8');
   writeFileSync(syntheticApplyPatch, syntheticPatch, 'utf8');
   writeFileSync(syntheticApplyPlan, JSON.stringify({
-    schema: 'ccpanes.hook-apply-plan.v1',
+    schema: 'paneforge.hook-apply-plan.v1',
     mode: 'staged-review',
     createdAt: '2026-08-06T00:00:00.000Z',
     releaseGatePath: join(syntheticApplyRoot, 'release-gate.json'),
@@ -746,7 +746,7 @@ try {
     instructions: []
   }, null, 2), 'utf8');
   writeFileSync(syntheticApprovalCheck, JSON.stringify({
-    schema: 'ccpanes.hook-approval-check.v1',
+    schema: 'paneforge.hook-approval-check.v1',
     mode: 'approval-preflight',
     createdAt: '2026-08-06T00:00:00.000Z',
     applyPlanPath: syntheticApplyPlan,
@@ -762,7 +762,7 @@ try {
     '--out-dir',
     syntheticWritePreviewDir
   ]));
-  assert(syntheticWritePreview.schema === 'ccpanes.hook-write-preview.v1', 'synthetic write preview schema mismatch');
+  assert(syntheticWritePreview.schema === 'paneforge.hook-write-preview.v1', 'synthetic write preview schema mismatch');
   const applyWriteReport = parseJson(run([
     'apply-hook-write',
     '--write-preview',
@@ -774,7 +774,7 @@ try {
     '--allow-root',
     syntheticApplyRoot
   ]));
-  assert(applyWriteReport.schema === 'ccpanes.hook-write-apply.v1', 'hook write apply schema mismatch');
+  assert(applyWriteReport.schema === 'paneforge.hook-write-apply.v1', 'hook write apply schema mismatch');
   assert(applyWriteReport.mode === 'guarded-apply', 'hook write apply mode mismatch');
   assert(applyWriteReport.passed === true, 'hook write apply expected passed=true');
   assert(existsSync(syntheticApplyReport), 'hook write apply did not write report');
@@ -789,7 +789,7 @@ try {
     '--allow-root',
     syntheticApplyRoot
   ]));
-  assert(restoreWriteReport.schema === 'ccpanes.hook-write-restore.v1', 'hook write restore schema mismatch');
+  assert(restoreWriteReport.schema === 'paneforge.hook-write-restore.v1', 'hook write restore schema mismatch');
   assert(restoreWriteReport.mode === 'guarded-restore', 'hook write restore mode mismatch');
   assert(restoreWriteReport.passed === true, 'hook write restore expected passed=true');
   assert(existsSync(syntheticRestoreReport), 'hook write restore did not write report');
@@ -809,7 +809,7 @@ try {
     '--out',
     productionReadiness
   ]));
-  assert(readiness.schema === 'ccpanes.hook-production-readiness.v1', 'production readiness schema mismatch');
+  assert(readiness.schema === 'paneforge.hook-production-readiness.v1', 'production readiness schema mismatch');
   assert(readiness.mode === 'final-readiness', 'production readiness mode mismatch');
   assert(readiness.ready === true, 'production readiness expected ready=true');
   assert(readiness.checks.every((check) => check.result === 'pass'), 'production readiness expected all checks pass');
@@ -827,7 +827,7 @@ try {
     '--upstream-hook',
     upstreamHook
   ]));
-  assert(goLiveApproval.schema === 'ccpanes.hook-go-live-approval-package.v1', 'go-live approval schema mismatch');
+  assert(goLiveApproval.schema === 'paneforge.hook-go-live-approval-package.v1', 'go-live approval schema mismatch');
   assert(goLiveApproval.mode === 'manual-approval-package', 'go-live approval mode mismatch');
   assert(goLiveApproval.manualApproval.approved === true, 'go-live approval expected approved=true');
   assert(goLiveApproval.manualApproval.approvedBy === 'AI001', 'go-live approval approvedBy mismatch');
@@ -843,7 +843,7 @@ try {
     '--out-dir',
     finalRunbook
   ]));
-  assert(finalRunbookManifest.schema === 'ccpanes.hook-final-runbook.v1', 'final runbook schema mismatch');
+  assert(finalRunbookManifest.schema === 'paneforge.hook-final-runbook.v1', 'final runbook schema mismatch');
   assert(finalRunbookManifest.mode === 'manual-execution-runbook', 'final runbook mode mismatch');
   assert(existsSync(join(finalRunbook, 'manifest.json')), 'final runbook missing manifest');
   assert(existsSync(join(finalRunbook, 'FINAL-RUNBOOK.md')), 'final runbook missing runbook markdown');
@@ -865,7 +865,7 @@ try {
   writeFileSync(acceptance, acceptanceJson, 'utf8');
 
   const verifyMatch = parseJson(run(['verify-acceptance', '--input', acceptance]));
-  assert(verifyMatch.schema === 'ccpanes.acceptance.verify.v1', 'verify schema mismatch');
+  assert(verifyMatch.schema === 'paneforge.acceptance.verify.v1', 'verify schema mismatch');
   assert(verifyMatch.passed === true, 'verify expected passed=true before mutation');
   assert(verifyMatch.summary.completionAllowed === true, 'verify expected completionAllowed=true before mutation');
 

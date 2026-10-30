@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { CCPANES_RUNTIME_PROFILE } from './runtime-profile.js';
+import { PANEFORGE_RUNTIME_PROFILE } from './runtime-profile.js';
 
 export type ExpectedHookEvent = 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PermissionRequest' | 'PostToolUse' | 'Stop';
 
@@ -39,7 +39,7 @@ export interface InstalledHooksCheck {
 }
 
 export interface InstalledHooksVerification {
-  schema: 'ccpanes.installed-hooks.verify.v1';
+  schema: 'paneforge.installed-hooks.verify.v1';
   mode: 'read-only';
   checkedAt: string;
   hooksJsonPath: string;
@@ -68,8 +68,8 @@ function commandFor(prototypeRoot: string, command: string, auditRoot: string): 
   return `node "${cliPath(prototypeRoot)}" ${command} --resolve-task-from-cwd --audit-root "${auditRoot}"`;
 }
 
-const skillsHubHookPath = CCPANES_RUNTIME_PROFILE.skillsHubHookPath;
-const ccPanesCodexHookPath = CCPANES_RUNTIME_PROFILE.ccPanesCodexHookPath;
+const skillsHubHookPath = PANEFORGE_RUNTIME_PROFILE.skillsHubHookPath;
+const paneforgeCodexHookPath = PANEFORGE_RUNTIME_PROFILE.paneforgeCodexHookPath;
 export const HOOKED_TOOL_MATCHER = '^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|mcp__fastctx__(inspect_local_file|read|grep|glob|replace))$';
 
 function executableCommand(executablePath: string, args: string[] = []): string {
@@ -81,8 +81,8 @@ function codexWindowsCommand(command: string): string {
   return `cmd.exe /d /s /c '${command}'`;
 }
 
-function ccPanesPromptBeforeCommand(): string {
-  return codexWindowsCommand(`${executableCommand(ccPanesCodexHookPath, ['prompt-before'])} 2>nul`);
+function paneforgePromptBeforeCommand(): string {
+  return codexWindowsCommand(`${executableCommand(paneforgeCodexHookPath, ['prompt-before'])} 2>nul`);
 }
 
 export function expectedHookDefinitions(): ExpectedHookDefinition[] {
@@ -107,9 +107,9 @@ export function expectedHookDefinitions(): ExpectedHookDefinition[] {
     },
     {
       event: 'UserPromptSubmit',
-      name: 'UserPromptSubmit cc-panes prompt-before',
-      commandToken: 'cc-panes-cli-hook.exe',
-      requiredCommandTokens: [ccPanesCodexHookPath, 'cc-panes-cli-hook.exe', 'prompt-before'],
+      name: 'UserPromptSubmit paneforge prompt-before',
+      commandToken: 'paneforge-cli-hook.exe',
+      requiredCommandTokens: [paneforgeCodexHookPath, 'paneforge-cli-hook.exe', 'prompt-before'],
       requiredMatcherTokens: [],
       trustStateKey: 'user_prompt_submit',
       requiresPrototypeCli: false,
@@ -151,10 +151,10 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
           hooks: [
             {
               type: 'command',
-              command: ccPanesPromptBeforeCommand(),
-              commandWindows: ccPanesPromptBeforeCommand(),
+              command: paneforgePromptBeforeCommand(),
+              commandWindows: paneforgePromptBeforeCommand(),
               timeout: 10,
-              statusMessage: 'CC-Panes plan lifecycle intake'
+              statusMessage: 'PaneForge plan lifecycle intake'
             }
           ]
         },
@@ -165,7 +165,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               command: commandFor(input.prototypeRoot, 'workflow-advisory', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'workflow-advisory', input.auditRoot),
               timeout: 10,
-              statusMessage: 'CC-Panes production workflow advisory',
+              statusMessage: 'PaneForge production workflow advisory',
               additionalContextLimit: 1800
             }
           ]
@@ -180,7 +180,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               command: commandFor(input.prototypeRoot, 'session-start', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'session-start', input.auditRoot),
               timeout: 10,
-              statusMessage: 'CC-Panes task lifecycle context',
+              statusMessage: 'PaneForge task lifecycle context',
               additionalContextLimit: 1200
             }
           ]
@@ -195,7 +195,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               command: commandFor(input.prototypeRoot, 'hook-enforce', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'hook-enforce', input.auditRoot),
               timeout: 10,
-              statusMessage: 'CC-Panes task boundary check'
+              statusMessage: 'PaneForge task boundary check'
             }
           ]
         }
@@ -209,7 +209,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               command: commandFor(input.prototypeRoot, 'permission-enforce', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'permission-enforce', input.auditRoot),
               timeout: 10,
-              statusMessage: 'CC-Panes permission request boundary check'
+              statusMessage: 'PaneForge permission request boundary check'
             }
           ]
         }
@@ -223,7 +223,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               command: commandFor(input.prototypeRoot, 'post-enforce', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'post-enforce', input.auditRoot),
               timeout: 10,
-              statusMessage: 'CC-Panes post tool audit'
+              statusMessage: 'PaneForge post tool audit'
             }
           ]
         }
@@ -236,7 +236,7 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
               command: commandFor(input.prototypeRoot, 'stop-check', input.auditRoot),
               commandWindows: commandFor(input.prototypeRoot, 'stop-check', input.auditRoot),
               timeout: 10,
-              statusMessage: 'CC-Panes completion gate reminder'
+              statusMessage: 'PaneForge completion gate reminder'
             }
           ]
         }
@@ -414,7 +414,7 @@ export async function verifyInstalledHooks(input: VerifyInstalledHooksInput): Pr
   }
 
   return {
-    schema: 'ccpanes.installed-hooks.verify.v1',
+    schema: 'paneforge.installed-hooks.verify.v1',
     mode: 'read-only',
     checkedAt: input.now ?? new Date().toISOString(),
     hooksJsonPath: input.hooksJsonPath,

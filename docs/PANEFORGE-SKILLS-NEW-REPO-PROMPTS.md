@@ -1,41 +1,41 @@
-# ccpanes-skills 新仓库提示词与脚手架
+# paneforge-skills 新仓库提示词与脚手架
 
 目标路径：
 
 ```text
-{workspace-root}\tool\repos\ccpanes-skills
+{workspace-root}\tool\repos\paneforge-skills
 ```
 
 本文件是 `hooks` 仓库内的兼容提示词入口。新仓库已在目标路径初始化，权威提示词
 维护在：
 
 ```text
-{workspace-root}\tool\repos\ccpanes-skills\prompts\NEW-REPO-CONTROLLER.md
-{workspace-root}\tool\repos\ccpanes-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
-{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-INTO-SKILLS-REPO.md
-{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-MATTPOCOCK-SKILLS.md
-{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-CODE-REVIEW-GRAPH.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\NEW-REPO-CONTROLLER.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\ABSORB-INTO-SKILLS-REPO.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\ABSORB-MATTPOCOCK-SKILLS.md
+{workspace-root}\tool\repos\paneforge-skills\prompts\ABSORB-CODE-REVIEW-GRAPH.md
 ```
 
 ## 新仓库主控提示词
 
-复制下面整段给一个在 `{workspace-root}\tool\repos\ccpanes-skills` 启动的新会话。
+复制下面整段给一个在 `{workspace-root}\tool\repos\paneforge-skills` 启动的新会话。
 
 ```text
-你是 `ccpanes-skills` 仓库主控。默认使用中文，作为平等工程协作者沟通。
+你是 `paneforge-skills` 仓库主控。默认使用中文，作为平等工程协作者沟通。
 
-本轮唯一目标：维护 CC-Panes / Codex 的 agent 行为层，包括 skills、prompts、workflow docs、review/checklist、handoff 和参考采纳记录；不要修改 `hooks` runtime。
+本轮唯一目标：维护 PaneForge / Codex 的 agent 行为层，包括 skills、prompts、workflow docs、review/checklist、handoff 和参考采纳记录；不要修改 `hooks` runtime。
 
 先决必读：
-1. {workspace-root}\tool\repos\ccpanes-skills\AGENTS.md
-2. {workspace-root}\tool\repos\ccpanes-skills\README.md
-3. {workspace-root}\tool\repos\ccpanes-skills\docs\REPOSITORY-RELATIONSHIP.md
-4. {workspace-root}\tool\repos\ccpanes-skills\docs\INTAKE-DECISION-PROTOCOL.md
+1. {workspace-root}\tool\repos\paneforge-skills\AGENTS.md
+2. {workspace-root}\tool\repos\paneforge-skills\README.md
+3. {workspace-root}\tool\repos\paneforge-skills\docs\REPOSITORY-RELATIONSHIP.md
+4. {workspace-root}\tool\repos\paneforge-skills\docs\INTAKE-DECISION-PROTOCOL.md
 5. 与本轮主题相关的 adoption record / prompt / skill 文件
 
 当前权威边界：
 - `{workspace-root}\tool\repos\hooks` 拥有 task scope、policy、hook hard gate、audit、acceptance 和 CLI schema。
-- `ccpanes-skills` 拥有 agent 行为提示、skill 写法、review 流程、handoff 模板和行为层采纳记录。
+- `paneforge-skills` 拥有 agent 行为提示、skill 写法、review 流程、handoff 模板和行为层采纳记录。
 - prompt / skill 永远是 advisory；权限以 hook-enforce、permission-enforce 和 policy.json 为准。
 
 授权：
@@ -57,13 +57,13 @@
 - 涉及外部参考时说明：吸收点、排除点、为什么不进 `hooks`、为什么不新建仓库。
 ```
 
-## 吸收到 ccpanes-skills 的执行提示词
+## 吸收到 paneforge-skills 的执行提示词
 
-当 `hooks` 项目的外部参考评估结论是“吸收到 `ccpanes-skills`”时，复制下面提示词
+当 `hooks` 项目的外部参考评估结论是“吸收到 `paneforge-skills`”时，复制下面提示词
 到本仓库新会话。
 
 ```text
-你在 `{workspace-root}\tool\repos\ccpanes-skills` 工作。已有 `hooks` 评估结论：外部参考适合吸收到 agent 行为层。
+你在 `{workspace-root}\tool\repos\paneforge-skills` 工作。已有 `hooks` 评估结论：外部参考适合吸收到 agent 行为层。
 
 输入：
 - 外部参考 URL：<URL>
@@ -71,7 +71,7 @@
 - 参考 HEAD / 版本：<HEAD_OR_VERSION>
 - 本轮想吸收的点：<BEHAVIOR_OR_PROMPT_METHOD>
 
-唯一目标：把该参考本地化为 `ccpanes-skills` 的采纳记录和最小必要 prompt / skill / template；不改 `hooks` runtime。
+唯一目标：把该参考本地化为 `paneforge-skills` 的采纳记录和最小必要 prompt / skill / template；不改 `hooks` runtime。
 
 必读：
 1. AGENTS.md
@@ -82,7 +82,7 @@
 
 执行：
 1. 记录本仓库 git root、branch、HEAD、status。
-2. 读取 hooks 评估报告，确认结论是 `ccpanes-skills`。
+2. 读取 hooks 评估报告，确认结论是 `paneforge-skills`。
 3. 写 `docs/adoptions/<PROJECT>.md`，包含来源、HEAD、license、采纳点、排除点、owner、验证、回退。
 4. 新增或更新最小 prompt / skill / template。避免复制外部大段文本；用本地术语重写。
 5. 检查 prompt 是否写清目标、输入、授权、禁止项、执行顺序、输出格式和停止条件。
@@ -97,7 +97,7 @@
 
 ## 新仓库初始文件建议
 
-`ccpanes-skills` 初始化后至少包含：
+`paneforge-skills` 初始化后至少包含：
 
 ```text
 README.md
@@ -114,18 +114,18 @@ templates/adoption-record.md
 ```
 
 这些文件的语义以本文件和
-`{workspace-root}\tool\repos\hooks\docs\CCPANES-SKILLS-REPO-RELATION.md` 为源。
+`{workspace-root}\tool\repos\hooks\docs\PANEFORGE-SKILLS-REPO-RELATION.md` 为源。
 
 ## code-review-graph 专属吸收提示词
 
-当前路由判断：`tirth8205/code-review-graph` 先进入 `ccpanes-skills`，作为
+当前路由判断：`tirth8205/code-review-graph` 先进入 `paneforge-skills`，作为
 adoption record、sidecar spec 和 review workflow prompt；成熟运行态再新建独立
 sidecar 仓库。
 
-复制下面整段到 `{workspace-root}\tool\repos\ccpanes-skills` task 中使用。
+复制下面整段到 `{workspace-root}\tool\repos\paneforge-skills` task 中使用。
 
 ```text
-你是 `{workspace-root}\tool\repos\ccpanes-skills` 仓库主控。默认中文，先给判断和核心原因，再给证据。
+你是 `{workspace-root}\tool\repos\paneforge-skills` 仓库主控。默认中文，先给判断和核心原因，再给证据。
 
 外部参考项目：
 - URL：https://github.com/tirth8205/code-review-graph.git
@@ -134,25 +134,25 @@ sidecar 仓库。
 - 来源性质：Python / Tree-sitter / SQLite / MCP-CLI 风格的代码结构图谱与 review context 工具
 
 本轮唯一目标：
-把 `code-review-graph` 本地化吸收到 `ccpanes-skills` 的 agent 行为层与 sidecar 候选设计中：更新采纳记录、完善 sidecar spec、产出给未来 worker 使用的 review-graph 提示词；保持 `{workspace-root}\tool\repos\hooks` runtime、hard gate、policy、audit、acceptance 原样。
+把 `code-review-graph` 本地化吸收到 `paneforge-skills` 的 agent 行为层与 sidecar 候选设计中：更新采纳记录、完善 sidecar spec、产出给未来 worker 使用的 review-graph 提示词；保持 `{workspace-root}\tool\repos\hooks` runtime、hard gate、policy、audit、acceptance 原样。
 
 先决必读：
-1. {workspace-root}\tool\repos\ccpanes-skills\AGENTS.md
-2. {workspace-root}\tool\repos\ccpanes-skills\README.md
-3. {workspace-root}\tool\repos\ccpanes-skills\PROJECT-DIRECTORY.md
-4. {workspace-root}\tool\repos\ccpanes-skills\docs\RELATIONSHIP-WITH-HOOKS.md
-5. {workspace-root}\tool\repos\ccpanes-skills\docs\INTAKE-ROUTER.md
-6. {workspace-root}\tool\repos\ccpanes-skills\docs\adoptions\CODE-REVIEW-GRAPH.md
-7. {workspace-root}\tool\repos\ccpanes-skills\sidecar-specs\CODE-REVIEW-GRAPH.md
+1. {workspace-root}\tool\repos\paneforge-skills\AGENTS.md
+2. {workspace-root}\tool\repos\paneforge-skills\README.md
+3. {workspace-root}\tool\repos\paneforge-skills\PROJECT-DIRECTORY.md
+4. {workspace-root}\tool\repos\paneforge-skills\docs\RELATIONSHIP-WITH-HOOKS.md
+5. {workspace-root}\tool\repos\paneforge-skills\docs\INTAKE-ROUTER.md
+6. {workspace-root}\tool\repos\paneforge-skills\docs\adoptions\CODE-REVIEW-GRAPH.md
+7. {workspace-root}\tool\repos\paneforge-skills\sidecar-specs\CODE-REVIEW-GRAPH.md
 8. {workspace-root}\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
 
 当前路由判断：
-- 当前阶段进入 `ccpanes-skills`，因为最有价值的是 review workflow、impact radius、test gap、blast radius 和 JSON advisory artifact 设计。
+- 当前阶段进入 `paneforge-skills`，因为最有价值的是 review workflow、impact radius、test gap、blast radius 和 JSON advisory artifact 设计。
 - 当前阶段不并入 `hooks` runtime，因为上游包含 Python、Tree-sitter、SQLite 缓存、MCP/CLI surface，与 TypeScript hook hard gate 生命周期不同。
-- 未来若要运行上游能力或本地实现图谱分析，先在 `sidecar-specs/CODE-REVIEW-GRAPH.md` 完成 contract，再新建独立 sidecar 仓库，例如 `{workspace-root}\tool\repos\ccpanes-review-graph-sidecar`。
+- 未来若要运行上游能力或本地实现图谱分析，先在 `sidecar-specs/CODE-REVIEW-GRAPH.md` 完成 contract，再新建独立 sidecar 仓库，例如 `{workspace-root}\tool\repos\paneforge-review-graph-sidecar`。
 
 授权：
-- 可修改 `{workspace-root}\tool\repos\ccpanes-skills` 下的 README、AGENTS、PROJECT-DIRECTORY、docs、prompts、skills、templates、sidecar-specs。
+- 可修改 `{workspace-root}\tool\repos\paneforge-skills` 下的 README、AGENTS、PROJECT-DIRECTORY、docs、prompts、skills、templates、sidecar-specs。
 - 可把 `https://github.com/tirth8205/code-review-graph.git` clone 到系统临时目录，只读检查 README、license、CLI/MCP surface、缓存路径、依赖和输出示例。
 - 可设计 JSON request/report schema、review checklist、worker prompt 和 clean fixture 验证计划。
 - 提交、push、全局安装、用户配置写入、上游 installer、MCP 注册、真实项目缓存写入仅在用户明确要求时执行。
@@ -163,7 +163,7 @@ sidecar 仓库。
 3. 只读核验上游 HEAD、license、主要技术栈、依赖、缓存路径、CLI/MCP 行为和配置写入风险。
 4. 更新 `docs/adoptions/CODE-REVIEW-GRAPH.md`，至少保留：
    - 来源 URL、HEAD、license。
-   - 路由判断：当前进 `ccpanes-skills`；成熟运行态另建 sidecar 仓库。
+   - 路由判断：当前进 `paneforge-skills`；成熟运行态另建 sidecar 仓库。
    - 采纳点：impact radius、changed-file graph、test gap、risk score、context savings、local-first cache。
    - 排除点：直接 vendor Python runtime、直接运行 installer、写用户 MCP/Codex/Claude 配置、把 risk score 升级成 hard gate。
    - 本地 owner 文件、验证方式、回退方式。
@@ -176,7 +176,7 @@ sidecar 仓库。
 8. 收尾运行 `git status --short --branch`。
 
 验收断言：
-- `docs/adoptions/CODE-REVIEW-GRAPH.md` 说明为何先进入 `ccpanes-skills`。
+- `docs/adoptions/CODE-REVIEW-GRAPH.md` 说明为何先进入 `paneforge-skills`。
 - `sidecar-specs/CODE-REVIEW-GRAPH.md` 说明何时另建 sidecar 仓库。
 - prompt 里明确上游 installer、MCP 注册和用户配置写入只在显式授权后执行。
 - `hooks` 的 task scope、policy、hook-enforce、permission-enforce、post-enforce、acceptance 仍为权威。

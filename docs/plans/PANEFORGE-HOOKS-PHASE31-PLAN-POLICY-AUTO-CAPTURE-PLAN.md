@@ -1,4 +1,4 @@
-# CC-Panes Hooks Phase 31 — Plan Policy Auto Capture Plan
+# PaneForge Hooks Phase 31 — Plan Policy Auto Capture Plan
 
 日期：2026-08-07
 目标仓库：`{workspace-root}\tool\repos\hooks`
@@ -6,7 +6,7 @@
 
 ## Change Contract
 
-Intent: 将 `policy-capture` 接入 plan 阶段的半自动入口，让明确的“禁止/开放/清除”项目规则可以从计划文本直接沉淀到 `.ccpanes-task/policy.md` 和 `.ccpanes-task/policy.json`，减少手工拼接命令。
+Intent: 将 `policy-capture` 接入 plan 阶段的半自动入口，让明确的“禁止/开放/清除”项目规则可以从计划文本直接沉淀到 `.paneforge-task/policy.md` 和 `.paneforge-task/policy.json`，减少手工拼接命令。
 Authorized Mutation:
 - 修改 hooks 仓库源码、测试、模板、README、smoke 和计划文档。
 - 本轮先在源仓库完成实现与验证；commit、push、live 同步按交付门禁另行执行。
@@ -23,13 +23,13 @@ In Scope:
 - 清除类指令只 disable 现有 `policy.json` rules，并追加 ledger，不删除历史规则。
 Out of Scope:
 - 不做开放式自然语言理解或隐式推断。
-- 不写用户级 Codex / CC-Panes 配置。
+- 不写用户级 Codex / PaneForge 配置。
 - 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 Expected Behavior:
 - 明确 plan 规则自动生成稳定 rule id、reason 和 matcher。
 - 重复运行同一 plan 文本幂等替换同一 rule id，不复制规则。
-- 未识别到规则时返回 `changed=false`，不创建 `.ccpanes-task` 文件。
+- 未识别到规则时返回 `changed=false`，不创建 `.paneforge-task` 文件。
 - 清除类指令保留审计历史，只 disable rules。
 Fatal Failures:
 - plan 解析器误把普通计划文字写成机械规则。

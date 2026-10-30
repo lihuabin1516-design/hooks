@@ -3,7 +3,7 @@
 ## Summary
 
 - Reworked the public README into a product-style homepage for agent hooks governance.
-- Moved CC-Panes from the headline story into compatibility.
+- Moved PaneForge from the headline story into compatibility.
 - Added `docs/compatibility.md`, `docs/faq.md`, and this release note.
 - Kept maintainer-only paths and operational details in `MAINTENANCE.md`.
 
@@ -33,5 +33,5 @@ node dist/src/cli.js verify-live-consistency --repo-root <repo-root> --live-root
 ## Known limits
 
 - Windows is still the primary validated environment.
-- CC-Panes compatibility exists, but the project is intentionally broader than one host.
+- PaneForge compatibility exists, but the project is intentionally broader than one host.
 - Additional runtimes stay in the candidate lane until they have fixtures and verification evidence.
