@@ -1,7 +1,7 @@
 # Ponytail 参考吸收记录
 
 日期：2026-08-14
-目标仓库：`D:\cc-pane\tool\repos\hooks`
+目标仓库：`{workspace-root}\tool\repos\hooks`
 外部参考：`https://github.com/DietrichGebert/ponytail.git`
 参考 HEAD：`2ed6c52c9d7e5e56942508591085fd45dea277d3`
 参考版本：`v4.9.0`

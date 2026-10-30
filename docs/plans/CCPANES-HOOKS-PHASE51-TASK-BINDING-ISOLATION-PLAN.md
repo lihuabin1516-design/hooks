@@ -25,7 +25,7 @@ Intent:
   Stop cross-project task selection and make canonical-project/worktree ownership
   explicit and machine-verifiable.
 Authorized Mutation:
-  Tracked files inside D:\cc-pane\.worktrees\hooks-phase51-task-binding plus its
+  Tracked files inside {workspace-root}\.worktrees\hooks-phase51-task-binding plus its
   ignored .ccpanes-task/current-task.json.
 In Scope:
   task schema semantics, Git topology reader, task factory/resolver, CLI command,
@@ -34,13 +34,13 @@ Out of Scope:
   PaneForge source, workspace-root product code, donor feature integration,
   user/global configuration, live sync, release and deployment.
 No-Touch:
-  D:\cc-pane\.worktrees\paneforge-foundation existing changes;
-  D:\cc-pane\tool\repos\hooks main worktree tracked files;
-  C:\Users\AI001\.codex and C:\Users\AI001\.cc-panes.
+  {workspace-root}\.worktrees\paneforge-foundation existing changes;
+  {workspace-root}\tool\repos\hooks main worktree tracked files;
+  {user-home}\.codex and {user-home}\.cc-panes.
 Current Evidence:
-  Canonical repo is D:\cc-pane\tool\repos\hooks.
-  Active linked worktree is D:\cc-pane\.worktrees\hooks-phase51-task-binding.
-  git common dir is D:\cc-pane\tool\repos\hooks\.git.
+  Canonical repo is {workspace-root}\tool\repos\hooks.
+  Active linked worktree is {workspace-root}\.worktrees\hooks-phase51-task-binding.
+  git common dir is {workspace-root}\tool\repos\hooks\.git.
   Baseline is f6846e9156ae4c871e063f996ba4031cf0732383.
 Active Hypothesis:
   Unbounded ancestor search caused the cross-project capture; treating
@@ -65,19 +65,19 @@ Recovery:
 
 ```text
 Canonical project:
-  D:\cc-pane\tool\repos\hooks
+  {workspace-root}\tool\repos\hooks
 
 Active task worktree:
-  D:\cc-pane\.worktrees\hooks-phase51-task-binding
+  {workspace-root}\.worktrees\hooks-phase51-task-binding
 
 Task binding:
-  D:\cc-pane\.worktrees\hooks-phase51-task-binding
+  {workspace-root}\.worktrees\hooks-phase51-task-binding
     \.ccpanes-task\current-task.json
 
 Required current-task values:
-  projectPath  = D:\cc-pane\tool\repos\hooks
-  mainRepoRoot = D:\cc-pane\tool\repos\hooks
-  worktreeRoot = D:\cc-pane\.worktrees\hooks-phase51-task-binding
+  projectPath  = {workspace-root}\tool\repos\hooks
+  mainRepoRoot = {workspace-root}\tool\repos\hooks
+  worktreeRoot = {workspace-root}\.worktrees\hooks-phase51-task-binding
 ```
 
 ## File map
@@ -1007,7 +1007,7 @@ git diff --check: exit 0
 
 ```powershell
 node dist/src/cli.js verify-task-binding `
-  --cwd D:\cc-pane\.worktrees\hooks-phase51-task-binding
+  --cwd {workspace-root}\.worktrees\hooks-phase51-task-binding
 ```
 
 Expected subset:
@@ -1041,7 +1041,7 @@ Expected: only Phase51 files inside the linked worktree. The ignored
 - [ ] **Step 4: Verify the canonical main worktree remains clean**
 
 ```powershell
-git -C D:\cc-pane\tool\repos\hooks status --short --branch
+git -C {workspace-root}\tool\repos\hooks status --short --branch
 ```
 
 Expected: `main` remains clean and at the recorded baseline unless the user
@@ -1050,7 +1050,7 @@ separately changed it.
 - [ ] **Step 5: Verify PaneForge preservation**
 
 ```powershell
-git -C D:\cc-pane\.worktrees\paneforge-foundation status --short --branch
+git -C {workspace-root}\.worktrees\paneforge-foundation status --short --branch
 ```
 
 Expected: existing PaneForge fusion changes remain; no Hooks Phase51 file appears.

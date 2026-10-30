@@ -223,7 +223,7 @@ Server 返回的 preview 是显示投影：先走统一 privacy redaction/excerp
 | `sidebar-reconcile` | 原 plan；host receipt；pin 后重新采集的 fresh App sidebar snapshot | `hooks.codex-sidebar-reconciliation/v1`；plan-bound，并记录 `receiptExecutionDigest` 供审计 |
 | `sidebar-rollback-plan` | apply result；与该 execution 对应的 host receipt | 严格校验 apply/receipt `executionDigest` 后输出 `hooks.codex-sidebar-rollback-plan/v1`，含 `sourceExecutionDigest`、逆序 `actions` 和自身 `digest` |
 
-下面四条命令均从仓库根 `D:\cc-pane\tool\repos\hooks` 执行。plan 示例只显式选择一个
+下面四条命令均从仓库根 `{workspace-root}\tool\repos\hooks` 执行。plan 示例只显式选择一个
 可用 `--thread-id`；应把示例 ID 替换为当前 concrete federation graph 中实际要处理的
 thread ID。
 
@@ -337,7 +337,7 @@ Codex 0.147.0 的 `thread/name/set` 只接受非空 string，没有公开 clear-
 以下命令从仓库根执行：
 
 ```powershell
-cd D:\cc-pane\tool\repos\hooks
+cd {workspace-root}\tool\repos\hooks
 npm run build
 ```
 
@@ -345,7 +345,7 @@ npm run build
 
 ```powershell
 node dist/src/cli.js codex-sessions scan `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --out live/codex-session-index-v2.json
 ```
 
@@ -353,7 +353,7 @@ node dist/src/cli.js codex-sessions scan `
 
 ```powershell
 node dist/src/cli.js codex-sessions scan `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --out live/codex-session-index-v2.json
 ```
@@ -362,10 +362,10 @@ node dist/src/cli.js codex-sessions scan `
 
 ```powershell
 node dist/src/cli.js codex-sessions resolve `
-  --project D:\cc-pane\tool\repos\hooks
+  --project {workspace-root}\tool\repos\hooks
 
 node dist/src/cli.js codex-sessions resolve `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --json
 ```
@@ -375,7 +375,7 @@ node dist/src/cli.js codex-sessions resolve `
 ```powershell
 New-Item -ItemType Directory -Force -Path live | Out-Null
 node dist/src/cli.js codex-sessions resolve `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --json | Set-Content -LiteralPath live/codex-session-resolution-v2.json -Encoding utf8
 ```
@@ -384,7 +384,7 @@ node dist/src/cli.js codex-sessions resolve `
 
 ```powershell
 node dist/src/cli.js codex-sessions resolve `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --include-archived `
   --include-subagents `
@@ -397,7 +397,7 @@ node dist/src/cli.js codex-sessions resolve `
 
 ```powershell
 node dist/src/cli.js codex-sessions retention `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --out live/session-retention-manifest.json
 ```
@@ -406,7 +406,7 @@ node dist/src/cli.js codex-sessions retention `
 
 ```powershell
 node dist/src/cli.js codex-sessions graph `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json
 ```
 
@@ -414,7 +414,7 @@ node dist/src/cli.js codex-sessions graph `
 
 ```powershell
 node dist/src/cli.js codex-sessions graph `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --out live/session-federation.json
 ```
@@ -424,12 +424,12 @@ node dist/src/cli.js codex-sessions graph `
 ```powershell
 node dist/src/cli.js handoff generate `
   --mode ccpanes-worker `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --index live/codex-session-index-v2.json
 
 node dist/src/cli.js handoff generate `
   --mode codex-app-visual `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --index live/codex-session-index-v2.json
 ```
 

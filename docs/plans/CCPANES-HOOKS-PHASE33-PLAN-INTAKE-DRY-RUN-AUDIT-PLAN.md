@@ -1,7 +1,7 @@
 # CC-Panes Hooks Phase 33 — Plan Intake Dry-Run Audit Plan
 
 日期：2026-08-07
-目标仓库：`D:\cc-pane\tool\repos\hooks`
+目标仓库：`{workspace-root}\tool\repos\hooks`
 
 ## Change Contract
 
@@ -24,7 +24,7 @@ Out of Scope:
 - 不接入真实 CC-Panes plan event 配置。
 - 不写用户级 Codex / Claude / CC-Panes 配置。
 - 不同步 live prototype。
-- 不执行 `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。
+- 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 reference repo 内容。
 
 Expected Behavior:

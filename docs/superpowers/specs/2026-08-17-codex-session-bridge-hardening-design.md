@@ -20,7 +20,7 @@ The protected invariant is:
 
 The design is based on the repository state observed on 2026-08-17:
 
-- repository: `D:\cc-pane\tool\repos\hooks`
+- repository: `{workspace-root}\tool\repos\hooks`
 - branch: `main`
 - HEAD: `53ae96a737d51c7ab7c02998c2320ea5f723408b`
 - the current session-federation and sidebar implementation is an uncommitted

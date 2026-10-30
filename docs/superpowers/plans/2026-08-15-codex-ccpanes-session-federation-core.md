@@ -1924,7 +1924,7 @@ Run:
 
 ```powershell
 node dist/src/cli.js codex-sessions scan `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --out live/codex-session-index-v2.json
 ```
 
@@ -1936,7 +1936,7 @@ Run:
 
 ```powershell
 node dist/src/cli.js codex-sessions resolve `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --json |
   Set-Content -LiteralPath live/codex-session-resolution-v2.json -Encoding utf8
 ```
@@ -1971,7 +1971,7 @@ Run:
 
 ```powershell
 node dist/src/cli.js codex-sessions graph `
-  --project D:\cc-pane\tool\repos\hooks `
+  --project {workspace-root}\tool\repos\hooks `
   --ccpanes-snapshot live/ccpanes-session-snapshot.json `
   --out live/session-federation.json
 ```

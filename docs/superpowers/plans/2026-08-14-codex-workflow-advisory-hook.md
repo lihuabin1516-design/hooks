@@ -90,11 +90,11 @@
 ### Task 7: Synchronize live and install the hook
 
 - [ ] Record existence, size, and SHA-256 for
-  `C:\Users\AI001\.codex\hooks.json` and
-  `C:\Users\AI001\.codex\config.toml`.
+  `{user-home}\.codex\hooks.json` and
+  `{user-home}\.codex\config.toml`.
 - [ ] Snapshot `hooks.json` to the task audit directory.
 - [ ] Synchronize the committed runtime files from the repo into
-  `D:\cc-pane\tool\experiments\ccpanes-task-probe`.
+  `{workspace-root}\tool\experiments\ccpanes-task-probe`.
 - [ ] Install dependencies only if the existing live dependency tree is
   insufficient; otherwise reuse it.
 - [ ] Build and test in the live root.

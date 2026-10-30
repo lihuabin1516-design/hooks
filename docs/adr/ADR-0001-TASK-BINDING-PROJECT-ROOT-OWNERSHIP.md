@@ -4,8 +4,8 @@
 - 日期：2026-08-10
 - 接受日期：2026-08-11
 - 任务：`hooks-phase51-task-binding-isolation`
-- Canonical project：`D:\cc-pane\tool\repos\hooks`
-- Active worktree：`D:\cc-pane\.worktrees\hooks-phase51-task-binding`
+- Canonical project：`{workspace-root}\tool\repos\hooks`
+- Active worktree：`{workspace-root}\.worktrees\hooks-phase51-task-binding`
 - Branch：`codex/hooks-phase51-task-binding`
 - 基线：`f6846e9156ae4c871e063f996ba4031cf0732383`
 
@@ -18,18 +18,18 @@
 
 2026-08-10 已确认一次真实串线：
 
-- 当前 Hooks 项目应归属 `D:\cc-pane\tool\repos\hooks`；
+- 当前 Hooks 项目应归属 `{workspace-root}\tool\repos\hooks`；
 - 当时 Hooks cwd 下没有项目级 task binding；
-- 父级 `D:\cc-pane\.ccpanes-task\current-task.json` 指向 PaneForge task；
-- 父级 binding 的 `worktreeRoot=D:\cc-pane`，范围过宽；
+- 父级 `{workspace-root}\.ccpanes-task\current-task.json` 指向 PaneForge task；
+- 父级 binding 的 `worktreeRoot={workspace-root}`，范围过宽；
 - ancestor search 因而把 PaneForge task 注入 Hooks 对话。
 
 现场已拆分为两个独立任务边界：
 
 - Hooks task binding 位于
-  `D:\cc-pane\.worktrees\hooks-phase51-task-binding\.ccpanes-task\current-task.json`；
+  `{workspace-root}\.worktrees\hooks-phase51-task-binding\.ccpanes-task\current-task.json`；
 - PaneForge task binding 位于
-  `D:\cc-pane\.worktrees\paneforge-foundation\.ccpanes-task\current-task.json`；
+  `{workspace-root}\.worktrees\paneforge-foundation\.ccpanes-task\current-task.json`；
 - workspace root 的 broad synthetic binding 已归档；
 - PaneForge 原有 fusion 改动原地保留，未复制、重置、暂存、提交或推送。
 
@@ -60,9 +60,9 @@ Review depth: Full
 
 | 字段 | 含义 | Hooks 本轮值 |
 |---|---|---|
-| `projectPath` | canonical 项目目录；项目身份与长期归属 | `D:\cc-pane\tool\repos\hooks` |
-| `worktreeRoot` | 当前 task checkout；写入、policy、audit、acceptance 的硬边界 | `D:\cc-pane\.worktrees\hooks-phase51-task-binding` |
-| `mainRepoRoot` | Git main worktree；Phase51 保留 schema 兼容 | `D:\cc-pane\tool\repos\hooks` |
+| `projectPath` | canonical 项目目录；项目身份与长期归属 | `{workspace-root}\tool\repos\hooks` |
+| `worktreeRoot` | 当前 task checkout；写入、policy、audit、acceptance 的硬边界 | `{workspace-root}\.worktrees\hooks-phase51-task-binding` |
+| `mainRepoRoot` | Git main worktree；Phase51 保留 schema 兼容 | `{workspace-root}\tool\repos\hooks` |
 
 在主工作树中，三个值通常相等。在 linked worktree 中，`projectPath` /
 `mainRepoRoot` 与 `worktreeRoot` 必须不同。
@@ -315,7 +315,7 @@ Observability: deny reason and task-binding JSON
 
 ### 只校验路径包含关系
 
-否决原因：`D:\cc-pane` 包含多个独立项目；ancestor/inside 关系不能证明 ownership。
+否决原因：`{workspace-root}` 包含多个独立项目；ancestor/inside 关系不能证明 ownership。
 
 ### 发现 mismatch 后全部 no-op
 
@@ -343,8 +343,8 @@ Phase51 只明确语义并保持字段。
 必要断言：
 
 1. Hooks 实际 binding 为：
-   `projectPath=mainRepoRoot=D:\cc-pane\tool\repos\hooks`，
-   `worktreeRoot=D:\cc-pane\.worktrees\hooks-phase51-task-binding`。
+   `projectPath=mainRepoRoot={workspace-root}\tool\repos\hooks`，
+   `worktreeRoot={workspace-root}\.worktrees\hooks-phase51-task-binding`。
 2. linked worktree 的 Git common dir 指向 canonical repo `.git`。
 3. 子 Git repo 没有 task、父级 workspace 有 task时返回
    `stale-parent-binding`。

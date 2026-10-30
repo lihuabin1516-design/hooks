@@ -1,9 +1,9 @@
 # Hook Integration Preflight
 
-日期：2026-08-06  
-范围：只读预检；不写入用户配置；不执行 hook；不接入真实 Hook。  
-目标 hook：`C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`  
-原型目录：`D:\cc-pane\tool\experiments\ccpanes-task-probe`
+日期：2026-08-06<br>
+范围：只读预检；不写入用户配置；不执行 hook；不接入真实 Hook。<br>
+目标 hook：`{user-home}\skills-hub\bin\skills-hub-hook.exe`<br>
+原型目录：`{workspace-root}\tool\experiments\ccpanes-task-probe`
 
 ## 1. 当前判断
 
@@ -23,42 +23,42 @@
 
 | Path | State | Bytes | SHA-256 |
 |---|---:|---:|---|
-| `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe` | exists | 2779136 | `F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4` |
-| `C:\Users\AI001\.codex\hooks.json` | exists | 407 | `C68FE99AC5D4E8FA38404D48C4D0B894535D1789F2BDE173DEABDCE9750D3479` |
-| `C:\Users\AI001\.codex\config.toml` | exists | 16128 | `C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61` |
-| `C:\Users\AI001\.claude\settings.json` | exists | 68 | `6697AC8BF3813E484FAAE85BE37242DC958B90660EAA184B99823308E32D699F` |
-| `C:\Users\AI001\.cc-panes\.claude\settings.local.json` | exists | 3468 | `8B3F97C46BB6193CE547D49783925491EA21416CBFE2B629190D681AF103C580` |
-| `C:\Users\AI001\.cc-panes\launch-profiles.json` | exists | 87622 | `89C2D972FA1D3BD21C756A7E607F45C16C9857FCE6DECA876CA3FB0D79B30AAE` |
-| `C:\Users\AI001\.cc-panes\shared-mcp.json` | exists | 1308 | `1391170F468C9FD1A590446BAD4D06E7DBEF439CFEB92DD4D99EE550622B2B9F` |
-| `C:\Users\AI001\.cc-panes\mcp-orchestrator.json` | exists | 329 | `7B9EA296DC02AD28FB53AE73FEEF80749C924DE00061DF4B70C1C48EFECF2A2C` |
-| `C:\Users\AI001\.cc-panes\providers.json` | exists | 2549 | `2D0DA5A6B6744438C4D6D7F206A4D63073406A93D49610E6DE90549D483642E8` |
+| `{user-home}\skills-hub\bin\skills-hub-hook.exe` | exists | 2779136 | `F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4` |
+| `{user-home}\.codex\hooks.json` | exists | 407 | `C68FE99AC5D4E8FA38404D48C4D0B894535D1789F2BDE173DEABDCE9750D3479` |
+| `{user-home}\.codex\config.toml` | exists | 16128 | `C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61` |
+| `{user-home}\.claude\settings.json` | exists | 68 | `6697AC8BF3813E484FAAE85BE37242DC958B90660EAA184B99823308E32D699F` |
+| `{user-home}\.cc-panes\.claude\settings.local.json` | exists | 3468 | `8B3F97C46BB6193CE547D49783925491EA21416CBFE2B629190D681AF103C580` |
+| `{user-home}\.cc-panes\launch-profiles.json` | exists | 87622 | `89C2D972FA1D3BD21C756A7E607F45C16C9857FCE6DECA876CA3FB0D79B30AAE` |
+| `{user-home}\.cc-panes\shared-mcp.json` | exists | 1308 | `1391170F468C9FD1A590446BAD4D06E7DBEF439CFEB92DD4D99EE550622B2B9F` |
+| `{user-home}\.cc-panes\mcp-orchestrator.json` | exists | 329 | `7B9EA296DC02AD28FB53AE73FEEF80749C924DE00061DF4B70C1C48EFECF2A2C` |
+| `{user-home}\.cc-panes\providers.json` | exists | 2549 | `2D0DA5A6B6744438C4D6D7F206A4D63073406A93D49610E6DE90549D483642E8` |
 
 敏感性说明：`providers.json` 和 `mcp-orchestrator.json` 含凭据或 token 类字段；本预检只记录文件哈希和风险，不复制内容。
 
 ## 3. Codex 当前 Hook 状态
 
-`C:\Users\AI001\.codex\hooks.json` 当前内容要点：
+`{user-home}\.codex\hooks.json` 当前内容要点：
 
 ```text
 hooks.UserPromptSubmit[0].hooks[0].type = command
-command        = "C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe"
-commandWindows = "C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe"
+command        = "{user-home}\skills-hub\bin\skills-hub-hook.exe"
+commandWindows = "{user-home}\skills-hub\bin\skills-hub-hook.exe"
 timeout        = 5
 statusMessage  = Routing cold skills
 ```
 
-`C:\Users\AI001\.codex\config.toml` 中相关要点：
+`{user-home}\.codex\config.toml` 中相关要点：
 
 ```text
 features.plugin_hooks = false
-hooks.state.'C:\Users\AI001\.codex\hooks.json:user_prompt_submit:0:0'.trusted_hash = sha256:bb3a3bdd19a4301bd2a1dc83b3bced3ee0bd4f2dddcfdeebb39a21155adbf895
+hooks.state.'{user-home}\.codex\hooks.json:user_prompt_submit:0:0'.trusted_hash = sha256:bb3a3bdd19a4301bd2a1dc83b3bced3ee0bd4f2dddcfdeebb39a21155adbf895
 mcp_servers.fastctx.command = C:/Users/AI001/.fastctx/bin/fastctx.exe
 ```
 
 FastCtx 本机落盘 exe 只做存在状态、大小和 SHA-256 记录：
 
 ```text
-path: C:\Users\AI001\.fastctx\bin\fastctx.exe
+path: {user-home}\.fastctx\bin\fastctx.exe
 size: 53498368
 lastWriteUtc: 2026-08-06T03:59:38Z
 sha256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA8579
@@ -73,12 +73,12 @@ sha256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA8579
 
 ## 4. Claude / CC-Panes 当前 Hook 状态
 
-`C:\Users\AI001\.claude\settings.json` 当前没有 hook 配置，只包含 UI/权限提示类设置。
+`{user-home}\.claude\settings.json` 当前没有 hook 配置，只包含 UI/权限提示类设置。
 
-`C:\Users\AI001\.cc-panes\.claude\settings.local.json` 已存在 CC-Panes 自有 hook 管线，命令目标为：
+`{user-home}\.cc-panes\.claude\settings.local.json` 已存在 CC-Panes 自有 hook 管线，命令目标为：
 
 ```text
-C:\Users\AI001\AppData\Local\cc-panes\binaries\cc-panes-cli-hook.exe
+{user-home}\AppData\Local\cc-panes\binaries\cc-panes-cli-hook.exe
 ```
 
 已覆盖事件：
@@ -144,7 +144,7 @@ npm run smoke
 生产门禁：
 
 ```powershell
-cd D:\cc-pane\tool\experiments\ccpanes-task-probe
+cd {workspace-root}\tool\experiments\ccpanes-task-probe
 npm test
 npm run typecheck
 npm run build
@@ -173,8 +173,8 @@ examples/hook-events/*.json
 只在得到明确授权后进行。优先研究：
 
 ```text
-C:\Users\AI001\AppData\Local\cc-panes\binaries\cc-panes-cli-hook.exe
-C:\Users\AI001\.cc-panes\.claude\settings.local.json
+{user-home}\AppData\Local\cc-panes\binaries\cc-panes-cli-hook.exe
+{user-home}\.cc-panes\.claude\settings.local.json
 ```
 
 目标不是替换现有 hook，而是为 `tool-before` 增加可选 dry-run 子步骤。
@@ -194,10 +194,10 @@ C:\Users\AI001\.cc-panes\.claude\settings.local.json
 
 ```text
 允许读取：
-- C:\Users\AI001\.codex\hooks.json
-- C:\Users\AI001\.codex\config.toml
-- C:\Users\AI001\.cc-panes\.claude\settings.local.json
-- C:\Users\AI001\.cc-panes\launch-profiles.json
+- {user-home}\.codex\hooks.json
+- {user-home}\.codex\config.toml
+- {user-home}\.cc-panes\.claude\settings.local.json
+- {user-home}\.cc-panes\launch-profiles.json
 
 允许写入：
 - 仅用户明确指定的单个配置文件
@@ -240,9 +240,9 @@ rollback command
 推荐下一步做 **Phase 1：hook event adapter**，仍只在 prototype 内实现，不改真实配置：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\hook-event-adapter.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\tests\hook-event-adapter.test.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\examples\hook-events\*.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\hook-event-adapter.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\tests\hook-event-adapter.test.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\examples\hook-events\*.json
 ```
 
 验收门禁：

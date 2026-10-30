@@ -2047,12 +2047,12 @@ Use these concrete examples:
 
 ```powershell
 node dist/src/cli.js codex-sessions scan `
-  --project "D:\cc-pane\tool\repos\hooks" `
+  --project "{workspace-root}\tool\repos\hooks" `
   --ccpanes-snapshot "live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json" `
   --out "live\codex-session-bridge-hardening-20260817\codex-session-index-v3.json"
 
 node dist/src/cli.js codex-sessions graph `
-  --project "D:\cc-pane\tool\repos\hooks" `
+  --project "{workspace-root}\tool\repos\hooks" `
   --ccpanes-snapshot "live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json" `
   --out "live\codex-session-bridge-hardening-20260817\session-federation-v2.json"
 
@@ -2240,7 +2240,7 @@ The review artifact may contain repository-relative paths, finding IDs, test nam
 Run:
 
 ```powershell
-$evidence = "D:\cc-pane\tool\repos\hooks\live\codex-session-bridge-hardening-20260817"
+$evidence = "{workspace-root}\tool\repos\hooks\live\codex-session-bridge-hardening-20260817"
 New-Item -ItemType Directory -Path $evidence -ErrorAction Stop
 ```
 
@@ -2251,14 +2251,14 @@ Expected: directory creation succeeds only when it does not already exist. If it
 Place the official bounded snapshot at:
 
 ```text
-D:\cc-pane\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json
+{workspace-root}\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\ccpanes-session-snapshot-v2.json
 ```
 
 Run:
 
 ```powershell
 node dist/src/cli.js codex-sessions graph `
-  --project "D:\cc-pane\tool\repos\hooks" `
+  --project "{workspace-root}\tool\repos\hooks" `
   --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
   --out "$evidence\session-federation-v2.json"
 ```
@@ -2271,17 +2271,17 @@ Run:
 
 ```powershell
 node dist/src/cli.js codex-sessions scan `
-  --project "D:\cc-pane\tool\repos\hooks" `
+  --project "{workspace-root}\tool\repos\hooks" `
   --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
   --out "$evidence\codex-session-index-v3.json"
 
 node dist/src/cli.js codex-sessions resolve `
-  --project "D:\cc-pane\tool\repos\hooks" `
+  --project "{workspace-root}\tool\repos\hooks" `
   --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
   --json > "$evidence\codex-session-resolution-v3.json"
 
 node dist/src/cli.js codex-sessions retention `
-  --project "D:\cc-pane\tool\repos\hooks" `
+  --project "{workspace-root}\tool\repos\hooks" `
   --ccpanes-snapshot "$evidence\ccpanes-session-snapshot-v2.json" `
   --out "$evidence\codex-session-retention-v2.json"
 ```
@@ -2293,7 +2293,7 @@ Expected: every artifact uses its new schema and contains no free-form warnings.
 Collect a fresh bounded host before snapshot at:
 
 ```text
-D:\cc-pane\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\codex-app-sidebar-snapshot.before.json
+{workspace-root}\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\codex-app-sidebar-snapshot.before.json
 ```
 
 Run:
@@ -2348,7 +2348,7 @@ node dist/src/cli.js codex-sessions sidebar-apply `
 Apply the exact `pendingHostActions` through the official Codex App host operation, then write the bounded v2 receipt to:
 
 ```text
-D:\cc-pane\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\codex-sidebar-host-receipt-v2.json
+{workspace-root}\tool\repos\hooks\live\codex-session-bridge-hardening-20260817\codex-sidebar-host-receipt-v2.json
 ```
 
 Collect a fresh after snapshot and run:

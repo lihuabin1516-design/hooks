@@ -32,7 +32,7 @@ hook-enforce stdin 形态：
 
 ```powershell
 Get-Content examples/hook-runner-event.json -Raw | node dist/src/cli.js hook-enforce --task <project>\.ccpanes-task\current-task.json --audit-out <project>\.ccpanes-task\hook-enforce-audit.json
-Get-Content examples/hook-runner-event.json -Raw | node dist/src/cli.js hook-enforce --resolve-task-from-cwd --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits
+Get-Content examples/hook-runner-event.json -Raw | node dist/src/cli.js hook-enforce --resolve-task-from-cwd --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits
 ```
 
 `hook-enforce` 用于 Codex `PreToolUse`：允许时输出为空；拒绝时输出 Codex deny JSON。多项目模式使用
@@ -48,19 +48,19 @@ node dist/src/cli.js write-current --root <project-root> --task-id <task-id> --p
 hook-shadow audit 形态：
 
 ```powershell
-Get-Content examples/hook-shadow-event.json -Raw | node dist/src/cli.js hook-shadow --task <project>\.ccpanes-task\current-task.json --upstream-hook C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe --out <project>\.ccpanes-task\shadow-audit.json
+Get-Content examples/hook-shadow-event.json -Raw | node dist/src/cli.js hook-shadow --task <project>\.ccpanes-task\current-task.json --upstream-hook {user-home}\skills-hub\bin\skills-hub-hook.exe --out <project>\.ccpanes-task\shadow-audit.json
 ```
 
 hook install plan 形态：
 
 ```powershell
-node dist/src/cli.js plan-hook-install --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe --task <project>\.ccpanes-task\current-task.json --target both --upstream-hook C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe --out <project>\.ccpanes-task\hook-install-plan.json
+node dist/src/cli.js plan-hook-install --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe --task <project>\.ccpanes-task\current-task.json --target both --upstream-hook {user-home}\skills-hub\bin\skills-hub-hook.exe --out <project>\.ccpanes-task\hook-install-plan.json
 ```
 
 hook rollback package 形态：
 
 ```powershell
-node dist/src/cli.js create-hook-package --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe --task <project>\.ccpanes-task\current-task.json --target both --upstream-hook C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe --out-dir <project>\.ccpanes-task\hook-package
+node dist/src/cli.js create-hook-package --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe --task <project>\.ccpanes-task\current-task.json --target both --upstream-hook {user-home}\skills-hub\bin\skills-hub-hook.exe --out-dir <project>\.ccpanes-task\hook-package
 ```
 
 hook package rehearsal 形态：
@@ -72,7 +72,7 @@ node dist/src/cli.js rehearse-hook-package --package-dir <project>\.ccpanes-task
 release gate 形态：
 
 ```powershell
-node dist/src/cli.js release-gate --package-dir <project>\.ccpanes-task\hook-package --expected-upstream-sha256 F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4 --config C:\Users\AI001\.codex\config.toml --config C:\Users\AI001\.cc-panes\config.toml --repo D:\cc-pane\tool\repos\comet --repo D:\cc-pane\tool\repos\fastctx --check "smoke=pass=SMOKE_PASS" --out <project>\.ccpanes-task\release-gate.json
+node dist/src/cli.js release-gate --package-dir <project>\.ccpanes-task\hook-package --expected-upstream-sha256 F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4 --config {user-home}\.codex\config.toml --config {user-home}\.cc-panes\config.toml --repo {workspace-root}\tool\repos\comet --repo {workspace-root}\tool\repos\fastctx --check "smoke=pass=SMOKE_PASS" --out <project>\.ccpanes-task\release-gate.json
 ```
 
 staged apply plan 形态：
@@ -114,7 +114,7 @@ node dist/src/cli.js production-readiness --release-gate <project>\.ccpanes-task
 go-live approval package 形态：
 
 ```powershell
-node dist/src/cli.js create-go-live-approval-package --readiness <project>\.ccpanes-task\production-readiness.json --out-dir <project>\.ccpanes-task\go-live-approval-package --approved-by AI001 --approval-note "manual authorization approved" --upstream-hook C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+node dist/src/cli.js create-go-live-approval-package --readiness <project>\.ccpanes-task\production-readiness.json --out-dir <project>\.ccpanes-task\go-live-approval-package --approved-by AI001 --approval-note "manual authorization approved" --upstream-hook {user-home}\skills-hub\bin\skills-hub-hook.exe
 ```
 
 final manual runbook 形态：

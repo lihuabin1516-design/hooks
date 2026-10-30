@@ -4,19 +4,19 @@ This file collects operational details that do not belong in the public README.
 
 ## Authority and boundaries
 
-- Source repo: `D:\cc-pane\tool\repos\hooks`
-- Live runtime: `D:\cc-pane\tool\experiments\ccpanes-task-probe`
+- Source repo: `{workspace-root}\tool\repos\hooks`
+- Live runtime: `{workspace-root}\tool\experiments\ccpanes-task-probe`
 - Task state: `<project>\.ccpanes-task`
-- User configs: `C:\Users\AI001\.codex`, `C:\Users\AI001\.cc-panes`
-- Upstream hook executable: `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`
-- FastCtx executable: `C:\Users\AI001\.fastctx\bin\fastctx.exe`
+- User configs: `{user-home}\.codex`, `{user-home}\.cc-panes`
+- Upstream hook executable: `{user-home}\skills-hub\bin\skills-hub-hook.exe`
+- FastCtx executable: `{user-home}\.fastctx\bin\fastctx.exe`
 
 ## Standard verification
 
 Repository:
 
 ```powershell
-cd D:\cc-pane\tool\repos\hooks
+cd {workspace-root}\tool\repos\hooks
 npm test
 npm run typecheck
 npm run build
@@ -28,16 +28,16 @@ git status --short
 Live runtime:
 
 ```powershell
-cd D:\cc-pane\tool\experiments\ccpanes-task-probe
+cd {workspace-root}\tool\experiments\ccpanes-task-probe
 npm run verify
 node dist/src/cli.js verify-installed-hooks `
-  --hooks-json C:\Users\AI001\.codex\hooks.json `
-  --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe `
-  --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits `
-  --config C:\Users\AI001\.codex\config.toml
+  --hooks-json {user-home}\.codex\hooks.json `
+  --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe `
+  --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits `
+  --config {user-home}\.codex\config.toml
 node dist/src/cli.js verify-live-consistency `
-  --repo-root D:\cc-pane\tool\repos\hooks `
-  --live-root D:\cc-pane\tool\experiments\ccpanes-task-probe
+  --repo-root {workspace-root}\tool\repos\hooks `
+  --live-root {workspace-root}\tool\experiments\ccpanes-task-probe
 ```
 
 ## Sync flow

@@ -3,23 +3,23 @@
 目标路径：
 
 ```text
-D:\cc-pane\tool\repos\ccpanes-skills
+{workspace-root}\tool\repos\ccpanes-skills
 ```
 
 本文件是 `hooks` 仓库内的兼容提示词入口。新仓库已在目标路径初始化，权威提示词
 维护在：
 
 ```text
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\NEW-REPO-CONTROLLER.md
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\ABSORB-INTO-SKILLS-REPO.md
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\ABSORB-MATTPOCOCK-SKILLS.md
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\ABSORB-CODE-REVIEW-GRAPH.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\NEW-REPO-CONTROLLER.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-INTO-SKILLS-REPO.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-MATTPOCOCK-SKILLS.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-CODE-REVIEW-GRAPH.md
 ```
 
 ## 新仓库主控提示词
 
-复制下面整段给一个在 `D:\cc-pane\tool\repos\ccpanes-skills` 启动的新会话。
+复制下面整段给一个在 `{workspace-root}\tool\repos\ccpanes-skills` 启动的新会话。
 
 ```text
 你是 `ccpanes-skills` 仓库主控。默认使用中文，作为平等工程协作者沟通。
@@ -27,14 +27,14 @@ D:\cc-pane\tool\repos\ccpanes-skills\prompts\ABSORB-CODE-REVIEW-GRAPH.md
 本轮唯一目标：维护 CC-Panes / Codex 的 agent 行为层，包括 skills、prompts、workflow docs、review/checklist、handoff 和参考采纳记录；不要修改 `hooks` runtime。
 
 先决必读：
-1. D:\cc-pane\tool\repos\ccpanes-skills\AGENTS.md
-2. D:\cc-pane\tool\repos\ccpanes-skills\README.md
-3. D:\cc-pane\tool\repos\ccpanes-skills\docs\REPOSITORY-RELATIONSHIP.md
-4. D:\cc-pane\tool\repos\ccpanes-skills\docs\INTAKE-DECISION-PROTOCOL.md
+1. {workspace-root}\tool\repos\ccpanes-skills\AGENTS.md
+2. {workspace-root}\tool\repos\ccpanes-skills\README.md
+3. {workspace-root}\tool\repos\ccpanes-skills\docs\REPOSITORY-RELATIONSHIP.md
+4. {workspace-root}\tool\repos\ccpanes-skills\docs\INTAKE-DECISION-PROTOCOL.md
 5. 与本轮主题相关的 adoption record / prompt / skill 文件
 
 当前权威边界：
-- `D:\cc-pane\tool\repos\hooks` 拥有 task scope、policy、hook hard gate、audit、acceptance 和 CLI schema。
+- `{workspace-root}\tool\repos\hooks` 拥有 task scope、policy、hook hard gate、audit、acceptance 和 CLI schema。
 - `ccpanes-skills` 拥有 agent 行为提示、skill 写法、review 流程、handoff 模板和行为层采纳记录。
 - prompt / skill 永远是 advisory；权限以 hook-enforce、permission-enforce 和 policy.json 为准。
 
@@ -63,11 +63,11 @@ D:\cc-pane\tool\repos\ccpanes-skills\prompts\ABSORB-CODE-REVIEW-GRAPH.md
 到本仓库新会话。
 
 ```text
-你在 `D:\cc-pane\tool\repos\ccpanes-skills` 工作。已有 `hooks` 评估结论：外部参考适合吸收到 agent 行为层。
+你在 `{workspace-root}\tool\repos\ccpanes-skills` 工作。已有 `hooks` 评估结论：外部参考适合吸收到 agent 行为层。
 
 输入：
 - 外部参考 URL：<URL>
-- hooks 评估报告路径：<D:\cc-pane\tool\repos\hooks\docs\...md>
+- hooks 评估报告路径：<{workspace-root}\tool\repos\hooks\docs\...md>
 - 参考 HEAD / 版本：<HEAD_OR_VERSION>
 - 本轮想吸收的点：<BEHAVIOR_OR_PROMPT_METHOD>
 
@@ -114,7 +114,7 @@ templates/adoption-record.md
 ```
 
 这些文件的语义以本文件和
-`D:\cc-pane\tool\repos\hooks\docs\CCPANES-SKILLS-REPO-RELATION.md` 为源。
+`{workspace-root}\tool\repos\hooks\docs\CCPANES-SKILLS-REPO-RELATION.md` 为源。
 
 ## code-review-graph 专属吸收提示词
 
@@ -122,10 +122,10 @@ templates/adoption-record.md
 adoption record、sidecar spec 和 review workflow prompt；成熟运行态再新建独立
 sidecar 仓库。
 
-复制下面整段到 `D:\cc-pane\tool\repos\ccpanes-skills` task 中使用。
+复制下面整段到 `{workspace-root}\tool\repos\ccpanes-skills` task 中使用。
 
 ```text
-你是 `D:\cc-pane\tool\repos\ccpanes-skills` 仓库主控。默认中文，先给判断和核心原因，再给证据。
+你是 `{workspace-root}\tool\repos\ccpanes-skills` 仓库主控。默认中文，先给判断和核心原因，再给证据。
 
 外部参考项目：
 - URL：https://github.com/tirth8205/code-review-graph.git
@@ -134,25 +134,25 @@ sidecar 仓库。
 - 来源性质：Python / Tree-sitter / SQLite / MCP-CLI 风格的代码结构图谱与 review context 工具
 
 本轮唯一目标：
-把 `code-review-graph` 本地化吸收到 `ccpanes-skills` 的 agent 行为层与 sidecar 候选设计中：更新采纳记录、完善 sidecar spec、产出给未来 worker 使用的 review-graph 提示词；保持 `D:\cc-pane\tool\repos\hooks` runtime、hard gate、policy、audit、acceptance 原样。
+把 `code-review-graph` 本地化吸收到 `ccpanes-skills` 的 agent 行为层与 sidecar 候选设计中：更新采纳记录、完善 sidecar spec、产出给未来 worker 使用的 review-graph 提示词；保持 `{workspace-root}\tool\repos\hooks` runtime、hard gate、policy、audit、acceptance 原样。
 
 先决必读：
-1. D:\cc-pane\tool\repos\ccpanes-skills\AGENTS.md
-2. D:\cc-pane\tool\repos\ccpanes-skills\README.md
-3. D:\cc-pane\tool\repos\ccpanes-skills\PROJECT-DIRECTORY.md
-4. D:\cc-pane\tool\repos\ccpanes-skills\docs\RELATIONSHIP-WITH-HOOKS.md
-5. D:\cc-pane\tool\repos\ccpanes-skills\docs\INTAKE-ROUTER.md
-6. D:\cc-pane\tool\repos\ccpanes-skills\docs\adoptions\CODE-REVIEW-GRAPH.md
-7. D:\cc-pane\tool\repos\ccpanes-skills\sidecar-specs\CODE-REVIEW-GRAPH.md
-8. D:\cc-pane\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
+1. {workspace-root}\tool\repos\ccpanes-skills\AGENTS.md
+2. {workspace-root}\tool\repos\ccpanes-skills\README.md
+3. {workspace-root}\tool\repos\ccpanes-skills\PROJECT-DIRECTORY.md
+4. {workspace-root}\tool\repos\ccpanes-skills\docs\RELATIONSHIP-WITH-HOOKS.md
+5. {workspace-root}\tool\repos\ccpanes-skills\docs\INTAKE-ROUTER.md
+6. {workspace-root}\tool\repos\ccpanes-skills\docs\adoptions\CODE-REVIEW-GRAPH.md
+7. {workspace-root}\tool\repos\ccpanes-skills\sidecar-specs\CODE-REVIEW-GRAPH.md
+8. {workspace-root}\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
 
 当前路由判断：
 - 当前阶段进入 `ccpanes-skills`，因为最有价值的是 review workflow、impact radius、test gap、blast radius 和 JSON advisory artifact 设计。
 - 当前阶段不并入 `hooks` runtime，因为上游包含 Python、Tree-sitter、SQLite 缓存、MCP/CLI surface，与 TypeScript hook hard gate 生命周期不同。
-- 未来若要运行上游能力或本地实现图谱分析，先在 `sidecar-specs/CODE-REVIEW-GRAPH.md` 完成 contract，再新建独立 sidecar 仓库，例如 `D:\cc-pane\tool\repos\ccpanes-review-graph-sidecar`。
+- 未来若要运行上游能力或本地实现图谱分析，先在 `sidecar-specs/CODE-REVIEW-GRAPH.md` 完成 contract，再新建独立 sidecar 仓库，例如 `{workspace-root}\tool\repos\ccpanes-review-graph-sidecar`。
 
 授权：
-- 可修改 `D:\cc-pane\tool\repos\ccpanes-skills` 下的 README、AGENTS、PROJECT-DIRECTORY、docs、prompts、skills、templates、sidecar-specs。
+- 可修改 `{workspace-root}\tool\repos\ccpanes-skills` 下的 README、AGENTS、PROJECT-DIRECTORY、docs、prompts、skills、templates、sidecar-specs。
 - 可把 `https://github.com/tirth8205/code-review-graph.git` clone 到系统临时目录，只读检查 README、license、CLI/MCP surface、缓存路径、依赖和输出示例。
 - 可设计 JSON request/report schema、review checklist、worker prompt 和 clean fixture 验证计划。
 - 提交、push、全局安装、用户配置写入、上游 installer、MCP 注册、真实项目缓存写入仅在用户明确要求时执行。

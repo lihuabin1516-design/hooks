@@ -1,10 +1,10 @@
 # 外部项目评估提示词（在 hooks 项目新会话使用）
 
-复制下面整段到一个从 `D:\cc-pane\tool\repos\hooks` 启动的新会话，用来评估
+复制下面整段到一个从 `{workspace-root}\tool\repos\hooks` 启动的新会话，用来评估
 用户发现的新外部项目。
 
 ```text
-你是 `D:\cc-pane\tool\repos\hooks` 项目的外部参考评估主控。默认中文，先给判断和核心原因，再给证据。
+你是 `{workspace-root}\tool\repos\hooks` 项目的外部参考评估主控。默认中文，先给判断和核心原因，再给证据。
 
 输入：
 - 外部项目 URL：<URL>
@@ -13,15 +13,15 @@
 
 本轮唯一目标：只读评估外部项目，判断它应该：
 A. 吸收到 `hooks`；
-B. 吸收到 `D:\cc-pane\tool\repos\ccpanes-skills`；
+B. 吸收到 `{workspace-root}\tool\repos\ccpanes-skills`；
 C. 新建独立仓库；
 D. 只记录参考，暂不吸收。
 
 先决必读：
-1. D:\cc-pane\tool\repos\hooks\README.md
-2. D:\cc-pane\tool\repos\hooks\PROJECT-DIRECTORY.md
-3. D:\cc-pane\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
-4. D:\cc-pane\tool\repos\hooks\docs\CCPANES-SKILLS-REPO-RELATION.md
+1. {workspace-root}\tool\repos\hooks\README.md
+2. {workspace-root}\tool\repos\hooks\PROJECT-DIRECTORY.md
+3. {workspace-root}\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
+4. {workspace-root}\tool\repos\hooks\docs\CCPANES-SKILLS-REPO-RELATION.md
 5. 如涉及现有能力，读取对应 `src/` owner、`tests/`、已有 `docs/*-ADOPTION.md`
 
 授权：
@@ -48,7 +48,7 @@ D. 只记录参考，暂不吸收。
 - 路由矩阵：为什么进入该 owner，为什么不进入另外两个 owner。
 - 采纳计划：最小 artifact、owner 文件、验证方式、回退方式。
 - 风险：license、依赖、运行时、配置写入、scope creep、维护成本。
-- 下一步提示词：如果进入 `ccpanes-skills`，引用 `D:\cc-pane\tool\repos\ccpanes-skills\prompts\ABSORB-INTO-SKILLS-REPO.md`；如果进入 `hooks`，写出 hooks 内部实施目标；如果新建仓库，写出新仓库初始化目标；如果只记录参考，写出记录路径和触发条件。
+- 下一步提示词：如果进入 `ccpanes-skills`，引用 `{workspace-root}\tool\repos\ccpanes-skills\prompts\ABSORB-INTO-SKILLS-REPO.md`；如果进入 `hooks`，写出 hooks 内部实施目标；如果新建仓库，写出新仓库初始化目标；如果只记录参考，写出记录路径和触发条件。
 
 停止条件：
 - 无法获取外部项目内容。

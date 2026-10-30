@@ -6,11 +6,11 @@
 
 | 层级 | 路径 | 用途 |
 |---|---|---|
-| 源码仓库 | `D:\cc-pane\tool\repos\hooks` | TypeScript 源码、测试、文档和 package 元数据 |
-| live 运行副本 | `D:\cc-pane\tool\experiments\ccpanes-task-probe` | 已构建 CLI、全局 hooks、生效验证 |
+| 源码仓库 | `{workspace-root}\tool\repos\hooks` | TypeScript 源码、测试、文档和 package 元数据 |
+| live 运行副本 | `{workspace-root}\tool\experiments\ccpanes-task-probe` | 已构建 CLI、全局 hooks、生效验证 |
 | 项目本地任务状态 | `<project>\.ccpanes-task` | 当前 task、policy、bootstrap report |
 | 项目接入点 | `<project>\AGENTS.md` | 托管块和项目级接手说明 |
-| 用户级引用 | `C:\Users\AI001\.codex`、`C:\Users\AI001\.cc-panes`、`C:\Users\AI001\.fastctx\bin\fastctx.exe`、`C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe` | 只读核验对象或上游引用 |
+| 用户级引用 | `%USERPROFILE%\.codex`、`%USERPROFILE%\.cc-panes`、`%USERPROFILE%\.fastctx\bin\fastctx.exe`、`%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe` | 只读核验对象或上游引用 |
 
 ## 忽略目录
 

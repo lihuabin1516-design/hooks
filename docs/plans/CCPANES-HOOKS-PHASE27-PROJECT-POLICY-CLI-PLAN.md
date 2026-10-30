@@ -1,7 +1,7 @@
 # CC-Panes Hooks Phase 27 — Project Policy CLI Plan
 
-日期：2026-08-07  
-目标仓库：`D:\cc-pane\tool\repos\hooks`  
+日期：2026-08-07<br>
+目标仓库：`{workspace-root}\tool\repos\hooks`<br>
 远端仓库：`https://github.com/lihuabin1516-design/hooks.git`
 
 ## Change Contract
@@ -24,7 +24,7 @@ In Scope:
 Out of Scope:
 - 不做自然语言解析器。
 - 不写用户级 Codex / CC-Panes 配置。
-- 不执行 `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。
+- 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 Expected Behavior:
 - `policy-add` 原子创建或更新 `<project>/.ccpanes-task/policy.json`。

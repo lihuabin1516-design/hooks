@@ -1,9 +1,9 @@
 # CC-Panes Task Probe Prototype Acceptance
 
-验收日期：2026-08-06  
-原型目录：`D:\cc-pane\tool\experiments\ccpanes-task-probe`  
-计划文件：`D:\cc-pane\tool\plans\CCPANES-TASK-OWNERSHIP-RESUME-PROBE-PROTOTYPE-PLAN.md`  
-设计文件：`D:\cc-pane\tool\designs\CCPANES-TASK-OWNERSHIP-RESUME-PROBE.md`
+验收日期：2026-08-06<br>
+原型目录：`{workspace-root}\tool\experiments\ccpanes-task-probe`<br>
+计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-OWNERSHIP-RESUME-PROBE-PROTOTYPE-PLAN.md`<br>
+设计文件：`{workspace-root}\tool\designs\CCPANES-TASK-OWNERSHIP-RESUME-PROBE.md`
 
 ## 1. 验收范围
 
@@ -21,7 +21,7 @@
 `skills-hub-hook.exe` 作为后续 Hook 接入研究对象记录，本轮未执行该二进制。
 
 ```text
-path: C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+path: %USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 size: 2779136
 lastWriteUtc: 2026-07-16T07:04:10.3614061Z
 sha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
@@ -30,22 +30,22 @@ sha256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 ## 3. 已实现文件
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\package.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\package-lock.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\README.md
-D:\cc-pane\tool\experiments\ccpanes-task-probe\tsconfig.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\vitest.config.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\cli.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\current-task.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\git-state.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\hook-dry-run.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\paths.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\resume-probe.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\src\types.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\tests\cli.test.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\tests\current-task.test.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\tests\hook-dry-run.test.ts
-D:\cc-pane\tool\experiments\ccpanes-task-probe\tests\resume-probe.test.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\package.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\package-lock.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\README.md
+{workspace-root}\tool\experiments\ccpanes-task-probe\tsconfig.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\vitest.config.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\cli.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\current-task.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\git-state.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\hook-dry-run.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\paths.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\resume-probe.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\src\types.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\tests\cli.test.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\tests\current-task.test.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\tests\hook-dry-run.test.ts
+{workspace-root}\tool\experiments\ccpanes-task-probe\tests\resume-probe.test.ts
 ```
 
 ## 4. 必要检查
@@ -57,8 +57,8 @@ D:\cc-pane\tool\experiments\ccpanes-task-probe\tests\resume-probe.test.ts
 | Build | `npm run build` | exit code 0 and `dist/src/cli.js` exists | pass |
 | CLI probe | `node dist/src/cli.js probe --utterance '继续' --session leader-1` | emits `ccpanes.resume-probe.v1` JSON | pass |
 | CLI dry-run | `node dist/src/cli.js dry-run-hook ... --phase shape ... --tool write` | emits `block` with `phase_shape_blocks_implementation_write` | pass |
-| Comet repo isolation | `git -C D:\cc-pane\tool\repos\comet status --short` | clean | pass |
-| FastCtx repo isolation | `git -C D:\cc-pane\tool\repos\fastctx status --short` | clean | pass |
+| Comet repo isolation | `git -C {workspace-root}\tool\repos\comet status --short` | clean | pass |
+| FastCtx repo isolation | `git -C {workspace-root}\tool\repos\fastctx status --short` | clean | pass |
 | User config isolation | recent writes under `~/.codex`, `~/.claude`, `~/.cc-panes` | 0 during execution window | pass |
 
 ## 5. Fresh verification evidence
@@ -101,11 +101,11 @@ CLI smoke evidence:
 ## 6. Reference repo baseline
 
 ```text
-comet path: D:\cc-pane\tool\repos\comet
+comet path: {workspace-root}\tool\repos\comet
 comet HEAD: 07c5b64b02dc00fffa6d66da70014bfb0f9ebca0
 comet status: clean
 
-fastctx path: D:\cc-pane\tool\repos\fastctx
+fastctx path: {workspace-root}\tool\repos\fastctx
 fastctx HEAD: 86dac0c99efae7859ed2be468f68c16e58f5e16a
 fastctx status: clean
 ```
@@ -519,7 +519,7 @@ Phase 3 目标：新增 shadow wrapper/audit 入口，在真实 Hook 接入前�
   - stdout 总是输出 audit JSON。
   - 有 `--out` 时写入同一份 audit JSON。
 - `scripts/smoke.mjs`
-  - 新增 shadow 覆盖：stdin event -> `hook-shadow --task ... --upstream-hook C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe --out <fixture>\shadow-audit.json`。
+  - 新增 shadow 覆盖：stdin event -> `hook-shadow --task ... --upstream-hook %USERPROFILE%\skills-hub\bin\skills-hub-hook.exe --out <fixture>\shadow-audit.json`。
   - 断言 upstream SHA-256 与已登记值一致。
 - `examples/hook-shadow-event.json`
   - 提供 hook-shadow stdin fixture。
@@ -962,8 +962,8 @@ Isolation evidence：
 comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 10 判断：通过。prototype 现在可以在人工批准通过后生成真实写配置前的 dry-run write preview；当前仅在显式 preview 输出目录生成 artifacts，用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，也未执行或注册 `skills-hub-hook.exe`。
@@ -1035,8 +1035,8 @@ Isolation evidence：
 comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 11 判断：通过。prototype 现在具备 guarded apply executor，可在显式 allow-root、approval-check、write-preview、写前哈希和写后哈希全部满足时写入 synthetic config；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，也未执行或注册 `skills-hub-hook.exe`。
@@ -1105,8 +1105,8 @@ Isolation evidence：
 comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 12 判断：通过。prototype 现在具备 guarded restore executor，可在显式 allow-root、apply report、当前 after hash、backup before hash 全部满足时恢复 synthetic config；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，也未执行或注册 `skills-hub-hook.exe`。
@@ -1180,8 +1180,8 @@ Isolation evidence：
 comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 13 判断：通过。prototype 现在具备 final production readiness aggregator，可把 release-gate、approval-check、write-preview、synthetic apply、synthetic restore 五段 evidence 聚合成唯一 readiness artifact；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，`skills-hub-hook.exe` 保持哈希基线。
@@ -1252,8 +1252,8 @@ Isolation evidence：
 comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 ```
 
 Phase 14 判断：通过。prototype 现在具备 go-live approval package generator，可将人工授权批准固化为可审计 package；当前真实用户配置内容哈希和大小保持基线一致，reference repos 保持 clean，`skills-hub-hook.exe` 保持哈希基线且未执行。
@@ -1328,8 +1328,8 @@ Isolation evidence：
 comet status --short: clean
 fastctx status --short: clean
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 .tmp-smoke exists after smoke: false
 ```
 
@@ -1337,12 +1337,12 @@ Phase 15 判断：通过。prototype 现在具备 final manual runbook generator
 
 ## 29. Phase 16: Codex live hook go-live acceptance
 
-Phase 16 目标：在用户明确给出“人工授权批准”后，把任务边界检查以 Codex 官方 hook 形态接入真实 Codex 用户 hooks 层。接入点选择 `C:\Users\AI001\.codex\hooks.json`，保留既有 `UserPromptSubmit` skills-hub hook，只新增 `PreToolUse` / `^apply_patch$` 的 `hook-enforce` 命令。未写入 `C:\Users\AI001\.codex\config.toml`，未写入 `C:\Users\AI001\.cc-panes\config.toml`，未执行 `skills-hub-hook.exe`。
+Phase 16 目标：在用户明确给出“人工授权批准”后，把任务边界检查以 Codex 官方 hook 形态接入真实 Codex 用户 hooks 层。接入点选择 `%USERPROFILE%\.codex\hooks.json`，保留既有 `UserPromptSubmit` skills-hub hook，只新增 `PreToolUse` / `^apply_patch$` 的 `hook-enforce` 命令。未写入 `%USERPROFILE%\.codex\config.toml`，未写入 `%USERPROFILE%\.cc-panes\config.toml`，未执行 `skills-hub-hook.exe`。
 
 官方 Codex hook 依据：
 
 ```text
-Codex manual fetched: C:\Users\AI001\AppData\Local\Temp\openai-docs-cache\codex-manual.md
+Codex manual fetched: %TEMP%\openai-docs-cache\codex-manual.md
 Relevant section: Hooks
 Config sources: ~/.codex/hooks.json and ~/.codex/config.toml
 PreToolUse deny output: hookSpecificOutput.hookEventName=PreToolUse, permissionDecision=deny
@@ -1368,24 +1368,24 @@ PreToolUse deny output: hookSpecificOutput.hookEventName=PreToolUse, permissionD
 真实接入写入：
 
 ```text
-Modified: C:\Users\AI001\.codex\hooks.json
+Modified: %USERPROFILE%\.codex\hooks.json
 Added event: hooks.PreToolUse
 Matcher: ^apply_patch$
 Command:
-node "D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js" hook-enforce --task "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\current-task.json" --audit-out "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hook-enforce-audit.json"
+node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" hook-enforce --task "{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\current-task.json" --audit-out "{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hook-enforce-audit.json"
 Status message: CC-Panes task boundary check
 ```
 
 Go-live artifacts：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\preflight-snapshot.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\postflight-snapshot.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hooks.json.before.bak
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hooks.json.after
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\current-task.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\verify-allowed-audit.json
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\verify-blocked-audit.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\preflight-snapshot.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\postflight-snapshot.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hooks.json.before.bak
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hooks.json.after
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\current-task.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\verify-allowed-audit.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\verify-blocked-audit.json
 ```
 
 Focused live-entry verification：
@@ -1402,8 +1402,8 @@ npm run build
 exit code 0
 
 Direct hook-enforce verification:
-allowed event inside D:\cc-pane: stdout length 0, audit written
-blocked config write inside D:\cc-pane: deny JSON emitted, reason contains forbidden_user_config_path, audit written
+allowed event inside {workspace-root}: stdout length 0, audit written
+blocked config write inside {workspace-root}: deny JSON emitted, reason contains forbidden_user_config_path, audit written
 outside cwd event: stdout length 0, audit not written
 
 Full post-go-live verification:
@@ -1424,16 +1424,16 @@ SMOKE_PASS
 Post-write config evidence：
 
 ```text
-C:\Users\AI001\.codex\hooks.json size: 1381, SHA-256: 443514CE6AF876F08F50856AF1BD5CE1834FDC88D3779B26492A92351031C4F0
-C:\Users\AI001\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
+%USERPROFILE%\.codex\hooks.json size: 1381, SHA-256: 443514CE6AF876F08F50856AF1BD5CE1834FDC88D3779B26492A92351031C4F0
+%USERPROFILE%\.codex\config.toml size: 16128, SHA-256: C7AAB6FCF366561C4A49EFD2B55A5D4ACB011F53AC1BA5C80F4F930C7B65CD61
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256: A9EE049462C99C8B6DFC5642DB24E594B1876B8A6461D0A55221D532BE721280
 skills-hub-hook.exe SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 comet status --short: clean
 fastctx status --short: clean
 .tmp-smoke exists after smoke: false
 ```
 
-Phase 16 判断：通过。真实 Codex 用户 hooks 层已经接入 `hook-enforce`，适用于 Codex CLI 和 Codex app 读取同一 `~/.codex/hooks.json` 的场景；新 hook 限定为 `PreToolUse` / `apply_patch`，且事件 cwd 不在 `D:\cc-pane` 时 no-op，降低全局用户 hook 的外溢影响。Codex 仍会按官方机制要求通过 `/hooks` 复核并信任新增 hook 定义后才持续运行。
+Phase 16 判断：通过。真实 Codex 用户 hooks 层已经接入 `hook-enforce`，适用于 Codex CLI 和 Codex app 读取同一 `~/.codex/hooks.json` 的场景；新 hook 限定为 `PreToolUse` / `apply_patch`，且事件 cwd 不在 `{workspace-root}` 时 no-op，降低全局用户 hook 的外溢影响。Codex 仍会按官方机制要求通过 `/hooks` 复核并信任新增 hook 定义后才持续运行。
 
 ## 30. Phase 17: New Codex CLI live execution verification
 
@@ -1443,7 +1443,7 @@ Phase 17 目标：按用户要求新开一个 Codex CLI 会话，从真实 Codex
 
 ```text
 sessionId: 46d0e26a-a063-4ac4-949d-5d6cb050366c
-projectPath: D:\cc-pane
+projectPath: {workspace-root}
 runtimeKind: local
 Codex version observed: v0.146.1
 model observed: gpt-5.5 high
@@ -1465,7 +1465,7 @@ After pressing trust-all:
 PreToolUse Installed=1 Active=1
 UserPromptSubmit Installed=1 Active=1
 UserPromptSubmit hook completed with context:
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 ```
 
 第一次真实执行探针发现的问题：
@@ -1494,12 +1494,12 @@ tests/hook-event-adapter.test.ts
 
 ```text
 Allowed probe:
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\codex-cli-allowed-probe.txt
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\codex-cli-allowed-probe.txt
 Result: success
 Content: allowed probe
 
 Blocked probe:
-C:\Users\AI001\.codex\__ccpanes_hook_probe_should_be_blocked.tmp
+%USERPROFILE%\.codex\__ccpanes_hook_probe_should_be_blocked.tmp
 Result: blocked by PreToolUse hook
 Reason: ccpanes-task-probe: forbidden_user_config_path
 File exists after probe: false
@@ -1508,10 +1508,10 @@ File exists after probe: false
 Final hook audit artifact:
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hook-enforce-audit.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\codex-hook-go-live\hook-enforce-audit.json
 schema: ccpanes.hook-runner-result.v1
 allowed: false
-targetPath: C:\Users\AI001\.codex\__ccpanes_hook_probe_should_be_blocked.tmp
+targetPath: %USERPROFILE%\.codex\__ccpanes_hook_probe_should_be_blocked.tmp
 decision.action: block
 decision.reason: forbidden_user_config_path
 ```
@@ -1539,27 +1539,27 @@ Final isolation / config evidence：
 comet status --short: clean
 fastctx status --short: clean
 
-C:\Users\AI001\.codex\hooks.json SHA-256:
+%USERPROFILE%\.codex\hooks.json SHA-256:
 443514CE6AF876F08F50856AF1BD5CE1834FDC88D3779B26492A92351031C4F0
 
-C:\Users\AI001\.codex\config.toml size: 16284, SHA-256:
+%USERPROFILE%\.codex\config.toml size: 16284, SHA-256:
 C11144BC931A85FBA44B5036B088B5206E4CAC20EB6E76AB1241A96F21945E34
 
-C:\Users\AI001\.cc-panes\config.toml size: 3660, SHA-256:
+%USERPROFILE%\.cc-panes\config.toml size: 3660, SHA-256:
 1DA33C211890827883D2311BF968A5F2C5CBB07B0372820917EB6C569B752C04
 
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe SHA-256:
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe SHA-256:
 F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 ```
 
 Config hash note：
 
 ```text
-C:\Users\AI001\.codex\config.toml changed during Codex CLI trust flow because Codex recorded:
-[hooks.state.'C:\Users\AI001\.codex\hooks.json:pre_tool_use:0:0']
+%USERPROFILE%\.codex\config.toml changed during Codex CLI trust flow because Codex recorded:
+[hooks.state.'%USERPROFILE%\.codex\hooks.json:pre_tool_use:0:0']
 trusted_hash = "sha256:f8cd360afc69c96f9e5f7cc719076e055c02f8df961ec262c4b8b959b7e77034"
 
-C:\Users\AI001\.cc-panes\config.toml hash also changed while using CC-Panes to launch/drive the verification session. No hook write was applied to that file in the task-probe path.
+%USERPROFILE%\.cc-panes\config.toml hash also changed while using CC-Panes to launch/drive the verification session. No hook write was applied to that file in the task-probe path.
 ```
 
 Phase 17 判断：通过。新开的 Codex CLI 真实识别并信任了新增 `PreToolUse` hook；真实 `apply_patch` allowed probe 成功写入 task worktree 内 artifact，真实 forbidden 用户配置 probe 被 hook 拒绝且目标文件未生成。当前 hook 可用于 Codex CLI 实际执行链路；由于配置在用户级 `~/.codex/hooks.json`，Codex app 使用同一 Codex 用户配置层时也会加载同一 hook。
@@ -1600,7 +1600,7 @@ use task.worktreeRoot as write boundary, emit Codex deny JSON only for blocked c
   - 覆盖无 current-task ancestor 时 no-op 且不写 audit。
 - `scripts/smoke.mjs`
   - smoke 改用 `--resolve-task-from-cwd --audit-root` 覆盖动态 resolver。
-- `D:\cc-pane\AGENTS.md`
+- `{workspace-root}\AGENTS.md`
   - 新增项目启动/规划时写入 `.ccpanes-task/current-task.json` 的规则和命令。
 - `README.md` / `examples/README.md`
   - 增加多项目 hook bootstrap 文档。
@@ -1609,13 +1609,13 @@ use task.worktreeRoot as write boundary, emit Codex deny JSON only for blocked c
 
 ```text
 Modified:
-C:\Users\AI001\.codex\hooks.json
+%USERPROFILE%\.codex\hooks.json
 
 PreToolUse command:
-node "D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js" hook-enforce --resolve-task-from-cwd --audit-root "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" hook-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
 
 Initialized:
-D:\cc-pane\.ccpanes-task\current-task.json
+{workspace-root}\.ccpanes-task\current-task.json
 taskId: cc-pane-dynamic-hook-root
 phase: build
 ```
@@ -1623,10 +1623,10 @@ phase: build
 Direct dynamic resolver verification：
 
 ```text
-allowed event cwd=D:\cc-pane:
+allowed event cwd={workspace-root}:
 stdout length 0
 
-blocked event cwd=D:\cc-pane target=C:\Users\AI001\.codex\config.toml:
+blocked event cwd={workspace-root} target=%USERPROFILE%\.codex\config.toml:
 deny JSON emitted
 reason contains forbidden_user_config_path
 
@@ -1638,7 +1638,7 @@ New Codex CLI live verification：
 
 ```text
 sessionId: 9ff9948b-984b-4f14-9794-537ef50dc321
-projectPath: D:\cc-pane
+projectPath: {workspace-root}
 
 Initial:
 Hooks need review
@@ -1653,12 +1653,12 @@ Live dynamic resolver probes：
 
 ```text
 Allowed probe:
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-hook-go-live\dynamic-codex-cli-allowed.txt
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-hook-go-live\dynamic-codex-cli-allowed.txt
 Result: apply_patch success
 Content: dynamic allowed
 
 Blocked probe:
-C:\Users\AI001\.codex\__dynamic_hook_block_probe.tmp
+%USERPROFILE%\.codex\__dynamic_hook_block_probe.tmp
 Result: blocked by PreToolUse hook
 Reason: ccpanes-task-probe: forbidden_user_config_path
 File exists after probe: false
@@ -1687,19 +1687,19 @@ Final isolation / hash evidence：
 comet status --short: clean
 fastctx status --short: clean
 
-C:\Users\AI001\.codex\hooks.json size: 1159
+%USERPROFILE%\.codex\hooks.json size: 1159
 SHA-256: E674A62FC567E03BAAB5F277BA6E8532F5D5510BD3B1194477472F25AF9261BE
 
-C:\Users\AI001\.codex\config.toml size: 16284
+%USERPROFILE%\.codex\config.toml size: 16284
 SHA-256: A6497D7FB573DCBFA839A05ADFAE40241F6613517D0AABC63F0EA56581AC6450
 
-C:\Users\AI001\.cc-panes\config.toml size: 3660
+%USERPROFILE%\.cc-panes\config.toml size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 
-D:\cc-pane\.ccpanes-task\current-task.json
+{workspace-root}\.ccpanes-task\current-task.json
 SHA-256: 302A0118493F06F2C732FEF28DF87356B5CDD959BBE97CECB51242B7BD786464
 ```
 
@@ -1707,8 +1707,8 @@ Phase 18 判断：通过。现在其它项目要使用 hook 的完整边界能�
 
 ## Phase 19 — PreToolUse 多工具覆盖与实机验收
 
-日期：2026-08-07  
-计划文件：`D:\cc-pane\tool\plans\CCPANES-TASK-PROBE-PHASE19-PRETOOLUSE-FULL-COVERAGE-PLAN.md`
+日期：2026-08-07<br>
+计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE19-PRETOOLUSE-FULL-COVERAGE-PLAN.md`
 
 Phase 19 目标：把动态 `PreToolUse` dispatcher 从 `apply_patch` 单点扩展为多工具覆盖，并保持项目级 `.ccpanes-task/current-task.json` 自动解析。
 
@@ -1741,11 +1741,11 @@ PreToolUse Installed=1 Active=0 Review=1
 Result:
 - apply_patch allowed path: pass
 - shell allowed path: pass
-- shell write to C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp: fail; hook was not trusted, file was created
+- shell write to %USERPROFILE%\.codex\__phase19_hook_block_probe.tmp: fail; hook was not trusted, file was created
 - git reset --hard HEAD: fail; hook was not active, git itself returned "not a git repository"
 
 Recovery:
-- C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp was removed after exact-path verification.
+- %USERPROFILE%\.codex\__phase19_hook_block_probe.tmp was removed after exact-path verification.
 - Analyzer was extended with interpreter_filesystem_mutation detection.
 ```
 
@@ -1756,14 +1756,14 @@ sessionId: 455281ae-cbbd-4abb-84c1-4ece5ef3c884
 PreToolUse Installed=1 Active=1
 
 Allowed:
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\phase19-real-validation\codex-apply-patch-active.txt
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase19-real-validation\codex-apply-patch-active.txt
 content: phase19 apply_patch active allowed
 
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\phase19-real-validation\shell-active-allowed.txt
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase19-real-validation\shell-active-allowed.txt
 content: phase19 shell active allowed
 
 Blocked:
-C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp
+%USERPROFILE%\.codex\__phase19_hook_block_probe.tmp
 Reason: ccpanes-task-probe: forbidden_user_config_path
 File exists after probe: false
 
@@ -1774,7 +1774,7 @@ Reason: ccpanes-task-probe: destructive_git_reset_hard
 Blocked:
 node -e require('fs').writeFileSync(...)
 Reason: ccpanes-task-probe: interpreter_filesystem_mutation
-C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists after probe: false
+%USERPROFILE%\.codex\__phase19_node_bypass_probe.tmp exists after probe: false
 ```
 
 Phase 19 判断：通过。当前全局 Codex hook 已从单一 `apply_patch` 扩展到常用写入工具、shell 命令和 FastCtx MCP 文件工具；未初始化 `.ccpanes-task/current-task.json` 的项目仍 no-op，已初始化项目按 task worktree 边界执行门禁。
@@ -1806,21 +1806,21 @@ Final Phase 19 isolation / hash evidence：
 comet status --short: clean
 fastctx status --short: clean
 
-C:\Users\AI001\.codex\hooks.json size: 1262
+%USERPROFILE%\.codex\hooks.json size: 1262
 SHA-256: B9E741ADB79F4FFBF85F415CE3767E4FCD3F4ED7BE1DAF395EA0A100B9C6DA6E
 
-C:\Users\AI001\.codex\config.toml size: 16284
+%USERPROFILE%\.codex\config.toml size: 16284
 SHA-256: B4B41CA3E3EFA82D4BD4915C1600DE33D412DE310230937CE1C2A8E3E0B39EC0
 
-C:\Users\AI001\.cc-panes\config.toml size: 3660
+%USERPROFILE%\.cc-panes\config.toml size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 
 Forbidden probes:
-C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp exists: false
-C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists: false
+%USERPROFILE%\.codex\__phase19_hook_block_probe.tmp exists: false
+%USERPROFILE%\.codex\__phase19_node_bypass_probe.tmp exists: false
 ```
 
 ## 21. Phase 22: SessionStart / Stop lifecycle acceptance
@@ -1830,7 +1830,7 @@ C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists: false
 计划文件：
 
 ```text
-D:\cc-pane\tool\plans\CCPANES-TASK-PROBE-PHASE22-SESSIONSTART-STOP-PLAN.md
+{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE22-SESSIONSTART-STOP-PLAN.md
 ```
 
 新增/变更能力：
@@ -1861,7 +1861,7 @@ Matcher:
 ^(startup|resume|clear|compact)$
 
 Command:
-node "D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js" session-start --resolve-task-from-cwd --audit-root "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" session-start --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
 
 statusMessage:
 CC-Panes task lifecycle context
@@ -1871,7 +1871,7 @@ additionalContextLimit:
 
 Event: Stop
 Command:
-node "D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js" stop-check --resolve-task-from-cwd --audit-root "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" stop-check --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
 
 statusMessage:
 CC-Panes completion gate reminder
@@ -1880,7 +1880,7 @@ CC-Panes completion gate reminder
 官方 Codex manual 依据：
 
 ```text
-C:\Users\AI001\AppData\Local\Temp\openai-docs-cache\codex-manual.md
+%TEMP%\openai-docs-cache\codex-manual.md
 Hooks section:
 - SessionStart matcher applies to source: startup, resume, clear, compact.
 - SessionStart JSON supports hookSpecificOutput.additionalContext.
@@ -1945,7 +1945,7 @@ failures: []
 Phase 22 acceptance artifact：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\phase22-acceptance\acceptance.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase22-acceptance\acceptance.json
 SHA-256: CBF65912CA648E18341D656B2ED718F980B13BB8676D52FB4E1833FC25C7FA0A
 ```
 
@@ -1955,24 +1955,24 @@ Phase 22 isolation / hash evidence：
 comet status --short: clean
 fastctx status --short: clean
 
-C:\Users\AI001\.codex\hooks.json
+%USERPROFILE%\.codex\hooks.json
 before size: 2968
 before SHA-256: 8E665E6C7E64F823DEC7AD31D6278CBB6E8464654E7D06BDC161333EE73AC213
 after size: 4380
 after SHA-256: B1091E063DAAEE64121A7BE52DCC39AD304D91CAD39C562FEB8E9CF41D05E4AC
 
-C:\Users\AI001\.codex\config.toml
+%USERPROFILE%\.codex\config.toml
 before size: 16603
 before SHA-256: AF0BA56A49D3065618E2C3CF394411A41F6D4C57EB53693EFBC26477D24A1116
 after size: 16908
 after SHA-256: B9CD8EE35BBCF98282531541170C67D3E1B160032FDB1E078E03F62480E9A50A
 note: config.toml changed during Codex hook trust; added trusted hashes for session_start and stop.
 
-C:\Users\AI001\.cc-panes\config.toml
+%USERPROFILE%\.cc-panes\config.toml
 size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 size: 2779136
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 ```
@@ -1986,7 +1986,7 @@ Phase 22 判断：通过。当前工具层已覆盖 `SessionStart`、`PreToolUse
 计划文件：
 
 ```text
-D:\cc-pane\tool\plans\CCPANES-TASK-PROBE-PHASE23-PRODUCTION-TOOLKIT-PLAN.md
+{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE23-PRODUCTION-TOOLKIT-PLAN.md
 ```
 
 新增能力：
@@ -2008,7 +2008,7 @@ manifest.json
 真实安装只读自检：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\phase23-installed-hooks-verify.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase23-installed-hooks-verify.json
 schema: ccpanes.installed-hooks.verify.v1
 passed: true
 discovered: 5
@@ -2019,7 +2019,7 @@ SHA-256: AF6B7B40290483CBC882F59BA961BC82FFAB57CA78300D681557F396C97AEF48
 生产工具包 artifact：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\phase23-production-toolkit\manifest.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase23-production-toolkit\manifest.json
 schema: ccpanes.production-toolkit-manifest.v1
 files: 5
 file hashes match: true
@@ -2065,7 +2065,7 @@ failures: []
 Phase 23 acceptance artifact：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\phase23-acceptance\acceptance.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\phase23-acceptance\acceptance.json
 SHA-256: 0F5D2C686B231A2ED4E9873E043AD7C8B6ACF3CEC9CCF9DE1DC4C0A29F2E5872
 ```
 
@@ -2075,19 +2075,19 @@ Phase 23 isolation / hash evidence：
 comet status --short: clean
 fastctx status --short: clean
 
-C:\Users\AI001\.codex\hooks.json
+%USERPROFILE%\.codex\hooks.json
 size: 4380
 SHA-256: B1091E063DAAEE64121A7BE52DCC39AD304D91CAD39C562FEB8E9CF41D05E4AC
 
-C:\Users\AI001\.codex\config.toml
+%USERPROFILE%\.codex\config.toml
 size: 16908
 SHA-256: B9CD8EE35BBCF98282531541170C67D3E1B160032FDB1E078E03F62480E9A50A
 
-C:\Users\AI001\.cc-panes\config.toml
+%USERPROFILE%\.cc-panes\config.toml
 size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 size: 2779136
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 ```
@@ -2096,8 +2096,8 @@ Phase 23 判断：通过。当前交付物已从“已上线原型”升级为�
 
 ## Phase 21 — PostToolUse 执行后审计
 
-日期：2026-08-07  
-计划文件：`D:\cc-pane\tool\plans\CCPANES-TASK-PROBE-PHASE21-POSTTOOLUSE-AUDIT-PLAN.md`
+日期：2026-08-07<br>
+计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE21-POSTTOOLUSE-AUDIT-PLAN.md`
 
 Phase 21 目标：为 Codex `PostToolUse` 增加执行后审计。该 hook 只追加 JSONL 证据，不输出 stdout，不阻断、不改写 Codex 原工具结果。
 
@@ -2126,7 +2126,7 @@ Matcher:
 ^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\.shell_command|mcp__fastctx__(read|grep|glob|replace))$
 
 Command:
-node "D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js" post-enforce --resolve-task-from-cwd --audit-root "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" post-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
 
 statusMessage:
 CC-Panes post tool audit
@@ -2142,13 +2142,13 @@ Hook trust:
 - trusted changed hook set
 
 Observed audit:
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\post-tool-use-audit.jsonl
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\post-tool-use-audit.jsonl
 
 LineCount: 6
 Last record:
 schema: ccpanes.post-tool-use-audit.v1
 taskId: cc-pane-dynamic-hook-root
-cwd: D:\cc-pane
+cwd: {workspace-root}
 toolName: mcp__fastctx__read
 toolUseId: call_XDjtrGU92fl6zsQ4mycWWPLz
 observedAt: 2026-08-06T17:13:47.127Z
@@ -2161,15 +2161,15 @@ Phase 21 判断：通过。当前工具已具备三层生产能力：`PreToolUse
 
 ## Phase 20 — PermissionRequest 二阶段门禁
 
-日期：2026-08-07  
-计划文件：`D:\cc-pane\tool\plans\CCPANES-TASK-PROBE-PHASE20-PERMISSIONREQUEST-GATE-PLAN.md`
+日期：2026-08-07<br>
+计划文件：`{workspace-root}\tool\plans\CCPANES-TASK-PROBE-PHASE20-PERMISSIONREQUEST-GATE-PLAN.md`
 
 Phase 20 目标：在 Phase 19 `PreToolUse` 预执行阻断之外，新增 Codex `PermissionRequest` 二阶段门禁。该门禁只对 dry-run 判定为 blocked 的权限请求输出官方 deny shape；对允许类请求输出空字符串，让 Codex 保持默认审批流，不自动批准提权。
 
 官方协议核验来源：
 
 ```text
-C:\Users\AI001\AppData\Local\Temp\openai-docs-cache\codex-manual.md
+%TEMP%\openai-docs-cache\codex-manual.md
 Hooks section:
 - PermissionRequest matcher applies to tool_name and aliases.
 - PermissionRequest deny shape:
@@ -2201,7 +2201,7 @@ Matcher:
 ^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\.shell_command|mcp__fastctx__(read|grep|glob|replace))$
 
 Command:
-node "D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js" permission-enforce --resolve-task-from-cwd --audit-root "D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
+node "{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js" permission-enforce --resolve-task-from-cwd --audit-root "{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits"
 
 statusMessage:
 CC-Panes permission request boundary check
@@ -2235,7 +2235,7 @@ stdout: empty
 No automatic allow decision emitted
 
 Audit:
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
 ```
 
 Phase 20 判断：通过。当前工具已经具备双层门禁：`PreToolUse` 在工具执行前阻断已识别风险；`PermissionRequest` 在 Codex 即将请求权限审批时再次 fail-closed，并且不会自动批准可通过请求。
@@ -2267,22 +2267,22 @@ Final Phase 20 isolation / hash evidence：
 comet status --short: clean
 fastctx status --short: clean
 
-C:\Users\AI001\.codex\hooks.json size: 2133
+%USERPROFILE%\.codex\hooks.json size: 2133
 SHA-256: E0AD3C8C7042E6A1311BB47EC69DDB49F4CF9D9FFA75C3640E9009A5F2315CF0
 
-C:\Users\AI001\.codex\config.toml size: 16446
+%USERPROFILE%\.codex\config.toml size: 16446
 SHA-256: B8C85B6627915FB3B115B14A6541EC1D7BE7205F4EF2F3B80B3CBCC0016862B6
 
-C:\Users\AI001\.cc-panes\config.toml size: 3660
+%USERPROFILE%\.cc-panes\config.toml size: 3660
 SHA-256: 40432662D0905E4443CCDA5B90D21D079E32AABD8983863A13ABF0E37B7F0836
 
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
+%USERPROFILE%\skills-hub\bin\skills-hub-hook.exe
 SHA-256: F2C3E4DAFE5CCA6ABF9D0E8857D863F1597E3D96E7BA8677E7C31D5CA3B0DCA4
 
-D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
+{workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits\Y2MtcGFuZS1keW5hbWljLWhvb2stcm9vdA\permission-enforce-audit.json
 SHA-256: EB10D803B85234DAEE3BDD3B206099BA75AA0B708471A52D52A45C6E6920D4F1
 
 Forbidden probes:
-C:\Users\AI001\.codex\__phase19_hook_block_probe.tmp exists: false
-C:\Users\AI001\.codex\__phase19_node_bypass_probe.tmp exists: false
+%USERPROFILE%\.codex\__phase19_hook_block_probe.tmp exists: false
+%USERPROFILE%\.codex\__phase19_node_bypass_probe.tmp exists: false
 ```

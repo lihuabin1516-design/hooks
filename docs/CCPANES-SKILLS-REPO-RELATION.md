@@ -2,9 +2,9 @@
 
 日期：2026-08-14
 
-本仓库：`D:\cc-pane\tool\repos\hooks`
+本仓库：`{workspace-root}\tool\repos\hooks`
 
-行为层仓库：`D:\cc-pane\tool\repos\ccpanes-skills`
+行为层仓库：`{workspace-root}\tool\repos\ccpanes-skills`
 
 ## 一句话判断
 
@@ -41,8 +41,8 @@ hooks
 | 评估结论 | 写入位置 | 判定条件 |
 |---|---|---|
 | 吸收到 `hooks` | 本仓库 | 影响 hook runtime、policy、permission、audit、acceptance、CLI schema、live verification |
-| 吸收到 `ccpanes-skills` | `D:\cc-pane\tool\repos\ccpanes-skills` | 价值是 prompt、skill、agent workflow、review、triage、handoff、domain glossary、协作方法 |
-| 新建仓库 | `D:\cc-pane\tool\repos\<new-repo>` | 独立运行时、benchmark、数据集、UI、插件、服务、可单独发布工具 |
+| 吸收到 `ccpanes-skills` | `{workspace-root}\tool\repos\ccpanes-skills` | 价值是 prompt、skill、agent workflow、review、triage、handoff、domain glossary、协作方法 |
+| 新建仓库 | `{workspace-root}\tool\repos\<new-repo>` | 独立运行时、benchmark、数据集、UI、插件、服务、可单独发布工具 |
 | 只记录参考 | 评估报告 | 当前只作方法参考，无明确 owner 或采纳收益不足 |
 
 ## 新项目评估入口
@@ -50,10 +50,10 @@ hooks
 用户发现新的外部项目时，默认在当前 `hooks` 项目中新开会话，使用：
 
 ```text
-D:\cc-pane\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
+{workspace-root}\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
 ```
 
-`D:\cc-pane\tool\repos\hooks\docs\EXTERNAL-PROJECT-EVALUATION-PROMPT.md`
+`{workspace-root}\tool\repos\hooks\docs\EXTERNAL-PROJECT-EVALUATION-PROMPT.md`
 保留为可复制提示词入口；权威分流规则以
 `EXTERNAL-PROJECT-INTAKE-ROUTER.md` 为准。该会话的唯一目标是给出归属判断和
 证据，写入动作由后续 owner 仓库任务承接。
@@ -69,6 +69,6 @@ D:\cc-pane\tool\repos\hooks\docs\EXTERNAL-PROJECT-INTAKE-ROUTER.md
 
 ## 当前落地状态
 
-`D:\cc-pane\tool\repos\ccpanes-skills` 已作为独立 Git 仓库初始化在 `main`
+`{workspace-root}\tool\repos\ccpanes-skills` 已作为独立 Git 仓库初始化在 `main`
 分支，当前还没有提交。`hooks` 侧保留本关系说明和 intake router；新仓库侧维护
 prompts、adoptions、templates、sidecar specs。

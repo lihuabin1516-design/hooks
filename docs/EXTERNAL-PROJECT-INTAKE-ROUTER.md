@@ -1,8 +1,8 @@
 # 外部项目评估与双线仓库分流规则
 
 日期：2026-08-14
-当前权威仓库：`D:\cc-pane\tool\repos\hooks`
-Companion 仓库：`D:\cc-pane\tool\repos\ccpanes-skills`
+当前权威仓库：`{workspace-root}\tool\repos\hooks`
+Companion 仓库：`{workspace-root}\tool\repos\ccpanes-skills`
 
 ## 一句话判断
 
@@ -106,14 +106,14 @@ flowchart TD
 在 `hooks` 新会话中使用：
 
 ```text
-请只读评估 <TARGET_URL> 对 D:\cc-pane\tool\repos\hooks 的作用，并按 docs/EXTERNAL-PROJECT-INTAKE-ROUTER.md 判断：吸收到 hooks、吸收到 D:\cc-pane\tool\repos\ccpanes-skills、另建新仓库，或仅记录暂不采纳。不要修改仓库、不要安装依赖、不要运行上游 installer、不要写用户配置。输出证据、adopted ideas、rejected ideas、推荐落点和下一步最小 artifact。
+请只读评估 <TARGET_URL> 对 {workspace-root}\tool\repos\hooks 的作用，并按 docs/EXTERNAL-PROJECT-INTAKE-ROUTER.md 判断：吸收到 hooks、吸收到 {workspace-root}\tool\repos\ccpanes-skills、另建新仓库，或仅记录暂不采纳。不要修改仓库、不要安装依赖、不要运行上游 installer、不要写用户配置。输出证据、adopted ideas、rejected ideas、推荐落点和下一步最小 artifact。
 ```
 
 更完整提示词维护在：
 
 ```text
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
-D:\cc-pane\tool\repos\ccpanes-skills\prompts\NEW-REPO-CONTROLLER.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\EXTERNAL-PROJECT-EVALUATION.md
+{workspace-root}\tool\repos\ccpanes-skills\prompts\NEW-REPO-CONTROLLER.md
 ```
 
 ## 停止条件

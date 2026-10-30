@@ -3,7 +3,7 @@
 ## 目录总览
 
 ```text
-D:\cc-pane\tool\repos\hooks
+{workspace-root}\tool\repos\hooks
 ├── README.md                         对外首页，agent hooks 治理层
 ├── LICENSE                           MIT license
 ├── SECURITY.md                       安全报告与响应入口
@@ -166,7 +166,7 @@ policy.example.json      policy.json 示例
 live 路径：
 
 ```text
-D:\cc-pane\tool\experiments\ccpanes-task-probe
+{workspace-root}\tool\experiments\ccpanes-task-probe
 ```
 
 Codex 全局 hooks 指向 live 的 `dist/src/cli.js`。`UserPromptSubmit` 保留
@@ -179,8 +179,8 @@ skills-hub 与 CC-Panes prompt-before，并追加独立的 `workflow-advisory`
 长期保持三层分离：
 
 ```text
-repo 源仓库：D:\cc-pane\tool\repos\hooks
-live 运行副本：D:\cc-pane\tool\experiments\ccpanes-task-probe
+repo 源仓库：{workspace-root}\tool\repos\hooks
+live 运行副本：{workspace-root}\tool\experiments\ccpanes-task-probe
 项目接入状态：<project>\.ccpanes-task + <project>\AGENTS.md
 ```
 

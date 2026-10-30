@@ -52,8 +52,8 @@
 - `npm run typecheck`
 - `npm run build`
 - `npm run smoke`
-- `node dist/src/cli.js verify-installed-hooks --hooks-json C:\Users\AI001\.codex\hooks.json --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config C:\Users\AI001\.codex\config.toml`
+- `node dist/src/cli.js verify-installed-hooks --hooks-json {user-home}\.codex\hooks.json --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config {user-home}\.codex\config.toml`
 
 - [ ] Commit and push to `https://github.com/lihuabin1516-design/hooks.git` on `main`.
-- [ ] Sync repo files to `D:\cc-pane\tool\experiments\ccpanes-task-probe` after backing up live files.
+- [ ] Sync repo files to `{workspace-root}\tool\experiments\ccpanes-task-probe` after backing up live files.
 - [ ] Repeat full live verification and a fixture run that proves `policy-capture` creates ledger + JSON and `hook-enforce` blocks the captured rule.

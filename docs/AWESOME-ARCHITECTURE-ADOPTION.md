@@ -1,7 +1,7 @@
 # awesome-architecture 参考吸收记录
 
 日期：2026-08-07
-目标仓库：`D:\cc-pane\tool\repos\hooks`
+目标仓库：`{workspace-root}\tool\repos\hooks`
 外部参考：<https://github.com/study8677/awesome-architecture.git>
 参考 HEAD：`d3febc75fa26bad746f6f9216bcad171b3923765`
 许可：MIT

@@ -1,7 +1,7 @@
 # CC-Panes Hooks Phase 32 — SBA Workflow Architecture Plan
 
 日期：2026-08-07
-目标仓库：`D:\cc-pane\tool\repos\hooks`
+目标仓库：`{workspace-root}\tool\repos\hooks`
 外部参考：`https://github.com/WoJiSama/skill-based-architecture.git`
 
 ## Change Contract
@@ -26,9 +26,9 @@ In Scope:
 Out of Scope:
 - 不把外部仓库作为运行时依赖。
 - 不整体迁移到 `skills/<name>/` 目录树。
-- 不写 `C:\Users\AI001\.codex`、`C:\Users\AI001\.claude`、`C:\Users\AI001\.cc-panes`。
-- 不执行 `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。
-- 不触碰 `D:\cc-pane\tool\repos\comet` / `D:\cc-pane\tool\repos\fastctx` 内容。
+- 不写 `{user-home}\.codex`、`{user-home}\.claude`、`{user-home}\.cc-panes`。
+- 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
+- 不触碰 `{workspace-root}\tool\repos\comet` / `{workspace-root}\tool\repos\fastctx` 内容。
 
 Expected Behavior:
 - 只读评估类 prompt 输出 Light + closure none，不要求 repo 验收命令。

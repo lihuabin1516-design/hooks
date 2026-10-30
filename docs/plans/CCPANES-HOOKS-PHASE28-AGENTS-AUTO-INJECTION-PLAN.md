@@ -1,7 +1,7 @@
 # CC-Panes Hooks Phase 28 — AGENTS Auto Injection Plan
 
-日期：2026-08-07  
-目标仓库：`D:\cc-pane\tool\repos\hooks`  
+日期：2026-08-07<br>
+目标仓库：`{workspace-root}\tool\repos\hooks`<br>
 远端仓库：`https://github.com/lihuabin1516-design/hooks.git`
 
 ## Change Contract
@@ -23,7 +23,7 @@ In Scope:
 Out of Scope:
 - 不自动扫描或批量改写所有项目。
 - 不写用户级 Codex / CC-Panes 配置。
-- 不执行 `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。
+- 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 Expected Behavior:
 - 项目无 `AGENTS.md`：创建并写入 managed block。

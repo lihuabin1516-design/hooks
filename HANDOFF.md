@@ -2,7 +2,7 @@
 
 ## 一句话状态
 
-`hooks` 是 CC-Panes / Codex 的项目上下文与 Hook 治理工具层，当前远端主仓库固定为 `https://github.com/lihuabin1516-design/hooks.git`，本机维护仓库位于 `D:\cc-pane\tool\repos\hooks`，live 验证路径位于 `D:\cc-pane\tool\experiments\ccpanes-task-probe`。
+`hooks` 是 CC-Panes / Codex 的项目上下文与 Hook 治理工具层，当前远端主仓库固定为 `https://github.com/lihuabin1516-design/hooks.git`，本机维护仓库位于 `{workspace-root}\tool\repos\hooks`，live 验证路径位于 `{workspace-root}\tool\experiments\ccpanes-task-probe`。
 
 ## 先决必读
 
@@ -18,10 +18,10 @@
 ## 当前基线
 
 ```text
-仓库根：D:\cc-pane\tool\repos\hooks
+仓库根：{workspace-root}\tool\repos\hooks
 分支：main
 远端：origin https://github.com/lihuabin1516-design/hooks.git
-live：D:\cc-pane\tool\experiments\ccpanes-task-probe
+live：{workspace-root}\tool\experiments\ccpanes-task-probe
 Node：>=22
 测试：vitest
 构建：tsc -p tsconfig.json
@@ -87,23 +87,23 @@ git diff --check
 用户级配置路径只做读取、验证和哈希记录：
 
 ```text
-C:\Users\AI001\.codex\hooks.json
-C:\Users\AI001\.codex\config.toml
-C:\Users\AI001\.cc-panes\config.toml
+{user-home}\.codex\hooks.json
+{user-home}\.codex\config.toml
+{user-home}\.cc-panes\config.toml
 ```
 
 上游 hook exe 只做哈希记录：
 
 ```text
-C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe
-C:\Users\AI001\.fastctx\bin\fastctx.exe
+{user-home}\skills-hub\bin\skills-hub-hook.exe
+{user-home}\.fastctx\bin\fastctx.exe
 ```
 
 参考仓库只做 status / remote / HEAD 检查：
 
 ```text
-D:\cc-pane\tool\repos\comet    origin https://github.com/rpamis/comet.git
-D:\cc-pane\tool\repos\fastctx  origin https://github.com/yc-duan/fastctx.git
+{workspace-root}\tool\repos\comet    origin https://github.com/rpamis/comet.git
+{workspace-root}\tool\repos\fastctx  origin https://github.com/yc-duan/fastctx.git
 ```
 
 当前只读基线：
@@ -133,7 +133,7 @@ fastctx exe SHA256: C94A7504FEA51CABDCD15BDBCFC95F494EF113AA11AE93A562E13492BAFA
 repo 路径：
 
 ```powershell
-cd D:\cc-pane\tool\repos\hooks
+cd {workspace-root}\tool\repos\hooks
 npm test
 npm run typecheck
 npm run build
@@ -145,13 +145,13 @@ git status --short
 live 路径：
 
 ```powershell
-cd D:\cc-pane\tool\experiments\ccpanes-task-probe
+cd {workspace-root}\tool\experiments\ccpanes-task-probe
 npm test
 npm run typecheck
 npm run build
 npm run smoke
-node dist/src/cli.js verify-installed-hooks --hooks-json C:\Users\AI001\.codex\hooks.json --prototype-root D:\cc-pane\tool\experiments\ccpanes-task-probe --audit-root D:\cc-pane\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config C:\Users\AI001\.codex\config.toml
-node dist/src/cli.js verify-live-consistency --repo-root D:\cc-pane\tool\repos\hooks --live-root D:\cc-pane\tool\experiments\ccpanes-task-probe
+node dist/src/cli.js verify-installed-hooks --hooks-json {user-home}\.codex\hooks.json --prototype-root {workspace-root}\tool\experiments\ccpanes-task-probe --audit-root {workspace-root}\tool\experiments\ccpanes-task-probe\live\dynamic-audits --config {user-home}\.codex\config.toml
+node dist/src/cli.js verify-live-consistency --repo-root {workspace-root}\tool\repos\hooks --live-root {workspace-root}\tool\experiments\ccpanes-task-probe
 ```
 
 ## 停止条件

@@ -1,7 +1,7 @@
 # CC-Panes Hooks Phase 25 — Project Policy Enforcement Plan
 
-日期：2026-08-07  
-目标仓库：`D:\cc-pane\tool\repos\hooks`  
+日期：2026-08-07<br>
+目标仓库：`{workspace-root}\tool\repos\hooks`<br>
 远端仓库：`https://github.com/lihuabin1516-design/hooks.git`
 
 ## Change Contract
@@ -19,12 +19,12 @@ In Scope:
 - malformed policy fail closed，阻断并给出 `project_policy_invalid`。
 Out of Scope:
 - 不写用户级 config / hooks。
-- 不执行 `C:\Users\AI001\skills-hub\bin\skills-hub-hook.exe`。
+- 不执行 `{user-home}\skills-hub\bin\skills-hub-hook.exe`。
 - 不触碰 `fastctx` / `comet` 引用仓库。
 - 不把自然语言 policy.md 自动解析成机械规则；本阶段只执行 JSON。
 No-Touch:
-- `D:\cc-pane\tool\repos\fastctx`
-- `D:\cc-pane\tool\repos\comet`
+- `{workspace-root}\tool\repos\fastctx`
+- `{workspace-root}\tool\repos\comet`
 - 用户级配置文件，除只读 hash/status 检查外不写。
 Expected Behavior:
 - 无 `policy.json`：既有 134 tests 行为不回退。

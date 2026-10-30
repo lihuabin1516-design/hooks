@@ -70,7 +70,7 @@ node <ccpanes-hooks-root>\dist\src\cli.js bootstrap-project --root <project-root
 Known local default for this workstation:
 
 ```powershell
-node E:\Projects\gzl\workflow\repositories\hooks\dist\src\cli.js bootstrap-project --root <project-root> --task-id <task-id> --phase shape
+node {hooks-repository-root}\dist\src\cli.js bootstrap-project --root <project-root> --task-id <task-id> --phase shape
 ```
 
 ## Phase meanings
@@ -143,9 +143,9 @@ node <ccpanes-hooks-root>\dist\src\cli.js policy-validate --root <project-root>
 Known local default for this workstation:
 
 ```powershell
-node E:\Projects\gzl\workflow\repositories\hooks\dist\src\cli.js plan-intake --root <project-root> --prompt "<current user request>" --utterance "<current plan/user rule text>" --audit-out <audit-json>
-node E:\Projects\gzl\workflow\repositories\hooks\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
-node E:\Projects\gzl\workflow\repositories\hooks\dist\src\cli.js policy-validate --root <project-root>
+node {hooks-repository-root}\dist\src\cli.js plan-intake --root <project-root> --prompt "<current user request>" --utterance "<current plan/user rule text>" --audit-out <audit-json>
+node {hooks-repository-root}\dist\src\cli.js policy-capture-plan --root <project-root> --utterance "<current plan/user rule text>"
+node {hooks-repository-root}\dist\src\cli.js policy-validate --root <project-root>
 ```
 
 Mechanical hooks enforce tool/file/command boundaries from `current-task.json`

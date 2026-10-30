@@ -362,8 +362,8 @@ Expected: all commands exit 0.
 - [ ] **Step 3: Inspect reference repositories**
 
 ```powershell
-git -C D:\cc-pane\tool\repos\comet status --short --branch
-git -C D:\cc-pane\tool\repos\fastctx status --short --branch
+git -C {workspace-root}\tool\repos\comet status --short --branch
+git -C {workspace-root}\tool\repos\fastctx status --short --branch
 ```
 
 Expected: no changed paths.

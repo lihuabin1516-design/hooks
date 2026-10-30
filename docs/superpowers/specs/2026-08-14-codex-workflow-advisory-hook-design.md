@@ -11,9 +11,9 @@ completion authority.
 
 The repository owns `ccpanes.workflow-profile.v1` and
 `ccpanes.implementation-standard.v1`. Codex currently loads user hooks from
-`C:\Users\AI001\.codex\hooks.json`, while the installed CC-Panes hook commands
+`{user-home}\.codex\hooks.json`, while the installed CC-Panes hook commands
 execute the live runtime at
-`D:\cc-pane\tool\experiments\ccpanes-task-probe\dist\src\cli.js`.
+`{workspace-root}\tool\experiments\ccpanes-task-probe\dist\src\cli.js`.
 
 The existing `UserPromptSubmit` chain contains:
 
