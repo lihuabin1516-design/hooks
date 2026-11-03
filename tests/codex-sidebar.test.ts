@@ -490,7 +490,7 @@ describe('createSidebarPlan names and digest', () => {
     const desiredName = plan.actions[0]?.desiredName ?? '';
 
     expect(Array.from(desiredName)).toHaveLength(120);
-    expect(desiredName).toBe(`[PaneForge] ${'😀'.repeat(109)}`);
+    expect(desiredName).toBe(`[PaneForge] ${'😀'.repeat(108)}`);
     expect(desiredName).not.toContain('\uFFFD');
   });
 

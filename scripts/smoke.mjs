@@ -503,9 +503,10 @@ try {
   ]));
   assert(installedHooksReport.schema === 'paneforge.installed-hooks.verify.v1', 'installed hooks verify schema mismatch');
   assert(installedHooksReport.passed === true, 'installed hooks verify expected passed=true');
-  assert(installedHooksReport.discovered.length === 8, 'installed hooks verify expected eight hooks');
+  assert(installedHooksReport.discovered.length === 9, 'installed hooks verify expected nine hooks');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit skills-hub'), 'installed hooks verify missing skills-hub UserPromptSubmit hook');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit paneforge prompt-before'), 'installed hooks verify missing PaneForge UserPromptSubmit hook');
+  assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit session scope authorization'), 'installed hooks verify missing explicit authorization intake');
   assert(installedHooksReport.discovered.some((item) => item.name === 'UserPromptSubmit workflow advisory'), 'installed hooks verify missing workflow advisory UserPromptSubmit hook');
 
   for (const consistencyRoot of [consistencyRepo, consistencyLive]) {

@@ -95,4 +95,46 @@ describe('analyzeShellCommand', () => {
       { tool: 'shell', targetPath: cwd, writes: true, command: `python -c "open('C:/Users/AI001/.codex/x.tmp', 'w').write('x')"`, policyReason: 'interpreter_filesystem_mutation' }
     ]);
   });
+
+  test('attaches semantic blast-radius evidence to a recursive root delete', () => {
+    const calls = analyzeShellCommand({ command: 'rm -rf /', cwd });
+
+    expect(calls[0]).toMatchObject({
+      tool: 'shell',
+      writes: true,
+      policyReason: expect.stringContaining('blast_radius_guard_block'),
+      destructiveAnalysis: expect.objectContaining({
+        verdict: 'block',
+        hazards: expect.arrayContaining([
+          expect.objectContaining({ code: 'H2_DRIVE_ROOT' })
+        ])
+      })
+    });
+  });
+
+  test('covers mirror deletion semantics missed by the legacy command regex', () => {
+    const calls = analyzeShellCommand({ command: 'rsync -a --delete /src/ /backup/', cwd });
+
+    expect(calls[0]).toMatchObject({
+      policyReason: expect.stringContaining('blast_radius_guard_warn'),
+      destructiveAnalysis: expect.objectContaining({
+        hazards: expect.arrayContaining([
+          expect.objectContaining({ code: 'H9_PERMANENT_DELETE' })
+        ])
+      })
+    });
+  });
+
+  test('classifies inline interpreter recursive deletion as a filesystem mutation', () => {
+    const calls = analyzeShellCommand({
+      command: 'python -c "import shutil; shutil.rmtree(\'/tmp/target\')"',
+      cwd
+    });
+
+    expect(calls[0]).toMatchObject({
+      targetPath: cwd,
+      writes: true,
+      policyReason: 'interpreter_filesystem_mutation'
+    });
+  });
 });

@@ -20,6 +20,8 @@ CLI router
 - `src/project-policy.ts`、`src/project-policy-capture.ts`、`src/project-policy-ledger.ts`、`src/plan-policy-capture.ts`：项目规则模型、台账和沉淀入口
 - `src/plan-intake.ts`、`src/task-risk.ts`、`src/workflow-profile.ts`、`src/runtime-profile.ts`：plan / risk / workflow / runtime 的分类和提示
 - `src/hook-event-adapter.ts`、`src/hook-shell-analyzer.ts`、`src/hook-dry-run.ts`、`src/hook-batch.ts`、`src/hook-runner.ts`、`src/task-lifecycle-authorization.ts`：事件适配、命令判定、可信任务生命周期授权和 dry-run 执行
+- `src/session-scope-authorization.ts`、`src/cli/session-scope.ts`：识别用户自然语言的明确授权，绑定当前 task/session 并短时放行具体文件写入
+- `src/blast-radius-guard.ts`：破坏性命令的语义判定、有限爆炸半径统计和跨平台未知项；只提供证据，不拥有 task 或 policy 授权
 - `src/mcp-server.ts`、`src/mcp-hook-adapter.ts`：Codex `mcp_tool` 生命周期入口；暴露只读 `runtime_identity`，并将生命周期事件结构化转发到 CLI，错误继续 fail closed
 - `src/runtime-identity.ts`、`scripts/write-runtime-identity.mjs`：加载、校验和比较构建身份；`npm run build` 在编译后生成 `dist/src/runtime-identity.json`
 - `src/cli/hook.ts`、`src/hook-runner.ts`、`src/hook-decision-audit.ts`、`src/post-tool-audit.ts`、`src/session-lifecycle.ts`：hook 拦截、授权、快照/追加审计和生命周期输出
@@ -52,7 +54,8 @@ external event
 2. 规则、状态和路径判断都回到 owner 模块。
 3. `dist/`、`live/`、`.tmp-smoke/`、`/.paneforge-task/` 这类目录属于运行产物或状态边界，不手改成源码。
 4. 任何 repo/live 同步先在 repo 走 `npm run verify`，再走 live 的只读一致性校验。
-5. Codex MCP 安装必须同时覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`；工具 matcher 至少覆盖 `apply_patch`、`Bash` 与 FastCtx 的 `inspect_local_file`、`grep`、`glob`、`replace`。
-6. `archive` 默认继续阻断实现写入；只有当前可信 CLI、精确任务路径和单命令语法同时匹配时，才允许读取 `verify-acceptance`、定向写入 `.paneforge-task/acceptance.json`，或将同一 task 从 `archive` 回退到 `verify`。该例外不得开启 `build`、切换 task 或覆盖 project policy block。
+5. Codex MCP 安装必须同时覆盖 `SessionStart`、`UserPromptSubmit`、`PreToolUse`、`PermissionRequest`、`PostToolUse` 和 `Stop`；工具 matcher 覆盖 `apply_patch`、`Bash`、FastCtx 0.2.6 的四个文件工具与五个可选 shell/job 工具，并兼容 0.2.4 的旧 `read` 名称。具体契约见 `docs/fastctx-0.2.6.md`。
+6. `archive` 默认继续阻断实现写入；可信 CLI 的验收生命周期例外仍绑定精确任务路径和单命令语法。另有 `UserPromptSubmit` 自然语言授权：只接受明确肯定的授权表达，在当前 task/session 和当前提示期间（最长 15 分钟）覆盖 task 路径、phase 和旧 project policy 对 `edit`、`write`、`apply_patch` 的阻拦；受保护路径、task binding 失败和危险命令仍然阻断。讨论授权格式或机制不会触发授权。
 7. 运行时身份是证据，不是授权旁路。`runtimeTaskHeadStatus=mismatch` 明确表示当前进程加载的 commit 与 task HEAD 不同，必须重启到正确版本后再验收。
 8. PreToolUse / PermissionRequest 的 `*-audit.json` 保持最新快照兼容；同名 `*.jsonl` 是 append-only 决策历史。二者都记录 runtime identity，但身份不改变既有 allow/deny 语义。
+9. `blast-radius-guard` 的 `warn` 和 `block` 都必须经过现有 fail-closed dry-run 决策；上游 fail-open hook、Python sidecar 和用户级配置不属于本仓库运行时。

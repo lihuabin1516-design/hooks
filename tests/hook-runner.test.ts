@@ -1,4 +1,7 @@
 import { describe, expect, test } from 'vitest';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import {
   runHookEventDryRun,
   runHookEventDryRunWithProjectPolicy,
@@ -6,13 +9,13 @@ import {
 } from '../src/hook-runner.js';
 import type { CurrentTask, TaskBindingCheck } from '../src/types.js';
 
-function task(phase: CurrentTask['phase'] = 'build'): CurrentTask {
+function task(phase: CurrentTask['phase'] = 'build', worktreeRoot = 'D:\\paneforge\\project-alpha'): CurrentTask {
   return {
     schema: 'paneforge.task-selection.v1',
     taskId: 'task-alpha',
     workspace: 'paneforge',
-    projectPath: 'D:\\paneforge\\project-alpha',
-    worktreeRoot: 'D:\\paneforge\\project-alpha',
+    projectPath: worktreeRoot,
+    worktreeRoot,
     mainRepoRoot: null,
     branch: null,
     head: null,
@@ -162,6 +165,180 @@ describe('runHookEventDryRun', () => {
     expect(result.allowed).toBe(false);
     expect(result.dryRun.decisions[0].action).toBe('block');
     expect(result.dryRun.decisions[0].reason).toBe('forbidden_user_config_path');
+  });
+
+  test('blocks a semantic blast-radius hazard before task-path policy can allow it', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/paneforge/project-alpha',
+      tool_name: 'mcp__fastctx__run',
+      tool_input: { command: 'rm -rf /' }
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.batch.calls[0]).toMatchObject({
+      policyReason: expect.stringContaining('blast_radius_guard_block'),
+      destructiveAnalysis: expect.objectContaining({ verdict: 'block' })
+    });
+    expect(result.dryRun.decisions[0].reason).toContain('blast_radius_guard_block');
+  });
+
+  test('blocks inline interpreter recursive deletion inside the task worktree', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/paneforge/project-alpha',
+      tool_name: 'mcp__fastctx__run',
+      tool_input: { command: 'python -c "import shutil; shutil.rmtree(\'/tmp/target\')"' }
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.batch.calls[0]?.policyReason).toBe('interpreter_filesystem_mutation');
+    expect(result.dryRun.decisions[0]?.action).toBe('block');
+  });
+
+  test('checks every target of a destructive multi-path shell command against task scope', async () => {
+    const result = await runHookEventDryRunWithProjectPolicy(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/paneforge/project-alpha',
+      tool_name: 'Bash',
+      tool_input: {
+        command: 'Move-Item -LiteralPath D:/paneforge/project-alpha/src/a.ts -Destination D:/paneforge/other/a.ts'
+      }
+    });
+
+    expect(result.allowed).toBe(false);
+    expect(result.batch.calls.map((call) => call.targetPath)).toEqual([
+      'D:/paneforge/project-alpha/src/a.ts',
+      'D:/paneforge/other/a.ts'
+    ]);
+    expect(result.dryRun.decisions.map((decision) => decision.action)).toEqual(['allow', 'block']);
+  });
+
+  test('honors an active task-bound user authorization for one exact out-of-worktree path', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-scope-grant-'));
+    const taskRoot = path.join(root, 'project');
+    const target = path.join(root, 'shared-notes.md');
+    const authorizedAt = new Date();
+    await fs.mkdir(path.join(taskRoot, '.paneforge-task'), { recursive: true });
+    await fs.writeFile(path.join(taskRoot, '.paneforge-task', 'session-authorizations.json'), `${JSON.stringify({
+      schema: 'paneforge.task-scope-authorizations.v1',
+      grants: [{
+        id: 'grant-1',
+        taskId: 'task-alpha',
+        worktreeRoot: taskRoot,
+        paths: [{ path: target, recursive: false }],
+        tools: ['edit'],
+        authorizedAt: authorizedAt.toISOString(),
+        expiresAt: new Date(authorizedAt.getTime() + 15 * 60_000).toISOString(),
+        revokedAt: null,
+        reason: 'Update the shared release note',
+        instruction: 'I explicitly authorize editing this release note.'
+      }]
+    }, null, 2)}\n`, 'utf8');
+    await fs.writeFile(path.join(taskRoot, '.paneforge-task', 'policy.json'), `${JSON.stringify({
+      schema: 'paneforge.project-policy.v1',
+      rules: [{
+        id: 'prior-release-hold',
+        enabled: true,
+        effect: 'block',
+        reason: 'prior release hold',
+        match: { tools: ['edit'], pathContains: ['shared-notes.md'] }
+      }]
+    }, null, 2)}\n`, 'utf8');
+
+    try {
+      const result = await runHookEventDryRunWithProjectPolicy(task('archive', taskRoot), {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Edit',
+        tool_input: { file_path: target }
+      });
+
+      expect(result.allowed).toBe(true);
+      expect(result.dryRun.decisions[0]).toMatchObject({
+        action: 'allow',
+        reason: 'session_scope_authorization:grant-1',
+        targetInsideWorktree: false
+      });
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test('does not extend a session authorization to neighboring paths or tools', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-scope-grant-'));
+    const taskRoot = path.join(root, 'project');
+    const target = path.join(root, 'shared-notes.md');
+    const authorizedAt = new Date();
+    await fs.mkdir(path.join(taskRoot, '.paneforge-task'), { recursive: true });
+    await fs.writeFile(path.join(taskRoot, '.paneforge-task', 'session-authorizations.json'), `${JSON.stringify({
+      schema: 'paneforge.task-scope-authorizations.v1',
+      grants: [{
+        id: 'grant-1',
+        taskId: 'task-alpha',
+        worktreeRoot: taskRoot,
+        paths: [{ path: target, recursive: false }],
+        tools: ['edit'],
+        authorizedAt: authorizedAt.toISOString(),
+        expiresAt: new Date(authorizedAt.getTime() + 15 * 60_000).toISOString(),
+        revokedAt: null,
+        reason: 'Update the shared release note',
+        instruction: 'I explicitly authorize editing this release note.'
+      }]
+    }, null, 2)}\n`, 'utf8');
+
+    try {
+      const wrongPath = await runHookEventDryRunWithProjectPolicy(task('build', taskRoot), {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Edit',
+        tool_input: { file_path: path.join(root, 'neighbor.md') }
+      });
+      const wrongTool = await runHookEventDryRunWithProjectPolicy(task('build', taskRoot), {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Write',
+        tool_input: { file_path: target }
+      });
+
+      expect(wrongPath.dryRun.decisions[0]?.reason).toBe('target_outside_task_worktree');
+      expect(wrongTool.dryRun.decisions[0]?.reason).toBe('target_outside_task_worktree');
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
+  });
+
+  test('keeps protected user configuration blocked even when an exact session grant matches', async () => {
+    const root = await fs.mkdtemp(path.join(os.tmpdir(), 'paneforge-scope-grant-'));
+    const taskRoot = path.join(root, 'project');
+    const target = path.resolve('C:/Users/AI001/.codex/config.toml');
+    const authorizedAt = new Date();
+    await fs.mkdir(path.join(taskRoot, '.paneforge-task'), { recursive: true });
+    await fs.writeFile(path.join(taskRoot, '.paneforge-task', 'session-authorizations.json'), `${JSON.stringify({
+      schema: 'paneforge.task-scope-authorizations.v1',
+      grants: [{
+        id: 'grant-protected-config',
+        taskId: 'task-alpha',
+        worktreeRoot: taskRoot,
+        paths: [{ path: target, recursive: false }],
+        tools: ['edit'],
+        authorizedAt: authorizedAt.toISOString(),
+        expiresAt: new Date(authorizedAt.getTime() + 15 * 60_000).toISOString(),
+        revokedAt: null,
+        reason: 'A protected path must remain blocked',
+        instruction: 'I authorize editing this protected configuration path.'
+      }]
+    }, null, 2)}\n`, 'utf8');
+
+    try {
+      const result = await runHookEventDryRunWithProjectPolicy(task('archive', taskRoot), {
+        hook_event_name: 'PreToolUse',
+        tool_name: 'Edit',
+        tool_input: { file_path: target }
+      });
+
+      expect(result.allowed).toBe(false);
+      expect(result.dryRun.decisions[0]?.reason).toBe('forbidden_user_config_path');
+    } finally {
+      await fs.rm(root, { recursive: true, force: true });
+    }
   });
 
   test('blocks writes when task binding scope is mismatched', () => {

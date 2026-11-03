@@ -35,9 +35,15 @@ export function summarizeHookValue(value: unknown): unknown {
   if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value;
   if (Array.isArray(value)) return value.slice(0, 20).map((item) => summarizeHookValue(item));
   if (value && typeof value === 'object') {
+    const record = value as Record<string, unknown>;
     const output: Record<string, unknown> = {};
-    for (const [key, nested] of Object.entries(value as Record<string, unknown>).slice(0, 40)) {
-      output[key] = summarizeHookValue(nested);
+    for (const [nestedKey, nested] of Object.entries(record).slice(0, 40)) {
+      const isBinaryPayload = nestedKey === 'data'
+        && typeof nested === 'string'
+        && (record.type === 'image' || record.type === 'audio');
+      output[nestedKey] = isBinaryPayload
+        ? `[omitted ${String(record.type)} data: ${nested.length} chars]`
+        : summarizeHookValue(nested);
     }
     const encoded = JSON.stringify(output);
     if (encoded.length > MAX_SUMMARY_CHARS) {

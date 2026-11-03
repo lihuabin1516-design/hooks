@@ -17,6 +17,8 @@ This project is agent-agnostic: if a runtime can surface hook-like events or inv
 | Windows | primary validated | GitHub Actions runs `windows-latest`. |
 | Codex App | supported | First-class hook path and audit outputs. |
 | PaneForge | compatible | Same core contract, with a host-specific integration path. |
+| FastCtx 0.2.6 | supported | Four file tools, five optional shell/job tools, legacy 0.2.4 `read`, and image-content audit handling. |
+| Blast-radius semantic guard | supported | TypeScript owner for shell, Bash, PowerShell, and FastCtx command events; upstream Python hooks are not installed. |
 | Cursor | candidate | Tracked in the host adapter registry. |
 | Gemini CLI | candidate | Tracked in the host adapter registry. |
 | Kimi CLI | candidate | Tracked in the host adapter registry. |
@@ -29,8 +31,10 @@ This project is agent-agnostic: if a runtime can surface hook-like events or inv
 | `PreToolUse` | Block unsafe or out-of-scope tool use before it runs. |
 | `PermissionRequest` | Gate high-risk permissions with explicit policy. |
 | `PostToolUse` | Record what happened after a tool ran. |
-| `UserPromptSubmit` | Inject workflow advice before work starts. |
+| `UserPromptSubmit` | Capture explicit natural-language file-write authorization for the current task/session and inject workflow advice before work starts. |
 | `SessionStart` / `Stop` | Carry task scope and guardrail reminders. |
+| FastCtx MCP | Enforce and audit the complete 0.2.6 tool surface; see `fastctx-0.2.6.md`. |
+| Destructive command analysis | Block semantic hazards before execution and preserve hazard evidence in the hook decision result. |
 
 ## Verification
 

@@ -609,10 +609,10 @@ test('roundtrips generator node IDs containing delimiters and percent encoding',
   });
 
   expect(graph.nodes.map((node) => node.id)).toEqual([
+    'codex-thread:thread%3Awith%3Acolon',
     'paneforge-launch:launch%3Aencoded%2Fvalue',
     'paneforge-session:session%3Aencoded%2Fvalue',
-    'paneforge-task:task%3Aencoded%2Fvalue',
-    'codex-thread:thread%3Awith%3Acolon'
+    'paneforge-task:task%3Aencoded%2Fvalue'
   ]);
   expect(validateSessionFederationArtifact(graph)).toEqual(graph);
 });

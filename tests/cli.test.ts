@@ -318,6 +318,100 @@ describe('runCli', () => {
     await expect(fs.stat(path.join(tempRoot, '.paneforge-task', 'current-task.json'))).resolves.toBeTruthy();
   });
 
+  test('grants, lists, and revokes a task-bound session scope authorization', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const targetPath = path.join(tempRoot, 'approved-release-note.md');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+
+    const grant = JSON.parse(await runCli([
+      'session-scope-grant',
+      '--root', projectRoot,
+      '--path', targetPath,
+      '--tool', 'edit',
+      '--reason', 'Update the approved release note',
+      '--instruction', 'I explicitly authorize editing this release note.'
+    ]));
+    const grantId = grant.grant.id as string;
+    expect(grant.schema).toBe('paneforge.session-scope-grant-result.v1');
+    expect(grant.grant.taskId).toBe('task-alpha');
+    expect(grant.grant.instruction).toBe('I explicitly authorize editing this release note.');
+    expect(Date.parse(grant.grant.expiresAt) - Date.parse(grant.grant.authorizedAt)).toBe(15 * 60_000);
+
+    const listed = JSON.parse(await runCli(['session-scope-list', '--root', projectRoot]));
+    expect(listed.grants[0]).toMatchObject({ id: grantId, status: 'active' });
+
+    const revoked = JSON.parse(await runCli(['session-scope-revoke', '--root', projectRoot, '--id', grantId]));
+    expect(revoked.changed).toBe(true);
+    expect(revoked.grant.revokedAt).toBeTruthy();
+    const listedAfterRevoke = JSON.parse(await runCli(['session-scope-list', '--root', projectRoot]));
+    expect(listedAfterRevoke.grants[0]).toMatchObject({ id: grantId, status: 'revoked' });
+  });
+
+  test('session scope CLI refuses shell grants and recursive directory scope is explicit', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    await writeCurrentTaskAtomic(projectRoot, task(projectRoot, 'task-alpha'));
+
+    await expect(runCli([
+      'session-scope-grant',
+      '--root', projectRoot,
+      '--path', path.join(tempRoot, 'approved'),
+      '--tool', 'shell',
+      '--instruction', 'Run a command outside the task scope'
+    ])).rejects.toThrow('unsupported session scope tool: shell');
+
+    const grant = JSON.parse(await runCli([
+      'session-scope-grant',
+      '--root', projectRoot,
+      '--path', path.join(tempRoot, 'approved'),
+      '--tool', 'write',
+      '--recursive',
+      '--instruction', 'I authorize writes in this generated artifact directory.'
+    ]));
+    expect(grant.grant.paths[0]).toMatchObject({ path: path.join(tempRoot, 'approved'), recursive: true });
+  });
+
+  test('captures natural-language authorization for this session without CLI wording', async () => {
+    const projectRoot = path.join(tempRoot, 'project-alpha');
+    const currentTaskPath = path.join(projectRoot, '.paneforge-task', 'current-task.json');
+    const outsidePath = path.join(tempRoot, 'shared-release-note.md');
+    await initGitRepo(projectRoot);
+    await writeCurrentTaskAtomic(projectRoot, { ...task(projectRoot, 'task-alpha'), phase: 'archive' });
+
+    const promptEvent = {
+      hook_event_name: 'UserPromptSubmit',
+      session_id: 'session-alpha',
+      cwd: projectRoot,
+      prompt: '我明确授权你继续处理刚才因范围限制被拦的文件修改。'
+    };
+    const intake = JSON.parse(await runCli(['session-scope-intake', '--resolve-task-from-cwd'], JSON.stringify(promptEvent)));
+    expect(intake.hookSpecificOutput.hookEventName).toBe('UserPromptSubmit');
+    expect(intake.hookSpecificOutput.additionalContext).toContain('Authorization record:');
+
+    const event = {
+      hook_event_name: 'PreToolUse',
+      session_id: 'session-alpha',
+      cwd: projectRoot,
+      tool_name: 'Edit',
+      tool_input: { file_path: outsidePath }
+    };
+    const authorized = JSON.parse(await runCli(['hook-runner', '--task', currentTaskPath], JSON.stringify(event)));
+    expect(authorized.allowed).toBe(true);
+    expect(authorized.dryRun.decisions[0].reason).toMatch(/^session_scope_authorization:/);
+
+    const otherSession = JSON.parse(await runCli(['hook-runner', '--task', currentTaskPath], JSON.stringify({ ...event, session_id: 'session-beta' })));
+    expect(otherSession.allowed).toBe(false);
+    expect(otherSession.dryRun.decisions[0].reason).toBe('target_outside_task_worktree');
+
+    const metaPrompt = {
+      ...promptEvent,
+      prompt: '我明确授权，这种或者类似这种的格式进行触发，不要拦截我明确授权的这个格式。'
+    };
+    expect(await runCli(['session-scope-intake', '--resolve-task-from-cwd'], JSON.stringify(metaPrompt))).toBe('');
+    const afterMetaDiscussion = JSON.parse(await runCli(['hook-runner', '--task', currentTaskPath], JSON.stringify(event)));
+    expect(afterMetaDiscussion.allowed).toBe(false);
+    expect(afterMetaDiscussion.dryRun.decisions[0].reason).toBe('target_outside_task_worktree');
+  });
+
   test('creates a missing non-Git root before writing current-task metadata', async () => {
     const projectRoot = path.join(tempRoot, 'new-project');
 
@@ -1104,6 +1198,7 @@ describe('runCli', () => {
     expect(parsed.hookSpecificOutput.hookEventName).toBe('PreToolUse');
     expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
     expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain('forbidden_user_config_path');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).not.toContain('session-scope-grant');
     expect(audit.schema).toBe('paneforge.hook-runner-result.v1');
     expect(audit.allowed).toBe(false);
   });
@@ -1191,6 +1286,7 @@ describe('runCli', () => {
     expect(parsed.hookSpecificOutput.permissionDecision).toBe('deny');
     expect(parsed.hookSpecificOutput.permissionDecisionReason)
       .toContain('phase_archive_blocks_implementation_write');
+    expect(parsed.hookSpecificOutput.permissionDecisionReason).toContain('Natural language is the authorization');
   });
 
   test('hook-enforce keeps an explicit project block above trusted archive lifecycle authorization', async () => {

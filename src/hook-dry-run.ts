@@ -52,6 +52,15 @@ export function decideHookDryRun(task: CurrentTask, call: HookCall): HookDryRunD
   }
 
   const targetInsideWorktree = isPathInside(task.worktreeRoot, targetPath);
+  if (call.policyEffect === 'allow' && call.policyReason?.startsWith('session_scope_authorization:')) {
+    return {
+      action: 'allow',
+      reason: call.policyReason,
+      targetInsideWorktree,
+      phase
+    };
+  }
+
   if (!targetInsideWorktree) {
     return { action: 'block', reason: 'target_outside_task_worktree', targetInsideWorktree: false, phase };
   }

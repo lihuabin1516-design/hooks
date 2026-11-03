@@ -1,3 +1,5 @@
+import type { BlastRadiusAnalysis } from './blast-radius-guard.js';
+
 export type TaskPhase = 'shape' | 'build' | 'verify' | 'archive';
 export type ResumeAction = 'none' | 'auto_resume' | 'ask_user' | 'out_of_scope';
 
@@ -86,6 +88,7 @@ export interface HookCall {
   writes: boolean;
   command?: string;
   rawCommand?: string;
+  destructiveAnalysis?: BlastRadiusAnalysis;
   policyEffect?: 'allow' | 'block';
   policyReason?: string;
 }

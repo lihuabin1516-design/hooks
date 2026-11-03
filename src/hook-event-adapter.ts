@@ -1,5 +1,6 @@
 import type { HookDryRunBatchInput } from './hook-batch.js';
 import { analyzeShellCommand } from './hook-shell-analyzer.js';
+import { fastCtxToolName } from './fastctx-contract.js';
 import type { CurrentTask, HookCall } from './types.js';
 
 const readTools = new Set(['read', 'grep', 'glob']);
@@ -16,11 +17,12 @@ function normalizeToolName(value: unknown): HookCall['tool'] | null {
   const normalized = value.trim().toLowerCase().replace(/-/g, '_').replace(/\./g, '_');
   if (normalized === 'bash' || normalized === 'shell_command' || normalized === 'functions_shell_command') return 'shell';
   if (normalized.startsWith('mcp__')) {
-    if (normalized.endsWith('__inspect_local_file')) return 'read';
-    if (normalized.endsWith('__read')) return 'read';
-    if (normalized.endsWith('__grep')) return 'grep';
-    if (normalized.endsWith('__glob')) return 'glob';
-    if (normalized.endsWith('__replace')) return 'write';
+    const fastCtxTool = fastCtxToolName(normalized);
+    if (fastCtxTool === 'inspect_local_file' || fastCtxTool === 'read' || fastCtxTool === 'job_output' || fastCtxTool === 'job_list') return 'read';
+    if (fastCtxTool === 'grep') return 'grep';
+    if (fastCtxTool === 'glob') return 'glob';
+    if (fastCtxTool === 'replace') return 'write';
+    if (fastCtxTool === 'run' || fastCtxTool === 'run_background' || fastCtxTool === 'job_kill') return 'shell';
     if (/(^|__)(write|edit|delete|remove|move|copy)(_|$)/.test(normalized)) return 'write';
     if (/(^|__)(read|search|find|list|grep|glob)(_|$)/.test(normalized)) return 'read';
   }
@@ -35,18 +37,12 @@ function inferWrites(tool: HookCall['tool'], explicitWrites: unknown): boolean {
   return writeTools.has(tool);
 }
 
-function extractPathFromPatch(patch: unknown): string | null {
-  if (typeof patch !== 'string') return null;
-  const patterns = [
-    /^\*\*\* Update File: (.+)$/m,
-    /^\*\*\* Add File: (.+)$/m,
-    /^\*\*\* Delete File: (.+)$/m
-  ];
-  for (const pattern of patterns) {
-    const match = patch.match(pattern);
-    if (match?.[1]) return match[1].trim();
-  }
-  return null;
+function extractPathsFromPatch(patch: unknown): string[] {
+  if (typeof patch !== 'string') return [];
+  const paths = [...patch.matchAll(/^\*\*\* (?:Update File|Add File|Delete File|Move to):\s*(.+?)\s*$/gm)]
+    .map((match) => match[1]?.trim())
+    .filter((targetPath): targetPath is string => Boolean(targetPath));
+  return [...new Set(paths)];
 }
 
 function extractCommandText(input: Record<string, unknown>, tool: HookCall['tool']): string | undefined {
@@ -57,8 +53,7 @@ function extractCommandText(input: Record<string, unknown>, tool: HookCall['tool
 
 function extractTargetPaths(input: Record<string, unknown>, tool: HookCall['tool']): string[] {
   if (tool === 'apply_patch') {
-    const patchPath = extractPathFromPatch(input.patch ?? input.command);
-    return patchPath ? [patchPath] : [];
+    return extractPathsFromPatch(input.patch ?? input.command);
   }
   const paths: string[] = [];
   for (const key of ['targetPath', 'path', 'file_path', 'filePath', 'cwd']) {
@@ -80,13 +75,25 @@ function extractTargetPaths(input: Record<string, unknown>, tool: HookCall['tool
 
 function adaptCall(value: unknown, fallbackCwd: string | null): HookCall[] {
   const record = asRecord(value);
-  const tool = normalizeToolName(record.tool ?? record.tool_name ?? record.name);
+  const rawTool = record.tool ?? record.tool_name ?? record.name;
+  const tool = normalizeToolName(rawTool);
   if (!tool || !allTools.has(tool)) throw new Error('unsupported hook event: missing tool');
+  const fastCtxTool = typeof rawTool === 'string' ? fastCtxToolName(rawTool) : null;
   if (tool === 'shell' && typeof record.command === 'string') {
     return analyzeShellCommand({
       command: record.command,
       cwd: typeof record.cwd === 'string' ? record.cwd : (fallbackCwd ?? process.cwd())
     });
+  }
+  if (fastCtxTool === 'run' || fastCtxTool === 'run_background') {
+    throw new Error(`unsupported hook event: ${fastCtxTool} requires command`);
+  }
+  if (fastCtxTool === 'job_kill') {
+    return [{
+      tool: 'shell',
+      targetPath: typeof record.cwd === 'string' ? record.cwd : (fallbackCwd ?? process.cwd()),
+      writes: true
+    }];
   }
   const targetPaths = extractTargetPaths(record, tool);
   if (targetPaths.length === 0) {
@@ -109,8 +116,10 @@ function adaptGenericEvent(task: CurrentTask, record: Record<string, unknown>): 
 }
 
 function adaptSingleToolEvent(task: CurrentTask, record: Record<string, unknown>): HookDryRunBatchInput {
-  const tool = normalizeToolName(record.tool_name ?? record.tool ?? record.name);
+  const rawTool = record.tool_name ?? record.tool ?? record.name;
+  const tool = normalizeToolName(rawTool);
   if (!tool) throw new Error('unsupported hook event: missing tool');
+  const fastCtxTool = typeof rawTool === 'string' ? fastCtxToolName(rawTool) : null;
   const input = asRecord(record.tool_input ?? record.arguments ?? record.input ?? record);
   if (tool === 'shell' && typeof input.command === 'string') {
     return {
@@ -120,6 +129,20 @@ function adaptSingleToolEvent(task: CurrentTask, record: Record<string, unknown>
         command: input.command,
         cwd: typeof input.cwd === 'string' ? input.cwd : (typeof record.cwd === 'string' ? record.cwd : task.worktreeRoot)
       })
+    };
+  }
+  if (fastCtxTool === 'run' || fastCtxTool === 'run_background') {
+    throw new Error(`unsupported hook event: ${fastCtxTool} requires command`);
+  }
+  if (fastCtxTool === 'job_kill') {
+    return {
+      schema: 'paneforge.hook-dry-run-batch.v1',
+      task,
+      calls: [{
+        tool: 'shell',
+        targetPath: typeof input.cwd === 'string' ? input.cwd : (typeof record.cwd === 'string' ? record.cwd : task.worktreeRoot),
+        writes: true
+      }]
     };
   }
   const targetPaths = extractTargetPaths(input, tool);

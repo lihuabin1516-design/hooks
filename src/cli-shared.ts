@@ -318,11 +318,12 @@ export function formatPreToolUseDeny(result: HookRunnerResult): string {
   const reason = blocked
     ? `${blocked.reason}${blocked.targetPath ? `: ${blocked.targetPath}` : ''}`
     : 'blocked by paneforge task probe';
+  const recovery = sessionScopeRecovery(result, blocked);
   return `${JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PreToolUse',
       permissionDecision: 'deny',
-      permissionDecisionReason: `paneforge-task-probe: ${reason}`
+      permissionDecisionReason: `paneforge-task-probe: ${reason}${recovery}`
     }
   }, null, 2)}\n`;
 }
@@ -332,15 +333,28 @@ export function formatPermissionRequestDeny(result: HookRunnerResult): string {
   const reason = blocked
     ? `${blocked.reason}${blocked.targetPath ? `: ${blocked.targetPath}` : ''}`
     : 'blocked by paneforge task probe';
+  const recovery = sessionScopeRecovery(result, blocked);
   return `${JSON.stringify({
     hookSpecificOutput: {
       hookEventName: 'PermissionRequest',
       decision: {
         behavior: 'deny',
-        message: `paneforge-task-probe: ${reason}`
+        message: `paneforge-task-probe: ${reason}${recovery}`
       }
     }
   }, null, 2)}\n`;
+}
+
+function sessionScopeRecovery(
+  result: HookRunnerResult,
+  blocked: HookRunnerResult['dryRun']['decisions'][number] | undefined
+): string {
+  if (!blocked || !blocked.targetPath || !['edit', 'write', 'apply_patch'].includes(blocked.tool)) return '';
+  const reason = blocked.reason;
+  if (reason !== 'target_outside_task_worktree' &&
+    !reason.startsWith('phase_') &&
+    !reason.startsWith('project_policy_block:')) return '';
+  return `; this task is ${result.taskId}. Natural language is the authorization; the CLI grant is only internal hook state. If the current conversation already clearly authorizes this file operation, register that existing authorization for this exact path and tool without asking the user to repeat it or provide special syntax. Otherwise ask for authorization`;
 }
 
 export function safeName(input: string): string {

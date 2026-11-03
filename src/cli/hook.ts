@@ -22,6 +22,7 @@ import type { CurrentTask, HookCall, TaskBindingCheck } from '../types.js';
 import type { RunCliOptions } from '../cli-types.js';
 import { createHookDecisionAuditRecord, writeHookDecisionAudit } from '../hook-decision-audit.js';
 import { getRuntimeIdentity } from '../runtime-identity.js';
+import { captureExplicitSessionScopeIntent } from '../session-scope-authorization.js';
 import {
   auditPathFromRoot,
   cliPathForBootstrapAuthorization,
@@ -42,6 +43,38 @@ export async function handleHookCommands(
   options: RunCliOptions
 ): Promise<string | null> {
   const command = args[0];
+
+  if (command === 'session-scope-intake') {
+    try {
+      const eventText = stdinText ?? await readStdin();
+      const event = JSON.parse(eventText) as Record<string, unknown>;
+      if (event.hook_event_name !== 'UserPromptSubmit' || typeof event.prompt !== 'string') return '';
+      const sessionId = typeof event.session_id === 'string' ? event.session_id : null;
+      if (!sessionId) return '';
+      const cwd = extractHookCwd(event) ?? process.cwd();
+      const taskPath = valueAfter(args, '--task');
+      let task: CurrentTask;
+      if (taskPath) {
+        task = validateCurrentTask(JSON.parse(await readFile(taskPath, 'utf8')));
+      } else {
+        if (!args.includes('--resolve-task-from-cwd')) return '';
+        const binding = await resolveCurrentTaskBindingFromCwd(cwd);
+        if (binding.check.status !== 'matched' || !binding.candidate) return '';
+        task = binding.candidate.task;
+      }
+      if (!isPathInside(task.worktreeRoot, cwd)) return '';
+      const intent = await captureExplicitSessionScopeIntent(task, { sessionId, prompt: event.prompt });
+      if (!intent) return '';
+      return `${JSON.stringify({
+        hookSpecificOutput: {
+          hookEventName: 'UserPromptSubmit',
+          additionalContext: `The user's explicit file-write authorization is active for this task and session until ${intent.expiresAt}. It can cover concrete edit, write, or apply_patch calls blocked only by task path, phase, or an older project policy. Protected paths and dangerous operations remain blocked. Authorization record: ${intent.id}.`
+        }
+      }, null, 2)}\n`;
+    } catch {
+      return '';
+    }
+  }
 
   if (command === 'dry-run-hook') {
     const input = valueAfter(args, '--input');

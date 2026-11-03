@@ -1499,10 +1499,10 @@ describe('buildSessionFederation', () => {
     expect(new Set(forward.edges.map((edge) => edge.id)).size)
       .toBe(forward.edges.length);
     expect(forward.nodes.map((node) => node.id)).toEqual([
-      'paneforge-session:a',
-      'paneforge-session:a-%3Ecodex-thread%3Ab',
       'codex-thread:b%3Acodex-thread%3Ac',
-      'codex-thread:c'
+      'codex-thread:c',
+      'paneforge-session:a',
+      'paneforge-session:a-%3Ecodex-thread%3Ab'
     ]);
     expect(forward.edges.map((edge) => edge.id)).toEqual([
       'hosts:paneforge-session:a-%253Ecodex-thread%253Ab->codex-thread:c',
@@ -1551,10 +1551,10 @@ describe('buildSessionFederation', () => {
       diagnostics: []
     });
     expect(graph.nodes.map((node) => node.id)).toEqual([
+      'codex-thread:thread-old',
       'paneforge-launch:launch-1',
       'paneforge-session:pty-1',
-      'paneforge-task:task-1',
-      'codex-thread:thread-old'
+      'paneforge-task:task-1'
     ]);
     expect(graph.nodes.find((node) => node.id === 'codex-thread:thread-old'))
       .toMatchObject({

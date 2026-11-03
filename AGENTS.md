@@ -167,6 +167,45 @@ active worktree. They do not override hard boundaries such as user-level config
 paths, reference repositories, destructive Git commands, global installs, or
 write calls without a target path.
 
+## Explicit session scope authorization
+
+`UserPromptSubmit` recognizes clear natural-language authorization, including
+phrases such as "我明确授权你继续这项修改" and "I explicitly authorize you to
+make this change". No special CLI syntax is required. The authorization applies
+to concrete file writes in the current task and session until the next user
+prompt or for 15 minutes, whichever comes first. If it covers a write that the
+task path, phase, or an older project policy would otherwise block, proceed
+without asking the user to repeat the authorization.
+
+Discussion about authorization wording, format, or trigger behavior is not an
+authorization. Negated and hypothetical wording is not an authorization either.
+The hook only opens `edit`, `write`, and `apply_patch` calls. Protected
+configuration paths, task binding failures, dangerous commands, and shell writes
+remain blocked.
+
+If the UserPromptSubmit hook is unavailable and an exact manual grant is needed,
+the fallback command is:
+
+```powershell
+node <paneforge-hooks-root>\dist\src\cli.js session-scope-grant --root <project-root> --path <absolute-file-path> --tool edit --reason "<short purpose>" --instruction "<verbatim user authorization>"
+```
+
+Repeat `--path` and `--tool` for each specifically authorized file and write
+tool. Use `--recursive` only when the user authorized changes to the whole
+directory tree. Manual grants can last at most 60 minutes. Shell commands do
+not inherit these grants.
+
+```powershell
+node <paneforge-hooks-root>\dist\src\cli.js session-scope-list --root <project-root>
+node <paneforge-hooks-root>\dist\src\cli.js session-scope-revoke --root <project-root> --id <grant-id>
+```
+
+The grant can bypass task-path, phase, and older project-policy blocks only for
+its task, paths, tools, and lifetime. Protected configuration paths, task
+binding failures, dangerous-command checks, and writes without a concrete target
+remain blocked. Grant records retain the user's instruction, purpose, issue
+time, expiry, and revocation time under `.paneforge-task/`.
+
 ## Completion gate
 
 Before claiming completion:

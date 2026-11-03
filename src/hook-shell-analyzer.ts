@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { analyzeBlastRadiusCommand, blastRadiusPolicyReason, type BlastRadiusAnalysis } from './blast-radius-guard.js';
 import type { HookCall } from './types.js';
 
 export interface ShellCommandInput {
@@ -34,7 +35,8 @@ function call(
   targetPath: string | null,
   writes: boolean,
   policyReason?: string,
-  rawCommand?: string
+  rawCommand?: string,
+  destructiveAnalysis?: BlastRadiusAnalysis
 ): HookCall {
   return {
     tool: 'shell',
@@ -42,6 +44,7 @@ function call(
     writes,
     command,
     ...(rawCommand !== undefined ? { rawCommand } : {}),
+    ...(destructiveAnalysis ? { destructiveAnalysis } : {}),
     ...(policyReason ? { policyReason } : {})
   };
 }
@@ -56,7 +59,7 @@ function classifyPolicy(command: string): string | null {
   if (/\bpip\s+install\b[\s\S]*(\s|^)--user(\s|$)/i.test(command)) return 'global_dependency_install';
   if (/\brm\s+-[^\s]*[rR][fF]?[^\s]*(\s|$)/i.test(command)) return 'destructive_file_removal';
   if (/\b(remove-item|del|erase|rd|rmdir)\b[\s\S]*(\s|^)-(recurse|r)(\s|$)/i.test(command)) return 'destructive_file_removal';
-  if (/\b(node|python|py)\s+(-e|-c)\b[\s\S]*(fs\.|require\(['"]fs['"]\)|open\(|unlink|writefile|appendfile|rmsync|rename|copyfile)/i.test(command)) {
+  if (/\b(node|python|py)\s+(-e|-c)\b[\s\S]*(fs\.|require\(['"]fs['"]\)|open\(|unlink|rmtree|(?:os|shutil)\.(?:remove|removedirs?|rmdir|unlink)|writefile|appendfile|rmsync|rename|copyfile)/i.test(command)) {
     return 'interpreter_filesystem_mutation';
   }
   return null;
@@ -132,8 +135,20 @@ export function analyzeShellCommand(input: ShellCommandInput): HookCall[] {
   const command = rawCommand.trim();
   const rawCommandForAudit = rawCommand === command ? undefined : rawCommand;
   const cwd = normalizeShellPath(input.cwd, process.cwd());
-  const policyReason = classifyPolicy(command);
-  if (policyReason) return [call(command, cwd, true, policyReason, rawCommandForAudit)];
+  const destructiveAnalysis = analyzeBlastRadiusCommand({ command, cwd });
+  const legacyPolicyReason = classifyPolicy(command);
+  const semanticPolicyReason = blastRadiusPolicyReason(destructiveAnalysis);
+  const policyReason = [semanticPolicyReason, legacyPolicyReason].filter((reason): reason is string => Boolean(reason)).join(';') || null;
+  if (policyReason) {
+    const analysisForCall = destructiveAnalysis.hazards.length > 0 ? destructiveAnalysis : undefined;
+    const targetPaths = destructiveAnalysis.targets.length > 0 ? destructiveAnalysis.targets : [cwd];
+    return targetPaths.map((targetPath) => call(command, targetPath, true, policyReason, rawCommandForAudit, analysisForCall));
+  }
+
+  if (destructiveAnalysis.targets.length > 0) {
+    const analysisForCall = destructiveAnalysis.hazards.length > 0 ? destructiveAnalysis : undefined;
+    return destructiveAnalysis.targets.map((targetPath) => call(command, targetPath, true, undefined, rawCommandForAudit, analysisForCall));
+  }
 
   const targets = [
     ...extractRedirectionTargets(command, cwd),

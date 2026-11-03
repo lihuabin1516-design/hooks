@@ -6,6 +6,7 @@ import { handleHookCommands } from './cli/hook.js';
 import { handlePolicyCommands } from './cli/policy.js';
 import { handleReleaseCommands } from './cli/release.js';
 import { handleSessionCommands } from './cli/session.js';
+import { handleSessionScopeCommands } from './cli/session-scope.js';
 import { handleTaskCommands } from './cli/task.js';
 import { handleWorkflowCommands } from './cli/workflow.js';
 import type { RunCliOptions } from './cli-types.js';
@@ -54,6 +55,7 @@ export function appendCliRuntimeError(args: string[], error: unknown, runtimeIde
 export async function runCli(args: string[], stdinText?: string, options: RunCliOptions = {}): Promise<string> {
   return routeCliCommand(args, stdinText, options, [
     handleSessionCommands,
+    handleSessionScopeCommands,
     handleTaskCommands,
     handlePolicyCommands,
     handleWorkflowCommands,

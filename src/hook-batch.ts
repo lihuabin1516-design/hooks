@@ -1,4 +1,5 @@
 import { validateCurrentTask } from './current-task.js';
+import { isBlastRadiusAnalysis } from './blast-radius-guard.js';
 import { decideHookDryRun } from './hook-dry-run.js';
 import type { CurrentTask, HookCall, HookDryRunDecision } from './types.js';
 
@@ -30,6 +31,7 @@ function validateHookCall(value: unknown, index: number): HookCall {
   if (typeof record.writes !== 'boolean') throw new Error(`invalid hook batch: calls[${index}].writes`);
   if (!(typeof record.command === 'string' || record.command === undefined)) throw new Error(`invalid hook batch: calls[${index}].command`);
   if (!(typeof record.rawCommand === 'string' || record.rawCommand === undefined)) throw new Error(`invalid hook batch: calls[${index}].rawCommand`);
+  if (!(record.destructiveAnalysis === undefined || isBlastRadiusAnalysis(record.destructiveAnalysis))) throw new Error(`invalid hook batch: calls[${index}].destructiveAnalysis`);
   if (!(record.policyEffect === 'allow' || record.policyEffect === 'block' || record.policyEffect === undefined)) throw new Error(`invalid hook batch: calls[${index}].policyEffect`);
   if (!(typeof record.policyReason === 'string' || record.policyReason === undefined)) throw new Error(`invalid hook batch: calls[${index}].policyReason`);
   return record as unknown as HookCall;

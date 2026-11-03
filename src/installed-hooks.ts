@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { PANEFORGE_RUNTIME_PROFILE } from './runtime-profile.js';
+import { FASTCTX_HOOK_TOOL_NAMES, fastCtxHookMatcherFragment } from './fastctx-contract.js';
 
 export type ExpectedHookEvent = 'SessionStart' | 'UserPromptSubmit' | 'PreToolUse' | 'PermissionRequest' | 'PostToolUse' | 'Stop';
 
@@ -69,8 +70,9 @@ function commandFor(prototypeRoot: string, command: string, auditRoot: string): 
 }
 
 const skillsHubHookPath = PANEFORGE_RUNTIME_PROFILE.skillsHubHookPath;
-const paneforgeCodexHookPath = PANEFORGE_RUNTIME_PROFILE.paneforgeCodexHookPath;
-export const HOOKED_TOOL_MATCHER = '^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|mcp__fastctx__(inspect_local_file|read|grep|glob|replace))$';
+const paneForgeCodexHookPath = PANEFORGE_RUNTIME_PROFILE.paneForgeCodexHookPath;
+export const HOOKED_TOOL_MATCHER = `^(apply_patch|Edit|Write|Bash|shell|shell_command|functions\\.shell_command|${fastCtxHookMatcherFragment()})$`;
+const REQUIRED_TOOL_MATCHER_TOKENS = ['apply_patch', 'Bash', ...FASTCTX_HOOK_TOOL_NAMES];
 
 function executableCommand(executablePath: string, args: string[] = []): string {
   const command = `"${executablePath}"`;
@@ -81,8 +83,8 @@ function codexWindowsCommand(command: string): string {
   return `cmd.exe /d /s /c '${command}'`;
 }
 
-function paneforgePromptBeforeCommand(): string {
-  return codexWindowsCommand(`${executableCommand(paneforgeCodexHookPath, ['prompt-before'])} 2>nul`);
+function paneForgePromptBeforeCommand(): string {
+  return codexWindowsCommand(`${executableCommand(paneForgeCodexHookPath, ['prompt-before'])} 2>nul`);
 }
 
 export function expectedHookDefinitions(): ExpectedHookDefinition[] {
@@ -109,12 +111,20 @@ export function expectedHookDefinitions(): ExpectedHookDefinition[] {
       event: 'UserPromptSubmit',
       name: 'UserPromptSubmit paneforge prompt-before',
       commandToken: 'paneforge-cli-hook.exe',
-      requiredCommandTokens: [paneforgeCodexHookPath, 'paneforge-cli-hook.exe', 'prompt-before'],
+      requiredCommandTokens: [paneForgeCodexHookPath, 'paneforge-cli-hook.exe', 'prompt-before'],
       requiredMatcherTokens: [],
       trustStateKey: 'user_prompt_submit',
       requiresPrototypeCli: false,
       requiresAuditRoot: false,
       trustRequired: false
+    },
+    {
+      event: 'UserPromptSubmit',
+      name: 'UserPromptSubmit session scope authorization',
+      commandToken: 'session-scope-intake',
+      requiredMatcherTokens: [],
+      trustStateKey: 'user_prompt_submit',
+      requiredAdditionalContextLimit: 800
     },
     {
       event: 'UserPromptSubmit',
@@ -125,9 +135,9 @@ export function expectedHookDefinitions(): ExpectedHookDefinition[] {
       trustStateKey: 'user_prompt_submit',
       requiredAdditionalContextLimit: 1800
     },
-    { event: 'PreToolUse', name: 'PreToolUse', commandToken: 'hook-enforce', requiredMatcherTokens: ['apply_patch', 'Bash', 'mcp__fastctx__'], trustStateKey: 'pre_tool_use' },
-    { event: 'PermissionRequest', name: 'PermissionRequest', commandToken: 'permission-enforce', requiredMatcherTokens: ['apply_patch', 'Bash', 'mcp__fastctx__'], trustStateKey: 'permission_request' },
-    { event: 'PostToolUse', name: 'PostToolUse', commandToken: 'post-enforce', requiredMatcherTokens: ['apply_patch', 'Bash', 'mcp__fastctx__'], trustStateKey: 'post_tool_use' },
+    { event: 'PreToolUse', name: 'PreToolUse', commandToken: 'hook-enforce', requiredMatcherTokens: REQUIRED_TOOL_MATCHER_TOKENS, trustStateKey: 'pre_tool_use' },
+    { event: 'PermissionRequest', name: 'PermissionRequest', commandToken: 'permission-enforce', requiredMatcherTokens: REQUIRED_TOOL_MATCHER_TOKENS, trustStateKey: 'permission_request' },
+    { event: 'PostToolUse', name: 'PostToolUse', commandToken: 'post-enforce', requiredMatcherTokens: REQUIRED_TOOL_MATCHER_TOKENS, trustStateKey: 'post_tool_use' },
     { event: 'Stop', name: 'Stop', commandToken: 'stop-check', requiredMatcherTokens: [], trustStateKey: 'stop' }
   ];
 }
@@ -151,10 +161,22 @@ export function buildExpectedHooksConfig(input: ExpectedHooksInput): { hooks: Re
           hooks: [
             {
               type: 'command',
-              command: paneforgePromptBeforeCommand(),
-              commandWindows: paneforgePromptBeforeCommand(),
+              command: paneForgePromptBeforeCommand(),
+              commandWindows: paneForgePromptBeforeCommand(),
               timeout: 10,
               statusMessage: 'PaneForge plan lifecycle intake'
+            }
+          ]
+        },
+        {
+          hooks: [
+            {
+              type: 'command',
+              command: commandFor(input.prototypeRoot, 'session-scope-intake', input.auditRoot),
+              commandWindows: commandFor(input.prototypeRoot, 'session-scope-intake', input.auditRoot),
+              timeout: 10,
+              statusMessage: 'PaneForge explicit authorization intake',
+              additionalContextLimit: 800
             }
           ]
         },

@@ -81,6 +81,26 @@ describe('createPostToolUseAuditRecord', () => {
     expect(JSON.stringify(record.responseSummary).length).toBeLessThan(1300);
     expect(JSON.stringify(record.responseSummary)).toContain('[truncated');
   });
+
+  test('omits FastCtx image payloads while retaining useful content metadata', () => {
+    const record = createPostToolUseAuditRecord(task(tempRoot), {
+      hook_event_name: 'PostToolUse',
+      cwd: tempRoot,
+      tool_name: 'mcp__fastctx__inspect_local_file',
+      tool_response: {
+        content: [{ type: 'image', data: 'A'.repeat(4096), mimeType: 'image/png' }]
+      }
+    }, runtimeIdentity);
+
+    expect(record.responseSummary).toEqual({
+      content: [{
+        type: 'image',
+        data: '[omitted image data: 4096 chars]',
+        mimeType: 'image/png'
+      }]
+    });
+    expect(JSON.stringify(record.responseSummary)).not.toContain('AAAA');
+  });
 });
 
 describe('appendPostToolUseAudit', () => {

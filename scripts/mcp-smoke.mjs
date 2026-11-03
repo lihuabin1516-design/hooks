@@ -161,6 +161,23 @@ try {
   });
   assert.equal(fastCtxRead, '');
 
+  for (const [toolName, toolInput] of [
+    ['mcp__fastctx__run', { command: 'git status --short' }],
+    ['mcp__fastctx__run_background', { command: 'git status --short' }],
+    ['mcp__fastctx__job_output', { job_id: 'fixture-job' }],
+    ['mcp__fastctx__job_list', {}],
+    ['mcp__fastctx__job_kill', { job_id: 'fixture-job' }]
+  ]) {
+    const fastCtxLifecycle = await callHook('hook-enforce', {
+      hook_event_name: 'PreToolUse',
+      cwd: projectRoot,
+      tool_name: toolName,
+      tool_use_id: `mcp-smoke-${toolName}`,
+      tool_input: toolInput
+    });
+    assert.equal(fastCtxLifecycle, '');
+  }
+
   const blockedWrite = JSON.parse(await callHook('hook-enforce', {
     hook_event_name: 'PreToolUse',
     cwd: projectRoot,
@@ -275,11 +292,13 @@ try {
     tool_name: 'mcp__fastctx__inspect_local_file',
     tool_use_id: 'mcp-smoke-post',
     tool_input: { file_path: path.join(projectRoot, 'README.md') },
-    tool_response: { content: [{ type: 'text', text: 'fixture' }] }
+    tool_response: { content: [{ type: 'image', data: 'A'.repeat(4096), mimeType: 'image/png' }] }
   });
   assert.equal(postOutput, '');
   const postAudit = await fs.readFile(path.join(taskAuditDir, 'post-tool-use-audit.jsonl'), 'utf8');
   assert.match(postAudit, /"toolUseId":"mcp-smoke-post"/);
+  assert.match(postAudit, /omitted image data: 4096 chars/);
+  assert.doesNotMatch(postAudit, /AAAA/);
   assert.match(postAudit, new RegExp(runtimeIdentity.buildSha256));
 
   const stop = JSON.parse(await callHook('stop-check', {

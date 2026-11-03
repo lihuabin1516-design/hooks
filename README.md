@@ -66,6 +66,7 @@ If a runtime can emit comparable hook events or invoke the CLI, the core contrac
 | Task Binding | Writes and verifies the current task for a project / worktree. |
 | Project Policy Gate | Captures human rules into machine-readable policy. |
 | Hook Enforcement | Applies allow / deny / audit logic to hook events. |
+| Destructive Command Semantics | Detects command forms whose real filesystem blast radius is larger or less certain than their text suggests. |
 | Workflow Advisory | Suggests risk level, workflow shape, and checks before work starts. |
 | Session Bridge | Builds read-only session indexes and handoff artifacts. |
 | Acceptance Evidence | Records checks, artifact hashes, truth layers, and completion gates. |
@@ -149,6 +150,7 @@ If it can expose hook-like events or call the CLI, it can usually join the same 
 - [`docs/faq.md`](./docs/faq.md) — expanded questions and answers.
 - [`docs/releases/2026-08-19-agent-hooks-homepage-refresh.md`](./docs/releases/2026-08-19-agent-hooks-homepage-refresh.md) — this publicization release note.
 - [`docs/architecture.md`](./docs/architecture.md) — source-level module boundaries.
+- [`docs/blast-radius-guard.md`](./docs/blast-radius-guard.md) — destructive command semantic guard and upstream absorption boundary.
 - [`docs/artifacts.md`](./docs/artifacts.md) — artifact and schema index.
 - [`docs/codex-session-bridge.md`](./docs/codex-session-bridge.md) — session bridge details.
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contribution workflow and verification.

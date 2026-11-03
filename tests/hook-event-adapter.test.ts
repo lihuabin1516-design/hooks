@@ -94,6 +94,18 @@ describe('adaptHookEventToBatch', () => {
     ]);
   });
 
+  test('adapts FastCtx image inspection as a non-write call', () => {
+    const batch = adaptHookEventToBatch(task(), {
+      hook_event_name: 'PreToolUse',
+      tool_name: 'mcp__fastctx__inspect_local_file',
+      tool_input: { file_path: 'D:/paneforge/project-alpha/assets/screenshot.png' }
+    });
+
+    expect(batch.calls).toEqual([
+      { tool: 'read', targetPath: 'D:/paneforge/project-alpha/assets/screenshot.png', writes: false }
+    ]);
+  });
+
   test('adapts FastCtx replace as a write call', () => {
     const batch = adaptHookEventToBatch(task(), {
       hook_event_name: 'PreToolUse',
@@ -104,6 +116,71 @@ describe('adaptHookEventToBatch', () => {
     expect(batch.calls).toEqual([
       { tool: 'write', targetPath: 'D:/paneforge/project-alpha/src', writes: true }
     ]);
+  });
+
+  test('adapts FastCtx foreground and background commands through shell analysis', () => {
+    for (const toolName of ['mcp__fastctx__run', 'mcp__fastctx__run_background']) {
+      const batch = adaptHookEventToBatch(task(), {
+        hook_event_name: 'PreToolUse',
+        cwd: 'D:/paneforge/project-alpha',
+        tool_name: toolName,
+        tool_input: { command: 'git status --short' }
+      });
+
+      expect(batch.calls).toEqual([{
+        tool: 'shell',
+        targetPath: 'D:/paneforge/project-alpha',
+        writes: false,
+        command: 'git status --short'
+      }]);
+    }
+  });
+
+  test('runs semantic blast-radius analysis for a FastCtx destructive command', () => {
+    const batch = adaptHookEventToBatch(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/paneforge/project-alpha',
+      tool_name: 'mcp__fastctx__run',
+      tool_input: { command: 'rm -rf /' }
+    });
+
+    expect(batch.calls[0]).toMatchObject({
+      tool: 'shell',
+      policyReason: expect.stringContaining('blast_radius_guard_block'),
+      destructiveAnalysis: expect.objectContaining({ verdict: 'block' })
+    });
+  });
+
+  test('adapts FastCtx background job inspection and process control', () => {
+    for (const toolName of ['mcp__fastctx__job_output', 'mcp__fastctx__job_list']) {
+      const batch = adaptHookEventToBatch(task(), {
+        hook_event_name: 'PreToolUse',
+        cwd: 'D:/paneforge/project-alpha',
+        tool_name: toolName,
+        tool_input: { job_id: 'job-1' }
+      });
+      expect(batch.calls).toEqual([{ tool: 'read', targetPath: null, writes: false }]);
+    }
+
+    const kill = adaptHookEventToBatch(task(), {
+      hook_event_name: 'PreToolUse',
+      cwd: 'D:/paneforge/project-alpha',
+      tool_name: 'mcp__fastctx__job_kill',
+      tool_input: { job_id: 'job-1' }
+    });
+    expect(kill.calls).toEqual([{
+      tool: 'shell',
+      targetPath: 'D:/paneforge/project-alpha',
+      writes: true
+    }]);
+  });
+
+  test('rejects malformed FastCtx run events without a command', () => {
+    expect(() => adaptHookEventToBatch(task(), {
+      hook_event_name: 'PreToolUse',
+      tool_name: 'mcp__fastctx__run',
+      tool_input: {}
+    })).toThrow('run requires command');
   });
 
   test('adapts functions.shell_command as shell command', () => {
@@ -140,6 +217,21 @@ describe('adaptHookEventToBatch', () => {
       writes: true,
       command: '*** Begin Patch\n*** Update File: D:/paneforge/project-alpha/src/a.ts\n@@\n-old\n+new\n*** End Patch\n'
     });
+  });
+
+  test('extracts every file path from a multi-file apply_patch request', () => {
+    const batch = adaptHookEventToBatch(task(), {
+      hook_event_name: 'PreToolUse',
+      tool_name: 'apply_patch',
+      tool_input: {
+        patch: '*** Begin Patch\n*** Update File: D:/paneforge/project-alpha/src/a.ts\n@@\n-old\n+new\n*** Add File: D:/paneforge/project-alpha/src/b.ts\n+export const value = 1;\n*** End Patch\n'
+      }
+    });
+
+    expect(batch.calls.map((call) => call.targetPath)).toEqual([
+      'D:/paneforge/project-alpha/src/a.ts',
+      'D:/paneforge/project-alpha/src/b.ts'
+    ]);
   });
 
   test('extracts target path from Codex apply_patch command field', () => {

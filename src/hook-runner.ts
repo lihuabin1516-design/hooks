@@ -6,6 +6,11 @@ import {
   applyTrustedTaskLifecycleAuthorization,
   type TaskLifecycleAuthorizationOptions
 } from './task-lifecycle-authorization.js';
+import {
+  applySessionScopeAuthorizations,
+  readSessionScopeAuthorizations,
+  SessionScopeAuthorizationError
+} from './session-scope-authorization.js';
 import type { CurrentTask, HookCall, TaskBindingCheck, TaskBindingStatus } from './types.js';
 
 export interface HookRunnerResult {
@@ -18,6 +23,13 @@ export interface HookRunnerResult {
 }
 
 export interface TaskBindingMismatchOptions extends TaskLifecycleAuthorizationOptions {}
+
+function hookSessionId(event: unknown): string | null {
+  if (!event || typeof event !== 'object') return null;
+  const record = event as Record<string, unknown>;
+  const sessionId = record.session_id ?? record.sessionId;
+  return typeof sessionId === 'string' && sessionId.length > 0 ? sessionId : null;
+}
 
 export function createTaskBindingMismatchGateTask(check: TaskBindingCheck): CurrentTask {
   const worktreeRoot = check.gitRoot ?? check.cwd;
@@ -136,11 +148,32 @@ export async function runHookEventDryRunWithProjectPolicy(
     return resultFromBatch(task, batch);
   }
 
+  let authorizations;
+  try {
+    authorizations = await readSessionScopeAuthorizations(task.worktreeRoot);
+  } catch (error) {
+    if (!(error instanceof SessionScopeAuthorizationError)) throw error;
+    const batch = validateHookDryRunBatch({
+      schema: 'paneforge.hook-dry-run-batch.v1',
+      task,
+      calls: [{
+        tool: 'write',
+        targetPath: task.worktreeRoot,
+        writes: true,
+        policyReason: `${error.code}:${error.message}`
+      }]
+    });
+    return resultFromBatch(task, batch);
+  }
+
   const batch = validateHookDryRunBatch(adaptHookEventToBatch(task, event));
   const policyBatch = validateHookDryRunBatch({
     ...batch,
-    calls: applyProjectPolicyToCalls(task, batch.calls, policy)
-      .map((call) => applyTrustedTaskLifecycleAuthorization(task, call, options))
+    calls: applySessionScopeAuthorizations(task,
+      applyProjectPolicyToCalls(task, batch.calls, policy)
+        .map((call) => applyTrustedTaskLifecycleAuthorization(task, call, options)),
+      authorizations,
+      hookSessionId(event))
   });
   return resultFromBatch(task, policyBatch);
 }

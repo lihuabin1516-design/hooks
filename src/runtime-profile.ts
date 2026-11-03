@@ -11,7 +11,7 @@ export interface RuntimeProfile {
   hooksJsonPath: string;
   configTomlPath: string;
   skillsHubHookPath: string;
-  paneforgeCodexHookPath: string;
+  paneForgeCodexHookPath: string;
   referenceRepos: ReferenceRepoProfile[];
 }
 
@@ -23,7 +23,7 @@ export const PANEFORGE_RUNTIME_PROFILE: RuntimeProfile = {
   hooksJsonPath: 'C:\\Users\\AI001\\.codex\\hooks.json',
   configTomlPath: 'C:\\Users\\AI001\\.codex\\config.toml',
   skillsHubHookPath: 'C:\\Users\\AI001\\skills-hub\\bin\\skills-hub-hook.exe',
-  paneforgeCodexHookPath: 'D:\\paneforge\\paneforge-main\\src-tauri\\binaries\\paneforge-cli-hook.exe',
+  paneForgeCodexHookPath: 'D:\\paneforge\\paneforge-main\\src-tauri\\binaries\\paneforge-cli-hook.exe',
   referenceRepos: [
     { name: 'comet', path: 'D:\\paneforge\\tool\\repos\\comet' },
     { name: 'fastctx', path: 'D:\\paneforge\\tool\\repos\\fastctx' },

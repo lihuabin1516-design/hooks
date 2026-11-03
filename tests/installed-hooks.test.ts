@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, test } from 'vitest';
 import { buildExpectedHooksConfig, verifyInstalledHooks } from '../src/installed-hooks.js';
+import { FASTCTX_HOOK_TOOL_NAMES, FASTCTX_SUPPORTED_VERSION } from '../src/fastctx-contract.js';
 
 let tempRoot: string;
 const legacyEvents = ['SessionStart', 'PreToolUse', 'PermissionRequest', 'PostToolUse', 'Stop'];
@@ -23,15 +24,12 @@ describe('verifyInstalledHooks', () => {
       const groups = hooks.hooks[event];
       if (!Array.isArray(groups)) throw new Error(`expected ${event} fixture`);
       const matcher = new RegExp(String(groups[0]?.matcher));
-      for (const tool of [
-        'mcp__fastctx__inspect_local_file',
-        'mcp__fastctx__grep',
-        'mcp__fastctx__glob',
-        'mcp__fastctx__replace'
-      ]) {
+      for (const name of FASTCTX_HOOK_TOOL_NAMES) {
+        const tool = `mcp__fastctx__${name}`;
         expect(matcher.test(tool), `${event} should match ${tool}`).toBe(true);
       }
     }
+    expect(FASTCTX_SUPPORTED_VERSION).toBe('0.2.6');
   });
 
   test('passes for a complete production hooks.json and trusted config.toml', async () => {
@@ -44,6 +42,8 @@ describe('verifyInstalledHooks', () => {
       "[hooks.state.'hooks.json:user_prompt_submit:0:0']",
       'trusted_hash = "sha256:user-prompt-skills"',
       "[hooks.state.'hooks.json:user_prompt_submit:2:0']",
+      'trusted_hash = "sha256:user-prompt-authorization"',
+      "[hooks.state.'hooks.json:user_prompt_submit:3:0']",
       'trusted_hash = "sha256:user-prompt-advisory"',
       "[hooks.state.'hooks.json:pre_tool_use:0:0']",
       'trusted_hash = "sha256:pre"',
@@ -68,6 +68,7 @@ describe('verifyInstalledHooks', () => {
       ['SessionStart', 'SessionStart', true],
       ['UserPromptSubmit skills-hub', 'UserPromptSubmit', true],
       ['UserPromptSubmit paneforge prompt-before', 'UserPromptSubmit', true],
+      ['UserPromptSubmit session scope authorization', 'UserPromptSubmit', true],
       ['UserPromptSubmit workflow advisory', 'UserPromptSubmit', true],
       ['PreToolUse', 'PreToolUse', true],
       ['PermissionRequest', 'PermissionRequest', true],
@@ -94,6 +95,25 @@ describe('verifyInstalledHooks', () => {
 
     expect(report.passed).toBe(false);
     expect(report.failures.some((failure) => failure.includes('Stop'))).toBe(true);
+  });
+
+  test('fails when an installed matcher still exposes only the 0.2.4 FastCtx surface', async () => {
+    const prototypeRoot = path.join(tempRoot, 'prototype');
+    const auditRoot = path.join(tempRoot, 'audits');
+    const hooksJsonPath = path.join(tempRoot, 'hooks.json');
+    const hooks = buildExpectedHooksConfig({ prototypeRoot, auditRoot });
+    for (const event of ['PreToolUse', 'PermissionRequest', 'PostToolUse'] as const) {
+      const groups = hooks.hooks[event];
+      if (!Array.isArray(groups)) throw new Error(`expected ${event} fixture`);
+      groups[0].matcher = '^(apply_patch|Bash|mcp__fastctx__(read|grep|glob|replace))$';
+    }
+    await fs.writeFile(hooksJsonPath, `${JSON.stringify(hooks, null, 2)}\n`, 'utf8');
+
+    const report = await verifyInstalledHooks({ hooksJsonPath, prototypeRoot, auditRoot });
+
+    expect(report.passed).toBe(false);
+    expect(report.failures.some((failure) => failure.includes('inspect_local_file'))).toBe(true);
+    expect(report.failures.some((failure) => failure.includes('run_background'))).toBe(true);
   });
 
   test('fails when the PaneForge prompt-before UserPromptSubmit hook is missing', async () => {

@@ -47,6 +47,7 @@ describe('createProductionToolkit', () => {
       'UserPromptSubmit',
       'UserPromptSubmit',
       'UserPromptSubmit',
+      'UserPromptSubmit',
       'PreToolUse',
       'PermissionRequest',
       'PostToolUse',
